@@ -3,7 +3,7 @@
 import PillButton from "@/components/shared/PillButton";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FiArrowRight, FiMenu, FiX } from "react-icons/fi";
 
 const navLinks = [
@@ -30,10 +30,30 @@ function Brand({ onClick }: { onClick?: () => void }) {
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const closeMenu = () => setIsOpen(false);
 
+  // The bar is transparent over the hero, but needs a solid backing once content
+  // scrolls beneath it — otherwise the links sit on top of the page copy.
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8);
+
+    onScroll(); // A reload mid-page starts already scrolled.
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // The open mobile menu needs the backing too, even at the top of the page.
+  const solid = scrolled || isOpen;
+
   return (
-    <header className="absolute inset-x-0 top-0 z-50 bg-transparent">
+    <header
+      className={`fixed inset-x-0 top-0 z-50 transition-colors duration-300 ${
+        solid
+          ? "border-b border-white/10 bg-black/80 backdrop-blur-xl"
+          : "border-b border-transparent bg-transparent"
+      }`}
+    >
       <nav className="mx-auto flex h-20 max-w-6xl items-center justify-between px-4">
         <Brand />
 

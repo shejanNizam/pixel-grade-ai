@@ -30,7 +30,10 @@ export default function Header({ toggleSidebar }: HeaderProps) {
     "Dashboard";
 
   return (
-    <header className="flex items-center gap-3 px-4 py-4 sm:gap-4 md:px-6 md:py-6">
+    // Sticky so the title and actions stay reachable while the page scrolls.
+    // z-10 keeps it above the content but below the mobile overlay (z-20) and
+    // the sidebar (z-30), so an open menu still covers it.
+    <header className="sticky top-0 z-10 flex items-center gap-3 bg-black px-4 py-4 sm:gap-4 md:px-6 md:py-6">
       {/* min-w-0 lets the title truncate instead of pushing the actions off-screen. */}
       <div className="flex min-w-0 flex-1 items-center gap-3">
         <button
