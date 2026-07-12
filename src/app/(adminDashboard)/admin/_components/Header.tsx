@@ -1,51 +1,65 @@
 "use client";
 
-import ThemeToggle from "@/components/shared/ThemeToggle";
-import { useEffect, useState } from "react";
-import { MdMenu, MdSearch } from "react-icons/md";
+import { usePathname } from "next/navigation";
+import { FiBell, FiMenu } from "react-icons/fi";
+
+/** Page titles keyed by route — the header is shared by every admin screen. */
+const pageTitles: Record<string, string> = {
+  "/admin": "Dashboard",
+  "/admin/users": "Users",
+  "/admin/subscribed-users": "Subscribed Users",
+  "/admin/earnings": "Earnings",
+  "/admin/subscription-plan": "Subscription Plan",
+  "/admin/settings": "Settings",
+};
 
 interface HeaderProps {
   toggleSidebar: () => void;
 }
 
 export default function AdminHeader({ toggleSidebar }: HeaderProps) {
-  const [mounted, setMounted] = useState(false);
-  const [search, setSearch] = useState("");
+  const pathname = usePathname();
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) return null;
+  const title =
+    pageTitles[pathname] ??
+    Object.entries(pageTitles).find(
+      ([href]) => href !== "/admin" && pathname.startsWith(href),
+    )?.[1] ??
+    "Dashboard";
 
   return (
-    <header className="bg-white dark:bg-[#0B0F1A] border-b border-gray-200 dark:border-gray-800 px-4 py-3 sticky top-0 z-10">
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-3 flex-1 min-w-0">
-          <button
-            onClick={toggleSidebar}
-            className="lg:hidden p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg shrink-0"
-          >
-            <MdMenu className="w-6 h-6 dark:text-gray-300" />
-          </button>
-          <span className="hidden sm:inline-flex items-center rounded-full bg-blue-100 dark:bg-blue-900/30 px-2.5 py-0.5 text-xs font-semibold text-blue-700 dark:text-blue-400">
-            Admin
-          </span>
-        </div>
+    <header className="flex items-center gap-3 px-4 py-4 sm:gap-4 md:px-6 md:py-6">
+      {/* min-w-0 lets the title truncate instead of pushing the actions off-screen. */}
+      <div className="flex min-w-0 flex-1 items-center gap-3">
+        <button
+          onClick={toggleSidebar}
+          aria-label="Open menu"
+          className="shrink-0 text-zinc-300 hover:text-white lg:hidden"
+        >
+          <FiMenu size={22} />
+        </button>
+        <h1 className="truncate text-lg font-medium text-white sm:text-xl md:text-2xl">
+          {title}
+        </h1>
+      </div>
 
-        {/* Right Section */}
-        <div className="flex items-center gap-3">
-          <div className="relative hidden md:block">
-            <MdSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-lg" />
-            <input
-              type="text"
-              placeholder="Search..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-10 pr-4 py-2 w-44 xl:w-72 border border-gray-200 dark:border-gray-800 rounded-lg text-sm bg-gray-50 dark:bg-[#111827] dark:text-gray-100 focus:ring-1 focus:ring-teal-500 outline-none"
-            />
+      <div className="flex shrink-0 items-center gap-2 sm:gap-3 md:gap-5">
+        <button
+          aria-label="Notifications"
+          className="relative inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-zinc-900 transition-colors hover:bg-zinc-200 md:h-10 md:w-10"
+        >
+          <FiBell size={17} />
+          <span className="absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-black bg-red-500" />
+        </button>
+
+        <div className="flex items-center gap-2.5">
+          <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-violet-500 to-cyan-400 text-sm font-semibold text-white md:h-10 md:w-10">
+            AA
+          </span>
+          <div className="hidden leading-tight lg:block">
+            <p className="text-sm font-medium text-white">Alex alfred</p>
+            <p className="text-xs text-zinc-500">Admin</p>
           </div>
-          <ThemeToggle />
         </div>
       </div>
     </header>

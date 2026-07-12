@@ -30,40 +30,46 @@ export default function Header({ toggleSidebar }: HeaderProps) {
     "Dashboard";
 
   return (
-    <header className="flex items-center justify-between gap-4 px-4 py-6 md:px-6">
-      <div className="flex items-center gap-3">
+    <header className="flex items-center gap-3 px-4 py-4 sm:gap-4 md:px-6 md:py-6">
+      {/* min-w-0 lets the title truncate instead of pushing the actions off-screen. */}
+      <div className="flex min-w-0 flex-1 items-center gap-3">
         <button
           onClick={toggleSidebar}
           aria-label="Open menu"
-          className="text-zinc-300 hover:text-white lg:hidden"
+          className="shrink-0 text-zinc-300 hover:text-white lg:hidden"
         >
           <FiMenu size={22} />
         </button>
-        <h1 className="text-xl font-medium text-white md:text-2xl">{title}</h1>
+        <h1 className="truncate text-lg font-medium text-white sm:text-xl md:text-2xl">
+          {title}
+        </h1>
       </div>
 
-      <div className="flex items-center gap-3 md:gap-5">
+      <div className="flex shrink-0 items-center gap-2 sm:gap-3 md:gap-5">
+        {/* Label shortens rather than disappearing — upgrading is the point of
+            the header, so it stays reachable on a phone. */}
         <PillButton
           href="/user-dashboard/subscription"
           variant="gradient"
-          className="hidden sm:inline-flex"
+          className="px-3! py-2! text-xs! sm:px-5! sm:py-2.5! sm:text-sm!"
         >
-          Upgrade to premium
+          <span className="md:hidden">Upgrade</span>
+          <span className="hidden md:inline">Upgrade to premium</span>
         </PillButton>
 
         <button
           aria-label="Notifications"
-          className="relative inline-flex h-10 w-10 items-center justify-center rounded-full bg-white text-zinc-900 transition-colors hover:bg-zinc-200"
+          className="relative inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-zinc-900 transition-colors hover:bg-zinc-200 md:h-10 md:w-10"
         >
-          <FiBell size={18} />
+          <FiBell size={17} />
           <span className="absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-black bg-red-500" />
         </button>
 
         <div className="flex items-center gap-2.5">
-          <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-linear-to-br from-violet-500 to-cyan-400 text-sm font-semibold text-white">
+          <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-violet-500 to-cyan-400 text-sm font-semibold text-white md:h-10 md:w-10">
             AA
           </span>
-          <div className="hidden leading-tight md:block">
+          <div className="hidden leading-tight lg:block">
             <p className="text-sm font-medium text-white">Alex alfred</p>
             <p className="text-xs text-zinc-500">Admin</p>
           </div>

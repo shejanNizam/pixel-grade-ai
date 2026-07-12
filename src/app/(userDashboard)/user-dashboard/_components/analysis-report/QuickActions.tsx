@@ -40,17 +40,18 @@ export default function QuickActions() {
   return (
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
       {actions.map(({ label, caption, href, Icon }) => (
+        /* Same shell as <StatCard>, but these are links rather than figures. */
         <Link
           key={label}
           href={href}
-          className="flex items-center gap-3 rounded-xl border border-white/8 bg-[#111113] p-4 transition-colors hover:border-violet-500/50"
+          className="flex items-center gap-4 rounded-2xl border border-violet-500/30 bg-linear-to-br from-violet-950/50 to-black p-4 transition-colors hover:border-violet-500/70"
         >
-          <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-500/15 text-violet-300">
+          <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-violet-500/15 text-xl text-violet-300">
             <Icon />
           </span>
           <span className="min-w-0">
             <span className="block truncate text-sm text-white">{label}</span>
-            <span className="block truncate text-xs text-zinc-500">
+            <span className="mt-0.5 block truncate text-[11px] text-zinc-500">
               {caption}
             </span>
           </span>

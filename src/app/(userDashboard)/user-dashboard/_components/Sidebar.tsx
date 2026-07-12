@@ -111,7 +111,9 @@ export default function Sidebar({ isOpen, toggleSidebar }: SidebarProps) {
         isOpen ? "translate-x-0" : "-translate-x-full"
       }`}
     >
-      <div className="flex h-full flex-col overflow-y-auto rounded-3xl bg-[#111113] p-5">
+      {/* Neutral fill, not the cards' violet gradient — the active nav pill is
+          violet-500 and needs a flat panel to read against. */}
+      <div className="flex h-full flex-col overflow-y-auto rounded-3xl border border-violet-500/20 bg-[#111113] p-5">
         <div className="mb-10 flex items-center justify-between px-2 pt-3">
           <Link href="/" aria-label="PixelGrade AI home">
             <Image

@@ -2,39 +2,51 @@
 
 import { logout } from "@/redux/features/auth/authSlice";
 import { clearAuthCookie } from "@/utils/cookieUtils";
-import { App } from "antd";
+import { App, Modal } from "antd";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect } from "react";
-import { IoIosLogOut } from "react-icons/io";
-import {
-  MdBarChart,
-  MdClose,
-  MdDashboard,
-  MdDescription,
-  MdPeople,
-  MdSettings,
-  MdShoppingCart,
-} from "react-icons/md";
+import { useEffect, useState } from "react";
+import { FiChevronDown, FiX } from "react-icons/fi";
 import { useDispatch } from "react-redux";
+import {
+  MdOutlineAccountBalanceWallet,
+  MdOutlineAddCard,
+  MdOutlineGroups,
+  MdOutlineLogout,
+  MdOutlinePeopleOutline,
+  MdOutlinePieChart,
+  MdOutlineSettings,
+} from "react-icons/md";
 
-const navigation = [
+const navItems = [
+  { href: "/admin", label: "Dashboard", Icon: MdOutlinePieChart },
+  { href: "/admin/users", label: "Users", Icon: MdOutlinePeopleOutline },
   {
-    section: "Core",
-    items: [
-      { name: "Overview", icon: MdDashboard, href: "/admin" },
-      { name: "Analytics", icon: MdBarChart, href: "/admin/analytics" },
-      { name: "Users", icon: MdPeople, href: "/admin/users" },
-      { name: "Orders", icon: MdShoppingCart, href: "/admin/orders" },
-    ],
+    href: "/admin/subscribed-users",
+    label: "Subscribed Users",
+    Icon: MdOutlineGroups,
   },
   {
-    section: "System",
-    items: [
-      { name: "Reports", icon: MdDescription, href: "/admin/reports" },
-      { name: "Settings", icon: MdSettings, href: "/admin/settings" },
-    ],
+    href: "/admin/earnings",
+    label: "Earnings",
+    Icon: MdOutlineAccountBalanceWallet,
   },
+  {
+    href: "/admin/subscription-plan",
+    label: "Subscription Plan",
+    Icon: MdOutlineAddCard,
+  },
+];
+
+const SETTINGS_ROOT = "/admin/settings";
+
+const settingsItems = [
+  { href: `${SETTINGS_ROOT}/profile`, label: "Profile" },
+  { href: `${SETTINGS_ROOT}/change-password`, label: "Change Password" },
+  { href: `${SETTINGS_ROOT}/about-us`, label: "About us" },
+  { href: `${SETTINGS_ROOT}/privacy-policy`, label: "Privacy policy" },
+  { href: `${SETTINGS_ROOT}/terms`, label: "Terms and condition" },
 ];
 
 interface SidebarProps {
@@ -44,130 +56,160 @@ interface SidebarProps {
 
 export default function AdminSidebar({ isOpen, toggleSidebar }: SidebarProps) {
   const pathname = usePathname();
-  const dispatch = useDispatch();
   const router = useRouter();
-  const { modal, message } = App.useApp();
+  const dispatch = useDispatch();
+  const { message } = App.useApp();
 
-  // Close sidebar on route change (mobile)
+  const inSettings = pathname.startsWith(SETTINGS_ROOT);
+  const [settingsOpen, setSettingsOpen] = useState(inSettings);
+  const [confirmingSignOut, setConfirmingSignOut] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
+
+  // Keep the group open when navigating straight to one of its pages.
   useEffect(() => {
-    if (isOpen) {
-      toggleSidebar();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pathname]);
+    if (inSettings) setSettingsOpen(true);
+  }, [inSettings]);
 
-  // Prevent body scroll when sidebar is open on mobile
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "unset";
-    }
+  const signOut = () => {
+    setIsSigningOut(true);
 
-    return () => {
-      document.body.style.overflow = "unset";
-    };
-  }, [isOpen]);
+    // Clear both auth layers: the redux store + the cookie middleware reads,
+    // and the localStorage tokens baseApi attaches to requests.
+    dispatch(logout());
+    clearAuthCookie();
+    localStorage.removeItem("token");
+    localStorage.removeItem("refresh");
+    localStorage.removeItem("user_id");
 
-  // Exact match for the index route, prefix match for the rest.
+    setConfirmingSignOut(false);
+    setIsSigningOut(false);
+    message.success("Signed out.");
+    router.push("/login");
+  };
+
   const isActive = (href: string) =>
     href === "/admin" ? pathname === href : pathname.startsWith(href);
 
-  const handleLogout = () => {
-    modal.confirm({
-      title: "Are you sure?",
-      content: "Do you want to logout?",
-      okText: "Yes, logout!",
-      cancelText: "Cancel",
-      okButtonProps: { danger: true },
-      onOk: () => {
-        localStorage.removeItem("token");
-        localStorage.removeItem("refresh");
-        localStorage.removeItem("user_id");
-        clearAuthCookie();
-        dispatch(logout());
-        router.push("/login");
-        message.success("You have successfully logged out.");
-      },
-    });
-  };
+  // `text-*!` is required on links: antd's `.ant-app a { color: colorLink }`
+  // outranks Tailwind's utilities and would otherwise tint every item violet.
+  const itemClass = (active: boolean) =>
+    `flex items-center gap-3.5 rounded-xl px-3 py-2.5 text-sm transition-colors ${
+      active
+        ? "bg-violet-500 font-medium text-white! shadow-lg shadow-violet-500/25"
+        : "text-zinc-400! hover:bg-white/5 hover:text-white!"
+    }`;
 
   return (
-    <>
-      <aside
-        className={`
-          fixed top-0 bottom-0 left-0 z-30
-          w-64 bg-[#1a1d29] dark:bg-gray-950 text-gray-300
-          flex flex-col
-          transform transition-transform duration-300 ease-in-out
-          ${isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
-        `}
-      >
-        {/* Logo & Close Button - Fixed at top */}
-        <div className="p-6 border-b border-gray-700 dark:border-gray-800 flex items-center justify-between shrink-0">
-          <Link href="/admin" className="flex flex-col flex-1">
-            <h1 className="text-xl font-bold text-white">
-              Pixel<span className="text-blue-500">Grade</span> AI
-            </h1>
-            <span className="mt-1 inline-flex w-fit items-center rounded-full bg-blue-500/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-blue-400">
-              Admin Panel
-            </span>
+    <aside
+      className={`fixed top-0 left-0 z-30 h-full w-64 transform p-4 transition-transform duration-300 lg:translate-x-0 ${
+        isOpen ? "translate-x-0" : "-translate-x-full"
+      }`}
+    >
+      {/* Neutral fill, not the cards' violet gradient — the active nav pill is
+          violet-500 and needs a flat panel to read against. */}
+      <div className="flex h-full flex-col overflow-y-auto rounded-3xl border border-violet-500/20 bg-[#111113] p-5">
+        <div className="mb-10 flex items-center justify-between px-2 pt-3">
+          <Link href="/admin" aria-label="PixelGrade AI admin home">
+            <Image
+              src="/assets/main_logo_all.png"
+              alt="PixelGrade AI"
+              width={160}
+              height={36}
+              className="h-6 w-auto"
+            />
           </Link>
-
-          {/* Close button (mobile only) */}
           <button
             onClick={toggleSidebar}
-            className="lg:hidden text-gray-400 hover:text-white p-1"
+            aria-label="Close menu"
+            className="text-zinc-400 hover:text-white lg:hidden"
           >
-            <MdClose className="w-6 h-6" />
+            <FiX size={20} />
           </button>
         </div>
 
-        {/* Navigation */}
-        <nav className="flex-1 px-3 py-6 overflow-y-auto custom-scrollbar min-h-0">
-          {navigation?.map((section) => (
-            <div key={section.section} className="mb-6">
-              <h3 className="px-3 mb-2 text-xs font-semibold text-gray-500 dark:text-gray-600 uppercase tracking-wider">
-                {section.section}
-              </h3>
-              <ul className="space-y-1">
-                {section?.items?.map((item) => {
-                  const Icon = item.icon;
-                  const active = isActive(item.href);
-                  return (
-                    <li key={item.name}>
-                      <Link
-                        href={item.href}
-                        className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-                          active
-                            ? "bg-gray-700 dark:bg-gray-800 text-white"
-                            : "text-gray-400 hover:bg-gray-800 dark:hover:bg-gray-800/50 hover:text-white"
-                        }`}
-                      >
-                        <Icon className="w-5 h-5 shrink-0" />
-                        <span className="text-sm font-medium truncate">
-                          {item.name}
-                        </span>
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
+        <nav className="flex flex-1 flex-col gap-1.5">
+          {navItems.map(({ href, label, Icon }) => (
+            <Link
+              key={href}
+              href={href}
+              onClick={toggleSidebar}
+              aria-current={isActive(href) ? "page" : undefined}
+              className={itemClass(isActive(href))}
+            >
+              <Icon className="shrink-0 text-xl" />
+              {label}
+            </Link>
           ))}
-        </nav>
 
-        {/* Logout - Fixed at bottom */}
-        <div className="p-4 border-t border-gray-700 dark:border-gray-800 shrink-0">
+          {/* Settings — a disclosure, not a link: it has no page of its own.
+              It stays muted while a child is active so only one row reads as
+              the current page. */}
           <button
-            onClick={handleLogout}
-            className="w-full flex justify-center items-center gap-2 text-red-500 cursor-pointer bg-primary/20 px-3 py-3 rounded-lg transition-colors dark:bg-gray-800"
+            type="button"
+            onClick={() => setSettingsOpen((open) => !open)}
+            aria-expanded={settingsOpen}
+            aria-controls="admin-settings-submenu"
+            className={`flex w-full items-center gap-3.5 rounded-xl px-3 py-2.5 text-sm transition-colors hover:bg-white/5 hover:text-white ${
+              inSettings ? "font-medium text-white" : "text-zinc-400"
+            }`}
           >
-            <IoIosLogOut size={24} />
-            Logout
+            <MdOutlineSettings className="shrink-0 text-xl" />
+            <span className="flex-1 text-left">Settings</span>
+            <FiChevronDown
+              className={`shrink-0 transition-transform duration-200 ${
+                settingsOpen ? "rotate-180" : ""
+              }`}
+            />
           </button>
-        </div>
-      </aside>
-    </>
+
+          {settingsOpen && (
+            <ul
+              id="admin-settings-submenu"
+              className="mt-0.5 ml-5 flex flex-col gap-1 border-l border-white/10 pl-3"
+            >
+              {settingsItems.map(({ href, label }) => (
+                <li key={href}>
+                  <Link
+                    href={href}
+                    onClick={toggleSidebar}
+                    aria-current={isActive(href) ? "page" : undefined}
+                    className={`block rounded-lg px-3 py-2 text-[13px] transition-colors ${
+                      isActive(href)
+                        ? "bg-violet-500 font-medium text-white! shadow-lg shadow-violet-500/25"
+                        : "text-zinc-400! hover:bg-white/5 hover:text-white!"
+                    }`}
+                  >
+                    {label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          <button
+            onClick={() => setConfirmingSignOut(true)}
+            className="mt-1.5 flex items-center gap-3.5 rounded-xl px-3 py-2.5 text-sm text-zinc-400 transition-colors hover:bg-white/5 hover:text-white"
+          >
+            <MdOutlineLogout className="shrink-0 text-xl" />
+            Sign out
+          </button>
+        </nav>
+      </div>
+
+      <Modal
+        open={confirmingSignOut}
+        onCancel={() => setConfirmingSignOut(false)}
+        onOk={signOut}
+        okText="Sign out"
+        cancelText="Cancel"
+        okButtonProps={{ danger: true, loading: isSigningOut }}
+        centered
+        title="Sign out"
+      >
+        <p className="text-sm text-zinc-400">
+          Are you sure you want to sign out of your account?
+        </p>
+      </Modal>
+    </aside>
   );
 }
