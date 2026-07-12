@@ -1,0 +1,161 @@
+@import "tailwindcss";
+
+/* @layer base {
+  body {
+    @apply antialiased;
+  }
+} */
+
+* {
+  box-sizing: border-box;
+}
+
+/* Tailwind v4 dark mode variant */
+@variant dark (&:is(.dark *));
+
+/* CSS Variables */
+:root {
+  --background: #ffffff;
+  --foreground: #000000;
+}
+
+.dark {
+  --background: #0f172a;
+  --foreground: #f1f5f9;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease;
+}
+
+@theme inline {
+  /* Brand — sampled from the logo mark and the Figma auth screens. */
+  --color-primary: #8b2fc9;
+  --color-primary-hover: #9c43d8;
+  --color-secondary: #22a6f2;
+  --color-accent: #ff3131;
+
+  /* --font-sans: "Inter", sans-serif;
+  --font-mono: "Roboto Mono", monospace;
+  --font-raleway: var(--times-new-roman);
+  --font-raleway-bold: var(--times-new-roman-bold); */
+}
+
+/* for ignore tailwind */
+.no-tailwind * {
+  all: revert !important;
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Auth screens                                                              */
+/*                                                                            */
+/*  The auth design uses pill fields on a full-bleed canvas — a look that      */
+/*  differs from the dashboard's inputs, so these overrides are scoped to      */
+/*  `.auth-shell` (set on the auth layout) rather than the antd theme.         */
+/* -------------------------------------------------------------------------- */
+.auth-shell {
+  --auth-field-bg: #f5f5f7;
+  --auth-field-border: #dcdce2;
+  --auth-field-text: #18181b;
+  --auth-field-muted: #8a8a94;
+  --auth-focus-ring: 0 0 0 3px rgba(139, 47, 201, 0.18);
+}
+
+.dark .auth-shell {
+  --auth-field-bg: #0b0b0e;
+  --auth-field-border: #3a3a42;
+  --auth-field-text: #ffffff;
+  --auth-field-muted: #8a8a94;
+  --auth-focus-ring: 0 0 0 3px rgba(139, 47, 201, 0.35);
+}
+
+/* ── Pill text fields ── */
+.auth-shell .ant-input-affix-wrapper {
+  height: 52px;
+  padding: 0 20px;
+  border-radius: 9999px;
+  background-color: var(--auth-field-bg);
+  border: 1px solid var(--auth-field-border);
+  box-shadow: none;
+}
+
+.auth-shell .ant-input-affix-wrapper:hover {
+  border-color: var(--color-primary);
+}
+
+.auth-shell .ant-input-affix-wrapper-focused {
+  border-color: var(--color-primary);
+  box-shadow: var(--auth-focus-ring);
+}
+
+.auth-shell .ant-input-affix-wrapper > input.ant-input {
+  background-color: transparent;
+  color: var(--auth-field-text);
+}
+
+.auth-shell .ant-input-affix-wrapper > input.ant-input::placeholder {
+  color: var(--auth-field-muted);
+}
+
+.auth-shell .ant-input-prefix {
+  margin-inline-end: 12px;
+  color: var(--auth-field-muted);
+  font-size: 16px;
+}
+
+.auth-shell .ant-input-suffix,
+.auth-shell .ant-input-password-icon {
+  color: var(--auth-field-muted);
+}
+
+/* Validation messages sit inside the pill's horizontal padding. */
+.auth-shell .ant-form-item-explain-error {
+  padding-inline-start: 20px;
+  font-size: 12px;
+}
+
+/* ── Circular OTP fields ── */
+.auth-shell .auth-otp {
+  width: 56px;
+  height: 56px;
+  padding: 0;
+  border-radius: 9999px;
+  text-align: center;
+  font-size: 18px;
+  background-color: var(--auth-field-bg);
+  border: 1px solid var(--auth-field-border);
+  color: var(--auth-field-text);
+}
+
+.auth-shell .auth-otp:hover,
+.auth-shell .auth-otp:focus {
+  border-color: var(--color-primary);
+  box-shadow: var(--auth-focus-ring);
+}
+
+/* ── Checkbox: violet fill on light, white fill on the black canvas ── */
+.auth-shell .ant-checkbox .ant-checkbox-inner {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  background-color: transparent;
+  border-color: var(--auth-field-border);
+}
+
+.auth-shell .ant-checkbox-checked .ant-checkbox-inner {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.dark .auth-shell .ant-checkbox-checked .ant-checkbox-inner {
+  background-color: #ffffff;
+  border-color: #ffffff;
+}
+
+.dark .auth-shell .ant-checkbox-checked .ant-checkbox-inner::after {
+  border-color: #0b0b0e;
+}
