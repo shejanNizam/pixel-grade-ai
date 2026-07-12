@@ -4,8 +4,8 @@ import { App } from "antd";
 import Image from "next/image";
 import { useId, useRef } from "react";
 import { FiPlus, FiX } from "react-icons/fi";
-import { ACCEPT_ATTR, MAX_PER_SIDE, validateImage } from "./upload";
-import { useObjectUrls } from "./useObjectUrl";
+import { useObjectUrls } from "@/hooks/useObjectUrl";
+import { ACCEPT_ATTR, MAX_PER_SIDE, validateImage } from "@/utils/imageUpload";
 
 interface ImageSlotGridProps {
   label: string;

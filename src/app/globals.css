@@ -137,6 +137,73 @@ body {
   box-shadow: var(--auth-focus-ring);
 }
 
+/* -------------------------------------------------------------------------- */
+/*  Contact form — pill fields on the black marketing canvas                   */
+/* -------------------------------------------------------------------------- */
+.contact-form .ant-input {
+  height: 52px;
+  padding: 0 20px;
+  border-radius: 9999px;
+  background-color: #0b0b0e;
+  border: 1px solid #3a3a42;
+  color: #ffffff;
+}
+
+.contact-form textarea.ant-input {
+  height: auto;
+  min-height: 120px;
+  padding: 16px 20px;
+  border-radius: 20px;
+}
+
+.contact-form .ant-input::placeholder {
+  color: #8a8a94;
+}
+
+.contact-form .ant-input:hover,
+.contact-form .ant-input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(139, 47, 201, 0.25);
+}
+
+.contact-form .ant-form-item-explain-error {
+  padding-inline-start: 20px;
+  font-size: 12px;
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Add Card modal                                                            */
+/*                                                                            */
+/*  The design puts a light modal on the dark dashboard, so it opts out of    */
+/*  antd's dark algorithm rather than inheriting it.                          */
+/* -------------------------------------------------------------------------- */
+.add-card-modal .ant-modal-content {
+  border-radius: 24px;
+  background-color: #ffffff;
+  padding: 28px;
+}
+
+.add-card-modal .ant-form-item-label > label {
+  color: #3f3f46;
+  font-size: 13px;
+}
+
+.add-card-modal .ant-input {
+  background-color: #ffffff;
+  border-color: #d4d4d8;
+  color: #18181b;
+  border-radius: 8px;
+}
+
+.add-card-modal .ant-input::placeholder {
+  color: #a1a1aa;
+}
+
+.add-card-modal .ant-input:hover,
+.add-card-modal .ant-input:focus {
+  border-color: var(--color-primary);
+}
+
 /* ── Checkbox: violet fill on light, white fill on the black canvas ── */
 .auth-shell .ant-checkbox .ant-checkbox-inner {
   width: 18px;

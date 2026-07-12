@@ -22,7 +22,7 @@ export default function CreditsCard() {
       </div>
 
       <Link
-        href="/user-dashboard/billing"
+        href="/user-dashboard/subscription"
         className="rounded-lg bg-violet-500 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-violet-600"
       >
         Buy credits

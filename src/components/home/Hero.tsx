@@ -1,4 +1,4 @@
-import Link from "next/link";
+import PillButton from "@/components/shared/PillButton";
 import { FiMaximize } from "react-icons/fi";
 
 export default function Hero() {
@@ -27,19 +27,16 @@ export default function Hero() {
         </p>
 
         <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
-          <Link
+          <PillButton
             href="/signup"
-            className="inline-flex items-center gap-2.5 rounded-full bg-violet-500 px-7 py-3.5 text-sm font-medium text-white transition-colors hover:bg-violet-600"
+            size="md"
+            icon={<FiMaximize className="text-base" />}
           >
             Scan now
-            <FiMaximize className="text-base" />
-          </Link>
-          <Link
-            href="/signup"
-            className="inline-flex items-center rounded-full bg-violet-500 px-7 py-3.5 text-sm font-medium text-white transition-colors hover:bg-violet-600"
-          >
+          </PillButton>
+          <PillButton href="/signup" size="md">
             Lets get start
-          </Link>
+          </PillButton>
         </div>
       </div>
     </section>

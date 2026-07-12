@@ -1,4 +1,4 @@
-import Link from "next/link";
+import PillButton from "@/components/shared/PillButton";
 import { FiArrowUpRight } from "react-icons/fi";
 
 export default function SupportCta() {
@@ -26,15 +26,18 @@ export default function SupportCta() {
             Are you need any support
           </h2>
 
-          <Link
+          <PillButton
             href="/contact"
-            className="mt-7 inline-flex items-center gap-2 rounded-full border border-white/25 py-2 pr-2 pl-5 text-sm text-white transition-colors hover:bg-white/10"
+            variant="outline"
+            icon={
+              <span className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-white/25">
+                <FiArrowUpRight />
+              </span>
+            }
+            className="mt-7 py-2! pr-2!"
           >
             Contact us
-            <span className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-white/25">
-              <FiArrowUpRight />
-            </span>
-          </Link>
+          </PillButton>
         </div>
       </div>
     </section>

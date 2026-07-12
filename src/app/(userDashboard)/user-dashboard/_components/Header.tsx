@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import PillButton from "@/components/shared/PillButton";
 import { usePathname } from "next/navigation";
 import { FiBell, FiMenu } from "react-icons/fi";
 
@@ -8,10 +8,10 @@ import { FiBell, FiMenu } from "react-icons/fi";
 const pageTitles: Record<string, string> = {
   "/user-dashboard": "Dashboard",
   "/user-dashboard/new-analysis": "New analysis",
-  "/user-dashboard/my-scans": "My Scans",
+  "/user-dashboard/analysis-report": "Analysis report",
   "/user-dashboard/my-collection": "My Collection",
   "/user-dashboard/price-tracker": "Price Tracker",
-  "/user-dashboard/report": "Report",
+  "/user-dashboard/subscription": "Subscription",
   "/user-dashboard/settings": "Settings",
 };
 
@@ -43,12 +43,13 @@ export default function Header({ toggleSidebar }: HeaderProps) {
       </div>
 
       <div className="flex items-center gap-3 md:gap-5">
-        <Link
-          href="/user-dashboard/billing"
-          className="hidden rounded-full bg-linear-to-r from-violet-500 to-cyan-400 px-5 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-90 sm:inline-flex"
+        <PillButton
+          href="/user-dashboard/subscription"
+          variant="gradient"
+          className="hidden sm:inline-flex"
         >
           Upgrade to premium
-        </Link>
+        </PillButton>
 
         <button
           aria-label="Notifications"

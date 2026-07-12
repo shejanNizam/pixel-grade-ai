@@ -1,11 +1,15 @@
 "use client";
 
+import { logout } from "@/redux/features/auth/authSlice";
+import { clearAuthCookie } from "@/utils/cookieUtils";
+import { App, Modal } from "antd";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { FiX } from "react-icons/fi";
+import { useEffect, useState } from "react";
+import { FiChevronDown, FiX } from "react-icons/fi";
+import { useDispatch } from "react-redux";
 import {
-  MdOutlineAssessment,
   MdOutlineCollectionsBookmark,
   MdOutlineInsertChart,
   MdOutlineLogout,
@@ -13,7 +17,10 @@ import {
   MdOutlineQrCodeScanner,
   MdOutlineSettings,
   MdOutlineTravelExplore,
+  MdOutlineWorkspacePremium,
 } from "react-icons/md";
+
+const SETTINGS_ROOT = "/user-dashboard/settings";
 
 const navItems = [
   { href: "/user-dashboard", label: "Dashboard", Icon: MdOutlinePieChart },
@@ -23,8 +30,8 @@ const navItems = [
     Icon: MdOutlineTravelExplore,
   },
   {
-    href: "/user-dashboard/my-scans",
-    label: "My Scans",
+    href: "/user-dashboard/analysis-report",
+    label: "Analysis report",
     Icon: MdOutlineQrCodeScanner,
   },
   {
@@ -38,15 +45,15 @@ const navItems = [
     Icon: MdOutlineInsertChart,
   },
   {
-    href: "/user-dashboard/report",
-    label: "Report",
-    Icon: MdOutlineAssessment,
+    href: "/user-dashboard/subscription",
+    label: "Subscription",
+    Icon: MdOutlineWorkspacePremium,
   },
-  {
-    href: "/user-dashboard/settings",
-    label: "Settings",
-    Icon: MdOutlineSettings,
-  },
+];
+
+const settingsItems = [
+  { href: `${SETTINGS_ROOT}/profile`, label: "Profile" },
+  { href: `${SETTINGS_ROOT}/change-password`, label: "Change Password" },
 ];
 
 interface SidebarProps {
@@ -57,9 +64,46 @@ interface SidebarProps {
 export default function Sidebar({ isOpen, toggleSidebar }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const dispatch = useDispatch();
+  const { message } = App.useApp();
+
+  const inSettings = pathname.startsWith(SETTINGS_ROOT);
+  const [settingsOpen, setSettingsOpen] = useState(inSettings);
+  const [confirmingSignOut, setConfirmingSignOut] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
+
+  const signOut = () => {
+    setIsSigningOut(true);
+
+    // Clear both auth layers: the redux store + the cookie middleware reads,
+    // and the localStorage tokens baseApi attaches to requests.
+    dispatch(logout());
+    clearAuthCookie();
+    localStorage.removeItem("token");
+    localStorage.removeItem("refresh");
+
+    setConfirmingSignOut(false);
+    setIsSigningOut(false);
+    message.success("Signed out.");
+    router.push("/login");
+  };
+
+  // Keep the group open when navigating straight to one of its pages.
+  useEffect(() => {
+    if (inSettings) setSettingsOpen(true);
+  }, [inSettings]);
 
   const isActive = (href: string) =>
     href === "/user-dashboard" ? pathname === href : pathname.startsWith(href);
+
+  // `text-*!` is required on links: antd's `.ant-app a { color: colorLink }`
+  // outranks Tailwind's utilities and would otherwise tint every item violet.
+  const itemClass = (active: boolean) =>
+    `flex items-center gap-3.5 rounded-xl px-3 py-2.5 text-sm transition-colors ${
+      active
+        ? "bg-violet-500 font-medium text-white! shadow-lg shadow-violet-500/25"
+        : "text-zinc-400! hover:bg-white/5 hover:text-white!"
+    }`;
 
   return (
     <aside
@@ -67,7 +111,7 @@ export default function Sidebar({ isOpen, toggleSidebar }: SidebarProps) {
         isOpen ? "translate-x-0" : "-translate-x-full"
       }`}
     >
-      <div className="flex h-full flex-col rounded-3xl bg-[#111113] p-5">
+      <div className="flex h-full flex-col overflow-y-auto rounded-3xl bg-[#111113] p-5">
         <div className="mb-10 flex items-center justify-between px-2 pt-3">
           <Link href="/" aria-label="PixelGrade AI home">
             <Image
@@ -94,19 +138,60 @@ export default function Sidebar({ isOpen, toggleSidebar }: SidebarProps) {
               href={href}
               onClick={toggleSidebar}
               aria-current={isActive(href) ? "page" : undefined}
-              className={`flex items-center gap-3.5 rounded-xl px-3 py-2.5 text-sm transition-colors ${
-                isActive(href)
-                  ? "bg-white/5 font-medium text-white"
-                  : "text-zinc-400 hover:bg-white/5 hover:text-white"
-              }`}
+              className={itemClass(isActive(href))}
             >
               <Icon className="shrink-0 text-xl" />
               {label}
             </Link>
           ))}
 
+          {/* Settings — a disclosure, not a link: it has no page of its own.
+              It stays muted while a child is active so only one row reads as
+              the current page. */}
           <button
-            onClick={() => router.push("/login")}
+            type="button"
+            onClick={() => setSettingsOpen((open) => !open)}
+            aria-expanded={settingsOpen}
+            aria-controls="settings-submenu"
+            className={`flex w-full items-center gap-3.5 rounded-xl px-3 py-2.5 text-sm transition-colors hover:bg-white/5 hover:text-white ${
+              inSettings ? "font-medium text-white" : "text-zinc-400"
+            }`}
+          >
+            <MdOutlineSettings className="shrink-0 text-xl" />
+            <span className="flex-1 text-left">Settings</span>
+            <FiChevronDown
+              className={`shrink-0 transition-transform duration-200 ${
+                settingsOpen ? "rotate-180" : ""
+              }`}
+            />
+          </button>
+
+          {settingsOpen && (
+            <ul
+              id="settings-submenu"
+              className="mt-0.5 ml-5 flex flex-col gap-1 border-l border-white/10 pl-3"
+            >
+              {settingsItems.map(({ href, label }) => (
+                <li key={href}>
+                  <Link
+                    href={href}
+                    onClick={toggleSidebar}
+                    aria-current={isActive(href) ? "page" : undefined}
+                    className={`block rounded-lg px-3 py-2 text-[13px] transition-colors ${
+                      isActive(href)
+                        ? "bg-violet-500 font-medium text-white! shadow-lg shadow-violet-500/25"
+                        : "text-zinc-400! hover:bg-white/5 hover:text-white!"
+                    }`}
+                  >
+                    {label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          <button
+            onClick={() => setConfirmingSignOut(true)}
             className="mt-1.5 flex items-center gap-3.5 rounded-xl px-3 py-2.5 text-sm text-zinc-400 transition-colors hover:bg-white/5 hover:text-white"
           >
             <MdOutlineLogout className="shrink-0 text-xl" />
@@ -114,6 +199,21 @@ export default function Sidebar({ isOpen, toggleSidebar }: SidebarProps) {
           </button>
         </nav>
       </div>
+
+      <Modal
+        open={confirmingSignOut}
+        onCancel={() => setConfirmingSignOut(false)}
+        onOk={signOut}
+        okText="Sign out"
+        cancelText="Cancel"
+        okButtonProps={{ danger: true, loading: isSigningOut }}
+        centered
+        title="Sign out"
+      >
+        <p className="text-sm text-zinc-400">
+          Are you sure you want to sign out of your account?
+        </p>
+      </Modal>
     </aside>
   );
 }

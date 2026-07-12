@@ -19,7 +19,7 @@ const steps = [
     tab: "BRAND",
     step: "3",
     title: "BRAND",
-    body: "Add your brands, choose your label, make it yours",
+    body: "Add brands, choose label, make it yours",
     src: "/assets/straight_phone_three.png",
   },
   {
@@ -35,11 +35,11 @@ export default function AppShowcase() {
   return (
     <section className="bg-black px-4 py-20">
       <div className="mx-auto max-w-6xl text-center">
-        <h2 className="text-3xl leading-tight font-semibold tracking-tight text-white sm:text-4xl">
+        {/* <h2 className="text-3xl leading-tight font-semibold tracking-tight text-white sm:text-4xl">
           Your Cards, Your Grades
           <br />
           Your slabs.
-        </h2>
+        </h2> */}
 
         <div className="mt-6 flex flex-wrap items-center justify-center gap-x-8 gap-y-2">
           {steps.map((s) => (

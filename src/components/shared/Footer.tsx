@@ -27,7 +27,9 @@ const support = [
 
 export default function Footer() {
   return (
-    <footer className="bg-[url('/assets/footer_bg.png')] bg-cover bg-bottom bg-no-repeat px-4 pb-12">
+    /* pt-14 matters on pages that don't have <SupportCta> above the footer to
+       provide the gap — About, Privacy, Terms. */
+    <footer className="bg-[url('/assets/footer_bg.png')] bg-cover bg-bottom bg-no-repeat px-4 pt-14 pb-12">
       <div className="mx-auto grid max-w-6xl gap-10 sm:grid-cols-2 lg:grid-cols-4">
         <div>
           <Link href="/" aria-label="PixelGrade AI home">
@@ -54,7 +56,7 @@ export default function Footer() {
                 <li key={link.label}>
                   <Link
                     href={link.href}
-                    className="text-sm text-zinc-400 transition-colors hover:text-white"
+                    className="text-sm text-white! transition-opacity hover:opacity-70"
                   >
                     {link.label}
                   </Link>
@@ -71,7 +73,7 @@ export default function Footer() {
               <li key={item.label}>
                 <a
                   href={item.href}
-                  className="text-sm text-zinc-400 transition-colors hover:text-white"
+                  className="text-sm text-white! transition-opacity hover:opacity-70"
                 >
                   {item.label}
                 </a>

@@ -12,9 +12,9 @@ export default function Home() {
       <Hero />
       <ScanningEngine />
       <SlabShowcase />
+      <AppShowcase />
       <WorkingProcess />
       <Pricing />
-      <AppShowcase />
       <SupportCta />
     </main>
   );

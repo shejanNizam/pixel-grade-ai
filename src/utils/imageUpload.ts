@@ -1,4 +1,4 @@
-/** Client-side image constraints shown to the user on the dropzones. */
+/** Shared client-side image constraints for every upload surface. */
 export const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 export const ACCEPT_ATTR = ACCEPTED_TYPES.join(",");
 export const MAX_BYTES = 10 * 1024 * 1024;

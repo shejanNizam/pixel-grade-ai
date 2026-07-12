@@ -25,12 +25,12 @@ const light = {
 } as const;
 
 const dark = {
-  bgBase: "#141414",
+  bgBase: "#0a0a0a",
   textBase: "#ffffff",
-  surface: "#12203b",
-  surfaceElevated: "#12203b",
-  border: "#303030",
-  placeholder: "#999999",
+  surface: "#111113",
+  surfaceElevated: "#18181b",
+  border: "#27272a",
+  placeholder: "#71717a",
 } as const;
 
 /* -------------------------------------------------------------------------- */
@@ -199,10 +199,10 @@ export const darkTheme: ThemeConfig = {
       colorText: dark.textBase,
       colorBorder: dark.border,
       colorBgContainer: dark.surface,
-      headerBg: "#0d1628", // was `colorBgHeader`/`colorHeaderBg` (invalid keys)
-      rowHoverBg: "#1a2d4e",
-      rowSelectedBg: "#1e3a5f",
-      rowSelectedHoverBg: "#234a7a",
+      headerBg: "#0d0d0f", // was `colorBgHeader`/`colorHeaderBg` (invalid keys)
+      rowHoverBg: "#18181b",
+      rowSelectedBg: "rgba(139, 47, 201, 0.16)",
+      rowSelectedHoverBg: "rgba(139, 47, 201, 0.24)",
     },
     Menu: {
       colorBgContainer: dark.bgBase,
@@ -235,9 +235,9 @@ export const darkTheme: ThemeConfig = {
       controlHeight: 44,
       controlHeightLG: 48,
       borderRadius: 10,
-      colorBgContainer: "#16233b",
-      colorText: "#e8eefc",
-      colorTextPlaceholder: "#64748b",
+      colorBgContainer: dark.surfaceElevated,
+      colorText: "#fafafa",
+      colorTextPlaceholder: dark.placeholder,
       colorBorder: "rgba(255, 255, 255, 0.10)",
       hoverBorderColor: brand.primary,
       activeBorderColor: brand.primary,
@@ -246,8 +246,8 @@ export const darkTheme: ThemeConfig = {
     InputNumber: {
       controlHeight: 44,
       borderRadius: 10,
-      colorBgContainer: "#0f1a2e",
-      colorText: "#e8eefc",
+      colorBgContainer: dark.surfaceElevated,
+      colorText: "#fafafa",
       colorBorder: "rgba(255, 255, 255, 0.10)",
       hoverBorderColor: brand.primary,
       activeBorderColor: brand.primary,
@@ -255,12 +255,12 @@ export const darkTheme: ThemeConfig = {
     Select: {
       controlHeight: 44,
       borderRadius: 10,
-      colorTextPlaceholder: "#64748b",
-      colorBgContainer: "#0f1a2e",
-      colorText: "#e8eefc",
+      colorTextPlaceholder: dark.placeholder,
+      colorBgContainer: dark.surfaceElevated,
+      colorText: "#fafafa",
       colorBorder: "rgba(255, 255, 255, 0.10)",
-      colorBgElevated: "#111c33",
-      controlItemBgHover: "#1a2b47",
+      colorBgElevated: dark.surfaceElevated,
+      controlItemBgHover: "#27272a",
       controlItemBgActive: brand.primary,
       optionSelectedColor: "#ffffff",
       optionSelectedBg: brand.primary,
@@ -268,10 +268,10 @@ export const darkTheme: ThemeConfig = {
     DatePicker: {
       controlHeight: 44,
       borderRadius: 10,
-      colorTextPlaceholder: "#64748b",
+      colorTextPlaceholder: dark.placeholder,
       colorIcon: brand.primary,
-      colorBgContainer: "#0f1a2e",
-      colorText: "#e8eefc",
+      colorBgContainer: dark.surfaceElevated,
+      colorText: "#fafafa",
       colorBorder: "rgba(255, 255, 255, 0.10)",
     },
     Collapse: {

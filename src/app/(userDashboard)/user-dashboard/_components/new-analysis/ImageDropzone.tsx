@@ -4,8 +4,8 @@ import { App } from "antd";
 import Image from "next/image";
 import { useId, useRef, useState } from "react";
 import { FiUploadCloud, FiX } from "react-icons/fi";
-import { ACCEPT_ATTR, validateImage } from "./upload";
-import { useObjectUrl } from "./useObjectUrl";
+import { useObjectUrl } from "@/hooks/useObjectUrl";
+import { ACCEPT_ATTR, validateImage } from "@/utils/imageUpload";
 
 interface ImageDropzoneProps {
   label: string;

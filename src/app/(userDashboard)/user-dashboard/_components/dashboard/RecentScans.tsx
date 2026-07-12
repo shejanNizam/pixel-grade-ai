@@ -8,7 +8,7 @@ export default function RecentScans() {
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-sm font-medium text-white">Recent scans</h2>
         <Link
-          href="/user-dashboard/my-scans"
+          href="/user-dashboard/analysis-report"
           className="text-xs text-zinc-400 transition-colors hover:text-white"
         >
           See all

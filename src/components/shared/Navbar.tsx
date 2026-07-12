@@ -1,5 +1,6 @@
 "use client";
 
+import PillButton from "@/components/shared/PillButton";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
@@ -41,20 +42,20 @@ export default function Navbar() {
             <Link
               key={link.href}
               href={link.href}
-              className="text-sm text-white/90 transition-colors hover:text-white"
+              className="text-sm text-white! transition-opacity hover:opacity-70"
             >
               {link.label}
             </Link>
           ))}
         </div>
 
-        <Link
+        <PillButton
           href="/login"
-          className="hidden items-center gap-2.5 rounded-full bg-violet-500 px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-violet-600 md:inline-flex"
+          icon={<FiArrowRight />}
+          className="hidden md:inline-flex"
         >
           Sign in
-          <FiArrowRight />
-        </Link>
+        </PillButton>
 
         <button
           onClick={() => setIsOpen((open) => !open)}
@@ -74,19 +75,20 @@ export default function Navbar() {
                 key={link.href}
                 href={link.href}
                 onClick={closeMenu}
-                className="rounded-lg px-3 py-3 text-sm text-white/90 transition-colors hover:bg-white/5 hover:text-white"
+                className="rounded-lg px-3 py-3 text-sm text-white! transition-colors hover:bg-white/5"
               >
                 {link.label}
               </Link>
             ))}
-            <Link
+            <PillButton
               href="/login"
               onClick={closeMenu}
-              className="mt-3 inline-flex items-center justify-center gap-2.5 rounded-full bg-violet-500 py-3 text-sm font-medium text-white transition-colors hover:bg-violet-600"
+              icon={<FiArrowRight />}
+              block
+              className="mt-3"
             >
               Sign in
-              <FiArrowRight />
-            </Link>
+            </PillButton>
           </div>
         </div>
       )}
