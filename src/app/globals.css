@@ -32,6 +32,14 @@ body {
     color 0.3s ease;
 }
 
+/* Smooth scrolling for the navbar's in-page links (#working-process, #pricing,
+   #contact) — skipped for anyone who has asked for reduced motion. */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
 @theme inline {
   /* Brand — sampled from the logo mark and the Figma auth screens. */
   --color-primary: #8b2fc9;
