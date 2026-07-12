@@ -1,5 +1,6 @@
 import { siteConfig } from "@/config/site";
 import StoreProvider from "@/providers/StoreProvider";
+import { THEME_KEY } from "@/config/theme";
 import ThemeProvider from "@/providers/ThemeProvider";
 import { AntdRegistry } from "@ant-design/nextjs-registry";
 import type { Metadata } from "next";
@@ -51,7 +52,7 @@ export default async function RootLayout({
   // light inputs on reload while in dark mode. Dark is the default: the product
   // is designed dark, and only an explicit opt-out gives you light.
   const initialTheme =
-    (await cookies()).get("theme")?.value === "light" ? "light" : "dark";
+    (await cookies()).get(THEME_KEY)?.value === "light" ? "light" : "dark";
 
   return (
     <html
