@@ -1,3 +1,4 @@
+import { cn } from "@/utils/cn";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
@@ -50,16 +51,17 @@ export default function PillButton({
   className = "",
   "aria-label": ariaLabel,
 }: PillButtonProps) {
-  const classes = [
+  // `cn` (twMerge) rather than a plain join: callers pass overrides like
+  // `hidden md:inline-flex`, which must beat the base `inline-flex` instead of
+  // racing it on stylesheet order.
+  const classes = cn(
     "inline-flex items-center justify-center gap-2.5 rounded-full font-medium whitespace-nowrap transition-all",
     "disabled:cursor-not-allowed disabled:bg-zinc-700 disabled:text-zinc-400 disabled:shadow-none disabled:ring-0",
     variants[variant],
     sizes[size],
-    block ? "w-full" : "",
+    block && "w-full",
     className,
-  ]
-    .filter(Boolean)
-    .join(" ");
+  );
 
   const content = (
     <>
