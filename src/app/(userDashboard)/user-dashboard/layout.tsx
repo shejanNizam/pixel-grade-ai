@@ -9,24 +9,22 @@ export default function UserLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  const toggleSidebar = () => {
-    setIsSidebarOpen(!isSidebarOpen);
-  };
+  const toggleSidebar = () => setIsSidebarOpen((open) => !open);
 
   return (
-    <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-black">
       <Sidebar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
 
       {isSidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-20 lg:hidden"
+          className="fixed inset-0 z-20 bg-black/60 lg:hidden"
           onClick={toggleSidebar}
         />
       )}
 
-      <div className="flex-1 flex flex-col min-w-0 lg:ml-64">
+      <div className="flex min-h-screen flex-col lg:ml-64">
         <Header toggleSidebar={toggleSidebar} />
-        <main className="flex-1 p-4 md:p-6 overflow-auto">{children}</main>
+        <main className="flex-1 px-4 pb-8 md:px-6">{children}</main>
       </div>
     </div>
   );

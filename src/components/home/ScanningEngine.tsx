@@ -1,0 +1,83 @@
+import { FiActivity, FiClipboard, FiCpu, FiCrop } from "react-icons/fi";
+import type { IconType } from "react-icons";
+
+const cardBase =
+  "rounded-2xl border border-violet-500/30 bg-linear-to-b from-violet-900/30 to-black/40 p-6";
+
+function CardIcon({ Icon }: { Icon: IconType }) {
+  return (
+    <span className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-violet-500/15 text-violet-300 ring-1 ring-violet-500/25">
+      <Icon className="text-xl" />
+    </span>
+  );
+}
+
+export default function ScanningEngine() {
+  return (
+    <section className="bg-black px-4 py-20">
+      <div className="mx-auto max-w-6xl">
+        <h2 className="mb-10 text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+          Advanced Scanning Engine
+        </h2>
+
+        <div className="grid gap-5 lg:grid-cols-3">
+          {/* Tall card — icon above the title */}
+          <article className={cardBase}>
+            <CardIcon Icon={FiCpu} />
+            <h3 className="mt-6 text-lg font-medium text-white">
+              AI grade prediction
+            </h3>
+            <p className="mt-4 text-sm leading-relaxed text-zinc-400">
+              Get accurate PSA-style grading estimates powered by advanced
+              Vision AI. Analyze your card&apos;s centering, corners, edges, and
+              surface instantly, with a confidence score that helps you make
+              informed grading decisions.
+            </p>
+          </article>
+
+          {/* Middle column — two stacked cards with the icon beside the title */}
+          <div className="grid gap-5 lg:grid-rows-2">
+            <article className={cardBase}>
+              <div className="flex items-center gap-4">
+                <CardIcon Icon={FiActivity} />
+                <h3 className="text-lg font-medium text-white">
+                  Surface Analysis
+                </h3>
+              </div>
+              <p className="mt-4 text-sm leading-relaxed text-zinc-400">
+                Automatically detect scratches, wear, dirt, print defects, and
+                holo damage with advanced AI analysis.
+              </p>
+            </article>
+
+            <article className={cardBase}>
+              <div className="flex items-center gap-4">
+                <CardIcon Icon={FiCrop} />
+                <h3 className="text-lg font-medium text-white">
+                  Corner &amp; Edge Inspection
+                </h3>
+              </div>
+              <p className="mt-4 text-sm leading-relaxed text-zinc-400">
+                Analyze corner sharpness, whitening, chipping, and edge wear
+                with precise AI-powered condition assessment.
+              </p>
+            </article>
+          </div>
+
+          <article className={cardBase}>
+            <CardIcon Icon={FiClipboard} />
+            <h3 className="mt-6 text-lg font-medium text-white">
+              Professional Reports
+            </h3>
+            <p className="mt-4 text-sm leading-relaxed text-zinc-400">
+              Generate professional, investor-ready PDF inspection reports with
+              detailed grading insights. Download, save, and share them
+              effortlessly with buyers, collectors, investors, or authentication
+              services anytime.
+            </p>
+          </article>
+        </div>
+      </div>
+    </section>
+  );
+}

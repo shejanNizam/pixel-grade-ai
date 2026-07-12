@@ -1,48 +1,71 @@
 "use client";
 
-import ThemeToggle from "@/components/shared/ThemeToggle";
-import { useEffect, useState } from "react";
-import { MdMenu, MdSearch } from "react-icons/md";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { FiBell, FiMenu } from "react-icons/fi";
+
+/** Page titles keyed by route — the header is shared by every dashboard screen. */
+const pageTitles: Record<string, string> = {
+  "/user-dashboard": "Dashboard",
+  "/user-dashboard/new-analysis": "New analysis",
+  "/user-dashboard/my-scans": "My Scans",
+  "/user-dashboard/my-collection": "My Collection",
+  "/user-dashboard/price-tracker": "Price Tracker",
+  "/user-dashboard/report": "Report",
+  "/user-dashboard/settings": "Settings",
+};
 
 interface HeaderProps {
   toggleSidebar: () => void;
 }
 
 export default function Header({ toggleSidebar }: HeaderProps) {
-  const [mounted, setMounted] = useState(false);
-  const [search, setSearch] = useState("");
+  const pathname = usePathname();
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) return null;
+  const title =
+    pageTitles[pathname] ??
+    Object.entries(pageTitles).find(
+      ([href]) => href !== "/user-dashboard" && pathname.startsWith(href),
+    )?.[1] ??
+    "Dashboard";
 
   return (
-    <header className="bg-white dark:bg-[#0B0F1A] border-b border-gray-200 dark:border-gray-800 px-4 py-3 sticky top-0 z-10">
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-3 flex-1 min-w-0">
-          <button
-            onClick={toggleSidebar}
-            className="lg:hidden p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg shrink-0"
-          >
-            <MdMenu className="w-6 h-6 dark:text-gray-300" />
-          </button>
-        </div>
+    <header className="flex items-center justify-between gap-4 px-4 py-6 md:px-6">
+      <div className="flex items-center gap-3">
+        <button
+          onClick={toggleSidebar}
+          aria-label="Open menu"
+          className="text-zinc-300 hover:text-white lg:hidden"
+        >
+          <FiMenu size={22} />
+        </button>
+        <h1 className="text-xl font-medium text-white md:text-2xl">{title}</h1>
+      </div>
 
-        {/* Right Section */}
-        <div className="flex items-center gap-3">
-          <div className="relative hidden md:block">
-            <MdSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-lg" />
-            <input
-              type="text"
-              placeholder="Search..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-10 pr-4 py-2 w-44 xl:w-72 border border-gray-200 dark:border-gray-800 rounded-lg text-sm bg-gray-50 dark:bg-[#111827] dark:text-gray-100 focus:ring-1 focus:ring-teal-500 outline-none"
-            />
+      <div className="flex items-center gap-3 md:gap-5">
+        <Link
+          href="/user-dashboard/billing"
+          className="hidden rounded-full bg-linear-to-r from-violet-500 to-cyan-400 px-5 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-90 sm:inline-flex"
+        >
+          Upgrade to premium
+        </Link>
+
+        <button
+          aria-label="Notifications"
+          className="relative inline-flex h-10 w-10 items-center justify-center rounded-full bg-white text-zinc-900 transition-colors hover:bg-zinc-200"
+        >
+          <FiBell size={18} />
+          <span className="absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-black bg-red-500" />
+        </button>
+
+        <div className="flex items-center gap-2.5">
+          <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-linear-to-br from-violet-500 to-cyan-400 text-sm font-semibold text-white">
+            AA
+          </span>
+          <div className="hidden leading-tight md:block">
+            <p className="text-sm font-medium text-white">Alex alfred</p>
+            <p className="text-xs text-zinc-500">Admin</p>
           </div>
-          <ThemeToggle />
         </div>
       </div>
     </header>

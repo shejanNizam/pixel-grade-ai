@@ -43,13 +43,17 @@ export default function DemoBanner() {
           </h1>
 
           <p className="mx-auto mt-6 max-w-xl text-base text-slate-600 sm:text-lg dark:text-slate-300">
-            A production-ready Next.js starter with auth, dashboards, theming and
-            state management already wired up. Swap this copy for your own and
-            launch.
+            A production-ready Next.js starter with auth, dashboards, theming
+            and state management already wired up. Swap this copy for your own
+            and launch.
           </p>
 
           <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
-            <CustomPrimaryButton href="/signup" size="lg" icon={<FiArrowRight />}>
+            <CustomPrimaryButton
+              href="/signup"
+              size="lg"
+              icon={<FiArrowRight />}
+            >
               Get Started
             </CustomPrimaryButton>
             <Link
