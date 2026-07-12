@@ -52,7 +52,7 @@ function AntdConfigProvider({
 
 export default function ThemeProvider({
   children,
-  initialTheme = "light",
+  initialTheme = "dark",
 }: {
   children: React.ReactNode;
   initialTheme?: ThemeName;

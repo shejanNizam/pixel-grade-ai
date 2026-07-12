@@ -48,9 +48,10 @@ export default async function RootLayout({
 }>) {
   // Read the theme from the cookie so the server renders the correct theme
   // class AND antd (via AntdRegistry) inlines the matching CSS — no flash of
-  // light inputs on reload while in dark mode.
+  // light inputs on reload while in dark mode. Dark is the default: the product
+  // is designed dark, and only an explicit opt-out gives you light.
   const initialTheme =
-    (await cookies()).get("theme")?.value === "dark" ? "dark" : "light";
+    (await cookies()).get("theme")?.value === "light" ? "light" : "dark";
 
   return (
     <html
@@ -65,7 +66,7 @@ export default async function RootLayout({
         <StoreProvider>
           <AntdRegistry>
             <ThemeProvider initialTheme={initialTheme}>
-              <div className="min-h-screen bg-white dark:bg-[#12203b] transition-colors duration-300">
+              <div className="min-h-screen bg-white transition-colors duration-300 dark:bg-black">
                 {children}
               </div>
             </ThemeProvider>
