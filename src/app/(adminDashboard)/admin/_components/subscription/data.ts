@@ -33,10 +33,8 @@ export interface Plan {
   facilities: Facility[];
 }
 
-const quotes: Facility[] = Array.from({ length: 5 }, () => ({
-  text: "Add your quote here.",
-  included: true,
-}));
+const facilities = (...texts: string[]): Facility[] =>
+  texts.map((text) => ({ text, included: true }));
 
 export const seedPlans: Plan[] = [
   {
@@ -44,20 +42,38 @@ export const seedPlans: Plan[] = [
     name: "Basic Plan",
     price: 0,
     expiry: "1 Month",
-    facilities: quotes,
+    facilities: facilities(
+      "5 card scans per month",
+      "AI grade prediction with confidence score",
+      "Centering, corner, edge & surface analysis",
+      "Watermarked PDF inspection report",
+      "Store up to 25 cards in your collection",
+    ),
   },
   {
     id: "2",
     name: "Plus Plan",
     price: 9,
     expiry: "1 Month",
-    facilities: quotes,
+    facilities: facilities(
+      "200 card scans per month",
+      "Live market valuation & price tracking",
+      "Investor-ready PDF reports, no watermark",
+      "Unlimited collection storage",
+      "Priority scan queue & email support",
+    ),
   },
   {
     id: "3",
     name: "Premium Plan",
     price: 19,
     expiry: "1 Month",
-    facilities: quotes,
+    facilities: facilities(
+      "Unlimited card scans",
+      "Bulk upload & batch grading",
+      "API access for storefronts and marketplaces",
+      "Team seats with a shared collection",
+      "Dedicated support with 24-hour response",
+    ),
   },
 ];

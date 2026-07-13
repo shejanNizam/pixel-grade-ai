@@ -1,19 +1,54 @@
 "use client";
 
 import PillButton from "@/components/shared/PillButton";
+import { Tooltip } from "antd";
+import { useEffect, useRef, useState } from "react";
 import { FiArrowUpRight, FiCheckCircle } from "react-icons/fi";
 
 export interface Plan {
   name: string;
   price: string;
-  features: number;
+  features: string[];
   popular: boolean;
 }
 
 export const plans: Plan[] = [
-  { name: "Free", price: "0", features: 5, popular: false },
-  { name: "Pro", price: "9", features: 5, popular: true },
-  { name: "Enterprise", price: "19", features: 5, popular: false },
+  {
+    name: "Free",
+    price: "0",
+    features: [
+      "5 card scans per month",
+      "AI grade prediction with confidence score",
+      "Centering, corner, edge & surface analysis",
+      "Watermarked PDF inspection report",
+      "Store up to 25 cards in your collection",
+    ],
+    popular: false,
+  },
+  {
+    name: "Pro",
+    price: "9",
+    features: [
+      "200 card scans per month",
+      "Live market valuation & price tracking",
+      "Investor-ready PDF reports, no watermark",
+      "Unlimited collection storage",
+      "Priority scan queue & email support",
+    ],
+    popular: true,
+  },
+  {
+    name: "Enterprise",
+    price: "19",
+    features: [
+      "Unlimited card scans",
+      "Bulk upload & batch grading",
+      "API access for storefronts and marketplaces",
+      "Team seats with a shared collection",
+      "Dedicated support with 24-hour response",
+    ],
+    popular: false,
+  },
 ];
 
 function Sparkle() {
@@ -23,6 +58,34 @@ function Sparkle() {
         <path d="M12 2c.5 4.8 2.7 7 7.5 7.5-4.8.5-7 2.7-7.5 7.5-.5-4.8-2.7-7-7.5-7.5C9.3 9 11.5 6.8 12 2Z" />
       </svg>
     </span>
+  );
+}
+
+/** One line of the feature list. Long copy is clipped to a single line and only
+ *  then gets a tooltip — short features would otherwise hover to repeat themselves. */
+function FeatureText({ text }: { text: string }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const [clipped, setClipped] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+
+    const measure = () => setClipped(el.scrollWidth > el.clientWidth);
+    measure();
+
+    // The cards reflow with the grid, so re-measure on width changes.
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [text]);
+
+  return (
+    <Tooltip title={clipped ? text : null}>
+      <span ref={ref} className="min-w-0 truncate">
+        {text}
+      </span>
+    </Tooltip>
   );
 }
 
@@ -79,13 +142,13 @@ export default function PricingPlans({ ctaHref, onSelect }: PricingPlansProps) {
               </p>
 
               <ul className="mt-7 flex-1 space-y-3">
-                {Array.from({ length: plan.features }).map((_, i) => (
+                {plan.features.map((feature) => (
                   <li
-                    key={i}
+                    key={feature}
                     className="flex items-center gap-2.5 text-sm text-zinc-300"
                   >
                     <FiCheckCircle className="shrink-0 text-violet-400" />
-                    Add your quote here.
+                    <FeatureText text={feature} />
                   </li>
                 ))}
               </ul>
