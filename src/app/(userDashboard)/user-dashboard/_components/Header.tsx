@@ -74,7 +74,7 @@ export default function Header({ toggleSidebar }: HeaderProps) {
           </span>
           <div className="hidden leading-tight lg:block">
             <p className="text-sm font-medium text-white">Alex alfred</p>
-            <p className="text-xs text-zinc-500">Admin</p>
+            <p className="text-xs text-zinc-500">My Profile</p>
           </div>
         </div>
       </div>

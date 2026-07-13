@@ -17,6 +17,7 @@ import {
   MdOutlineQrCodeScanner,
   MdOutlineSettings,
   MdOutlineTravelExplore,
+  MdOutlineVerifiedUser,
   MdOutlineWorkspacePremium,
 } from "react-icons/md";
 
@@ -43,6 +44,11 @@ const navItems = [
     href: "/user-dashboard/price-tracker",
     label: "Price Tracker",
     Icon: MdOutlineInsertChart,
+  },
+  {
+    href: "/user-dashboard/creator-profile",
+    label: "Creator profile",
+    Icon: MdOutlineVerifiedUser,
   },
   {
     href: "/user-dashboard/subscription",

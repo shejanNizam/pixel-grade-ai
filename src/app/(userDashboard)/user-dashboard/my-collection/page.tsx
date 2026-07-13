@@ -1,6 +1,7 @@
 "use client";
 
 import PillButton from "@/components/shared/PillButton";
+import { App } from "antd";
 import { useState } from "react";
 import { FiPlus } from "react-icons/fi";
 import AddCardModal, {
@@ -14,6 +15,7 @@ import {
 } from "../_components/my-collection/data";
 
 export default function MyCollection() {
+  const { message } = App.useApp();
   const [cards, setCards] = useState<CollectionCard[]>(initialCards);
   const [isAdding, setIsAdding] = useState(false);
 
@@ -64,7 +66,13 @@ export default function MyCollection() {
 
       <section>
         <h3 className="mb-5 text-lg font-medium text-white">Recently added</h3>
-        <CardGrid cards={cards} onToggleFavorite={toggleFavorite} />
+        <CardGrid
+          cards={cards}
+          onToggleFavorite={toggleFavorite}
+          onBuySlab={(card) =>
+            message.info(`Custom slabs for ${card.name} are coming soon.`)
+          }
+        />
       </section>
 
       <AddCardModal

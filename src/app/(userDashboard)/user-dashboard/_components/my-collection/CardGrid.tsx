@@ -1,15 +1,21 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { FiHeart } from "react-icons/fi";
 import { CARD_IMAGE, type CollectionCard } from "./data";
 
 interface CardGridProps {
   cards: CollectionCard[];
   onToggleFavorite: (id: string) => void;
+  onBuySlab: (card: CollectionCard) => void;
 }
 
-export default function CardGrid({ cards, onToggleFavorite }: CardGridProps) {
+export default function CardGrid({
+  cards,
+  onToggleFavorite,
+  onBuySlab,
+}: CardGridProps) {
   if (cards.length === 0) {
     return (
       <p className="rounded-2xl border border-dashed border-white/10 py-16 text-center text-sm text-zinc-500">
@@ -59,6 +65,25 @@ export default function CardGrid({ cards, onToggleFavorite }: CardGridProps) {
             <p className="mt-0.5 truncate text-xs text-zinc-400">{card.set}</p>
             <p className="mt-0.5 text-xs text-zinc-500">{card.number}</p>
             <p className="mt-0.5 text-xs text-zinc-600">{card.addedOn}</p>
+          </div>
+
+          <div className="mt-3 space-y-2">
+            <Link
+              href="/user-dashboard/analysis-report"
+              aria-label={`View the report for ${card.name}`}
+              className="block rounded-lg bg-violet-600 py-2 text-center text-xs font-medium text-white! transition-colors hover:bg-violet-500"
+            >
+              View Report
+            </Link>
+
+            <button
+              type="button"
+              onClick={() => onBuySlab(card)}
+              aria-label={`Buy a slab for ${card.name}`}
+              className="block w-full rounded-lg border border-white/15 bg-white/5 py-2 text-center text-xs font-medium text-zinc-300 transition-colors hover:bg-white/10"
+            >
+              Buy Slab
+            </button>
           </div>
         </li>
       ))}

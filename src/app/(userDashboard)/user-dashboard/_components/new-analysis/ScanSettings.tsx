@@ -14,8 +14,6 @@ const cardTypes = [
 const languages = [
   { value: "en", label: "English" },
   { value: "ja", label: "Japanese" },
-  { value: "de", label: "German" },
-  { value: "fr", label: "French" },
 ];
 
 export default function ScanSettings() {

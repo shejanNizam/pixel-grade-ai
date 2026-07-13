@@ -8,7 +8,7 @@ export default function SlabShowcase() {
       {/* Glow behind the slab render. */}
       <div
         aria-hidden
-        className="pointer-events-none absolute top-1/2 right-0 h-[34rem] w-[34rem] -translate-y-1/2 translate-x-1/4 rounded-full bg-violet-600/40 blur-[130px]"
+        className="pointer-events-none absolute top-1/2 right-0 h-136 w-136 -translate-y-1/2 translate-x-1/4 rounded-full bg-violet-600/40 blur-[130px]"
       />
 
       <div className="relative mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-2">

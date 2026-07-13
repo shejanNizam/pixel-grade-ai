@@ -1,5 +1,6 @@
 "use client";
 
+import HardwareCard from "@/components/pricing/HardwareCard";
 import PricingPlans from "@/components/pricing/PricingPlans";
 import { App } from "antd";
 
@@ -13,6 +14,7 @@ export default function Subscription() {
           message.success(`Switched to the ${plan.name} plan (demo).`)
         }
       />
+      <HardwareCard />
     </div>
   );
 }

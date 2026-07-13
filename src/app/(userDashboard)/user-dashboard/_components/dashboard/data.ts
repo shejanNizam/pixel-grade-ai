@@ -3,7 +3,7 @@
 export const stats = [
   { label: "Total collection value", value: "$ 34.5 k", delta: "11.3 %" },
   { label: "Cards in collection", value: "27", delta: "11.3 %" },
-  { label: "Graded cards", value: "756", delta: "3.1 %" },
+  { label: "Slabs ordered", value: "756", delta: "3.1 %" },
   { label: "Average grade", value: "8.3", delta: "3.1 %" },
   { label: "Total scans", value: "54", delta: "3.1 %" },
 ];

@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { FiChevronRight } from "react-icons/fi";
 
 const steps = [
   {
@@ -35,23 +36,33 @@ export default function AppShowcase() {
   return (
     <section className="bg-black px-4 py-20">
       <div className="mx-auto max-w-6xl text-center">
-        {/* <h2 className="text-3xl leading-tight font-semibold tracking-tight text-white sm:text-4xl">
-          Your Cards, Your Grades
-          <br />
-          Your slabs.
-        </h2> */}
+        <h2 className="text-2xl font-bold tracking-tight text-white sm:text-4xl">
+          YOUR <span className="text-violet-400">CARDS,</span> YOUR{" "}
+          <span className="text-violet-400">GRADE,</span> YOUR{" "}
+          <span className="text-violet-400">SLABS.</span>
+        </h2>
 
-        <div className="mt-6 flex flex-wrap items-center justify-center gap-x-8 gap-y-2">
+        <div className="mt-4 flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
           {steps.map((s) => (
-            <span key={s.tab} className="text-lg font-medium text-fuchsia-500">
+            <span
+              key={s.tab}
+              className="text-xs tracking-[0.2em] text-zinc-500"
+            >
               {s.tab}
             </span>
           ))}
         </div>
 
         <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {steps.map((s) => (
-            <div key={s.tab} className="flex flex-col items-center">
+          {steps.map((s, i) => (
+            <div key={s.tab} className="relative flex flex-col items-center">
+              {/* Connector between phones, as in the design. */}
+              {i < steps.length - 1 && (
+                <FiChevronRight
+                  aria-hidden
+                  className="absolute top-1/3 -right-4 hidden text-violet-500/60 lg:block"
+                />
+              )}
               <div className="rounded-3xl border border-violet-500/40 p-2">
                 <Image
                   src={s.src}

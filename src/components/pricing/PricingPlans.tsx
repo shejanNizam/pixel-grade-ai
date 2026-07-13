@@ -5,8 +5,14 @@ import { Tooltip } from "antd";
 import { useEffect, useRef, useState } from "react";
 import { FiArrowUpRight, FiCheckCircle } from "react-icons/fi";
 
+type Billing = "monthly" | "yearly";
+
+/** Yearly is billed up front at 20% off; both figures are shown per month. */
+const YEARLY_DISCOUNT = 0.2;
+
 export interface Plan {
   name: string;
+  tagline: string;
   price: string;
   features: string[];
   popular: boolean;
@@ -15,6 +21,7 @@ export interface Plan {
 export const plans: Plan[] = [
   {
     name: "Free",
+    tagline: "For hobby collectors",
     price: "0",
     features: [
       "5 card scans per month",
@@ -27,6 +34,7 @@ export const plans: Plan[] = [
   },
   {
     name: "Pro",
+    tagline: "For serious collectors",
     price: "9",
     features: [
       "200 card scans per month",
@@ -39,6 +47,7 @@ export const plans: Plan[] = [
   },
   {
     name: "Enterprise",
+    tagline: "For businesses & shops",
     price: "19",
     features: [
       "Unlimited card scans",
@@ -51,14 +60,11 @@ export const plans: Plan[] = [
   },
 ];
 
-function Sparkle() {
-  return (
-    <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-violet-500 text-white">
-      <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor">
-        <path d="M12 2c.5 4.8 2.7 7 7.5 7.5-4.8.5-7 2.7-7.5 7.5-.5-4.8-2.7-7-7.5-7.5C9.3 9 11.5 6.8 12 2Z" />
-      </svg>
-    </span>
-  );
+/** Monthly list price -> what that plan costs per month on the yearly plan. */
+function priceFor(plan: Plan, billing: Billing) {
+  const monthly = Number(plan.price);
+  if (billing === "monthly" || monthly === 0) return plan.price;
+  return Math.round(monthly * (1 - YEARLY_DISCOUNT)).toString();
 }
 
 /** One line of the feature list. Long copy is clipped to a single line and only
@@ -89,6 +95,47 @@ function FeatureText({ text }: { text: string }) {
   );
 }
 
+function BillingToggle({
+  billing,
+  onChange,
+}: {
+  billing: Billing;
+  onChange: (next: Billing) => void;
+}) {
+  const options: Billing[] = ["monthly", "yearly"];
+
+  return (
+    <div className="mt-7 flex items-center justify-center gap-3">
+      <div
+        role="radiogroup"
+        aria-label="Billing period"
+        className="inline-flex rounded-full border border-violet-500/30 bg-violet-950/30 p-1"
+      >
+        {options.map((option) => (
+          <button
+            key={option}
+            type="button"
+            role="radio"
+            aria-checked={billing === option}
+            onClick={() => onChange(option)}
+            className={`rounded-full px-5 py-1.5 text-xs font-medium capitalize transition-colors ${
+              billing === option
+                ? "bg-violet-500 text-white"
+                : "text-zinc-400 hover:text-white"
+            }`}
+          >
+            {option}
+          </button>
+        ))}
+      </div>
+
+      <span className="rounded-full bg-emerald-500/12 px-2.5 py-1 text-[11px] font-medium text-emerald-400">
+        Save up to 20%
+      </span>
+    </div>
+  );
+}
+
 interface PricingPlansProps {
   /** Marketing site: the CTA is a link. */
   ctaHref?: string;
@@ -98,15 +145,18 @@ interface PricingPlansProps {
 
 /** Shared by the marketing landing page and the dashboard subscription screen. */
 export default function PricingPlans({ ctaHref, onSelect }: PricingPlansProps) {
+  const [billing, setBilling] = useState<Billing>("monthly");
+
   return (
     <>
-      <div className="mx-auto max-w-sm text-center">
-        <h2 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">
-          Pricing
+      <div className="mx-auto max-w-xl text-center">
+        <p className="text-[10px] tracking-[0.2em] text-zinc-600">PRICING</p>
+        <h2 className="mt-3 text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+          Choose <span className="text-violet-400">the plan</span> that fits
+          you.
         </h2>
-        <p className="mt-3 text-sm text-zinc-400">
-          Start free, upgrade when you need more
-        </p>
+
+        <BillingToggle billing={billing} onChange={setBilling} />
       </div>
 
       <div className="mx-auto mt-12 grid max-w-5xl gap-6 md:grid-cols-3">
@@ -120,7 +170,11 @@ export default function PricingPlans({ ctaHref, onSelect }: PricingPlansProps) {
           return (
             <article
               key={plan.name}
-              className="relative flex flex-col rounded-2xl border border-violet-500/30 bg-linear-to-b from-violet-950/40 to-black p-6"
+              className={`relative flex flex-col rounded-2xl border bg-linear-to-b from-violet-950/40 to-black p-6 ${
+                plan.popular
+                  ? "border-violet-500 shadow-[0_0_40px_rgba(139,92,246,0.25)]"
+                  : "border-violet-500/30"
+              }`}
             >
               {plan.popular && (
                 <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full bg-violet-500 px-4 py-1.5 text-xs font-medium whitespace-nowrap text-white">
@@ -128,15 +182,12 @@ export default function PricingPlans({ ctaHref, onSelect }: PricingPlansProps) {
                 </span>
               )}
 
-              <Sparkle />
+              <h3 className="text-lg font-medium text-white">{plan.name}</h3>
+              <p className="mt-1 text-xs text-zinc-500">{plan.tagline}</p>
 
-              <h3 className="mt-5 text-lg font-medium text-white">
-                {plan.name}
-              </h3>
-
-              <p className="mt-2 flex items-baseline gap-1.5">
+              <p className="mt-5 flex items-baseline gap-1.5">
                 <span className="text-3xl font-semibold text-white">
-                  $ {plan.price}
+                  $ {priceFor(plan, billing)}
                 </span>
                 <span className="text-xs text-zinc-500">/per month</span>
               </p>
@@ -164,7 +215,7 @@ export default function PricingPlans({ ctaHref, onSelect }: PricingPlansProps) {
                 }
                 className="mt-10 py-2.5! pr-2.5!"
               >
-                Get start
+                Get Started
               </PillButton>
             </article>
           );

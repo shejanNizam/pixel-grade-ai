@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { IconType } from "react-icons";
-import { FiCamera, FiGrid, FiPackage, FiUser } from "react-icons/fi";
+import { FiCamera, FiGrid, FiUser } from "react-icons/fi";
 
 interface Action {
   label: string;
@@ -17,12 +17,6 @@ const actions: Action[] = [
     Icon: FiCamera,
   },
   {
-    label: "Buy custom slab",
-    caption: "Order your own slab",
-    href: "/user-dashboard/subscription",
-    Icon: FiPackage,
-  },
-  {
     label: "My collection",
     caption: "Browse your cards",
     href: "/user-dashboard/my-collection",
@@ -31,14 +25,14 @@ const actions: Action[] = [
   {
     label: "Creators profile",
     caption: "View your profile",
-    href: "/user-dashboard/settings/profile",
+    href: "/user-dashboard/creator-profile",
     Icon: FiUser,
   },
 ];
 
 export default function QuickActions() {
   return (
-    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
       {actions.map(({ label, caption, href, Icon }) => (
         /* Same shell as <StatCard>, but these are links rather than figures. */
         <Link
