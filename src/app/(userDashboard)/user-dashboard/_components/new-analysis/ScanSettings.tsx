@@ -5,10 +5,10 @@ import { useState } from "react";
 
 /* Placeholder options — replace with the real taxonomy when it's defined. */
 const cardTypes = [
-  { value: "pokemon", label: "Pokémon" },
-  { value: "magic", label: "Magic: The Gathering" },
-  { value: "yugioh", label: "Yu-Gi-Oh!" },
-  { value: "sports", label: "Sports" },
+  { value: "pokemon", label: "Pokémon", comingSoon: false },
+  { value: "magic", label: "Magic: The Gathering", comingSoon: true },
+  { value: "yugioh", label: "Yu-Gi-Oh!", comingSoon: true },
+  { value: "sports", label: "Sports", comingSoon: true },
 ];
 
 const languages = [
@@ -35,11 +35,31 @@ export default function ScanSettings() {
           <Select
             id="card-type"
             value={cardType}
-            onChange={setCardType}
-            options={cardTypes}
+            onChange={(val) => {
+              const selected = cardTypes.find((c) => c.value === val);
+              if (!selected?.comingSoon) setCardType(val);
+            }}
             placeholder="Card type"
             size="large"
             className="w-full"
+            optionRender={(option) => {
+              const item = cardTypes.find((c) => c.value === option.value);
+              return (
+                <div className="flex items-center justify-between">
+                  <span>{option.label}</span>
+                  {item?.comingSoon && (
+                    <span className="ml-2 rounded text-xs font-medium text-amber-400">
+                      Coming Soon
+                    </span>
+                  )}
+                </div>
+              );
+            }}
+            options={cardTypes.map((c) => ({
+              value: c.value,
+              label: c.label,
+              disabled: c.comingSoon,
+            }))}
           />
         </div>
 

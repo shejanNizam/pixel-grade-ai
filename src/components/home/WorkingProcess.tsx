@@ -36,14 +36,17 @@ const steps: { Icon: IconType; step: string; title: string; body: string }[] = [
 
 export default function WorkingProcess() {
   return (
-    <section id="working-process" className="bg-black px-4 py-20">
+    <section className="bg-black px-4 py-20">
       <div className="mx-auto max-w-6xl">
         <div className="text-center">
-          <p className="text-[10px] tracking-[0.2em] text-zinc-600">
+          <p className="text-sm font-bold tracking-[0.2em] text-white">
             HOW IT WORKS
           </p>
-          <h2 className="mt-3 text-2xl font-semibold tracking-tight text-white sm:text-3xl">
-            Simple process. Professional results.
+          <h2 className="mt-3 text-2xl font-bold tracking-tight sm:text-3xl">
+            <span className="text-white">Simple </span>
+            <span className="text-violet-500">Process, </span>
+            <span className="text-white">Professional </span>
+            <span className="text-violet-500">Results.</span>
           </h2>
         </div>
 

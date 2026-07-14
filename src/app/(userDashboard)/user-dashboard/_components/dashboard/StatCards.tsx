@@ -13,8 +13,8 @@ const icons: IconType[] = [
   FiDollarSign,
   MdOutlineStyle,
   MdOutlineVerified,
-  FiAward,
   MdOutlineQrCodeScanner,
+  FiAward,
 ];
 
 export default function StatCards() {

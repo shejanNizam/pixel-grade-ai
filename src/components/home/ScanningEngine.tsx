@@ -14,7 +14,7 @@ function CardIcon({ Icon }: { Icon: IconType }) {
 
 export default function ScanningEngine() {
   return (
-    <section className="bg-black px-4 py-20">
+    <section id="working-process" className="bg-black px-4 py-20">
       <div className="mx-auto max-w-6xl">
         <h2 className="mb-10 text-2xl font-semibold tracking-tight text-white sm:text-3xl">
           Advanced Scanning Engine
@@ -28,10 +28,9 @@ export default function ScanningEngine() {
               AI grade prediction
             </h3>
             <p className="mt-4 text-sm leading-relaxed text-zinc-400">
-              Get accurate PSA-style grading estimates powered by advanced
-              Vision AI. Analyze your card&apos;s centering, corners, edges, and
-              surface instantly, with a confidence score that helps you make
-              informed grading decisions.
+              Get grading estimates powered by advanced Vision AI. Analyze your
+              card&apos;s centering, corners, edges, and surface instantly, with
+              a confidence score that helps you make informed grading decisions.
             </p>
           </article>
 
@@ -70,10 +69,9 @@ export default function ScanningEngine() {
               Professional Reports
             </h3>
             <p className="mt-4 text-sm leading-relaxed text-zinc-400">
-              Generate professional, investor-ready PDF inspection reports with
-              detailed grading insights. Download, save, and share them
-              effortlessly with buyers, collectors, investors, or authentication
-              services anytime.
+              Generate professional PDF inspection reports with detailed grading
+              insights. Download, save, and share them effortlessly with buyers,
+              collectors, investors, or authentication services anytime.
             </p>
           </article>
         </div>

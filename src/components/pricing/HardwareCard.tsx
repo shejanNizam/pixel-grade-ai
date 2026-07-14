@@ -12,7 +12,7 @@ export default function HardwareCard() {
   return (
     <article className="mx-auto mt-6 flex max-w-5xl flex-col items-center rounded-2xl border border-amber-500/50 bg-linear-to-b from-amber-950/40 to-black p-6 text-center md:p-8">
       <h3 className="text-2xl font-semibold text-white sm:text-3xl">
-        PixelGrade Hardware
+        PixelScope Hardware
       </h3>
 
       <p className="mt-6 inline-flex items-baseline rounded-full bg-amber-500 px-10 py-3 text-3xl font-semibold text-black">
@@ -33,7 +33,7 @@ export default function HardwareCard() {
 
       <PillButton
         disabled
-        aria-label="PixelGrade hardware is coming soon"
+        aria-label="PixelScope hardware is coming soon"
         className="mt-8 bg-amber-500! py-2.5! text-black! ring-amber-300/70! shadow-[0_0_24px_rgba(245,158,11,0.45)]! disabled:cursor-default"
       >
         Coming Soon

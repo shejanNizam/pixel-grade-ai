@@ -9,8 +9,8 @@ export const impact = [
 ];
 
 export const creator = {
-  name: "David joseph",
-  badge: "Slab creator",
+  name: "Alex Alfred",
+  badge: "Pixel verified",
   stats: [
     { value: "358", label: "Cards certified" },
     { value: "12k", label: "Followers" },
