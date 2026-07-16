@@ -1,5 +1,7 @@
 /* Frontend-only placeholder data. Swap for RTK Query hooks when the API exists. */
 
+import type { PlanName, ScanQuota } from "@/config/plans";
+
 /** "Blocked" is the only status the table renders in red; the rest read as active. */
 export type UserStatus = "New users" | "Subscribed" | "Blocked";
 
@@ -17,7 +19,7 @@ export interface AdminUser {
 const states = [
   "New York",
   "California",
-  "Loss angels",
+  "Los Angeles",
   "United States",
   "United States",
   "United States",
@@ -43,11 +45,30 @@ export const PAGE_SIZE = 6;
 /** The "All users" option never filters; the other is the page's own status. */
 export const ALL_USERS = "All users";
 
-/** The details screen — one poster plus the cards they submitted. */
-export const userDetails = {
+/** The details screen — one poster, their plan usage, plus the cards they
+ *  submitted. `scansUsed` against the plan's quota is what support needs when a
+ *  user writes in about a scan that failed but still counted. */
+export const userDetails: {
+  name: string;
+  email: string;
+  state: string;
+  plan: PlanName;
+  scansUsed: number;
+  scanQuota: ScanQuota;
+  renewsOn: string;
+  cards: Array<{
+    id: string;
+    image: string;
+    grades: Array<{ label: string; value: string }>;
+  }>;
+} = {
   name: "Cheerleader",
   email: "abc@gmail.com",
   state: "New York, USA",
+  plan: "Pro",
+  scansUsed: 47,
+  scanQuota: 200,
+  renewsOn: "2026-08-13",
   cards: [
     {
       id: "1",

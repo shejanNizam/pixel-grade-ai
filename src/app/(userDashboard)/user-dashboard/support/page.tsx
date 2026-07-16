@@ -1,63 +1,65 @@
 "use client";
 
 import EmptyState from "@/components/shared/EmptyState";
+import {
+  PRIORITY_COLOR,
+  STATUS_COLOR,
+  TICKET_PRIORITIES,
+  type Ticket,
+  type TicketPriority,
+} from "@/types/support";
 import { App, Button, Form, Input, Select, Tag } from "antd";
 import { useState } from "react";
 import { FiLifeBuoy } from "react-icons/fi";
+import { myTickets } from "../_components/support/data";
 
 interface TicketFormValues {
   subject: string;
-  priority: "Low" | "Normal" | "High";
+  priority: TicketPriority;
   message: string;
 }
 
-interface Ticket extends TicketFormValues {
-  id: string;
-  created: string;
-}
+const CARD = "rounded-xl border border-white/8 bg-[#111113]";
 
-const priorityColor: Record<TicketFormValues["priority"], string> = {
-  Low: "default",
-  Normal: "blue",
-  High: "red",
-};
-
-// Demo page showing a form + the reusable EmptyState component.
-// Tickets live in local state only — no API call.
 export default function SupportPage() {
   const { message } = App.useApp();
   const [form] = Form.useForm<TicketFormValues>();
-  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [tickets, setTickets] = useState<Ticket[]>(myTickets);
 
   const onFinish = (values: TicketFormValues) => {
     setTickets((prev) => [
       {
-        ...values,
-        id: `TCK-${String(prev.length + 1).padStart(4, "0")}`,
+        id: crypto.randomUUID(),
+        subject: values.subject,
+        message: values.message,
+        priority: values.priority,
+        // New tickets always land in the admin queue as Open.
+        status: "Open",
         created: new Date().toISOString().slice(0, 10),
+        user: { name: "You", email: "you@example.com" },
+        plan: "Pro",
+        replies: [],
       },
       ...prev,
     ]);
     form.resetFields();
-    message.success("Ticket submitted (demo).");
+    message.success("Ticket submitted. Support will reply by email.");
   };
 
   return (
-    <div className="w-full mx-auto space-y-6">
+    <div className="mx-auto w-full space-y-6">
       <div>
-        <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-gray-100">
-          Support
-        </h1>
-        <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-          A demo form + empty-state page. Submitting stores the ticket in local
-          state only.
+        <h1 className="text-xl font-semibold text-white sm:text-2xl">Support</h1>
+        <p className="mt-1 text-sm text-zinc-400">
+          Open a ticket and our team will get back to you. Pro and Enterprise
+          plans get priority response.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* New ticket form */}
-        <div className="bg-white dark:bg-primary/10 rounded-lg border border-gray-200 dark:border-gray-800 p-6">
-          <h2 className="mb-4 text-base font-semibold text-gray-900 dark:text-gray-100">
+        <div className={`${CARD} p-6`}>
+          <h2 className="mb-4 text-base font-semibold text-white">
             Open a ticket
           </h2>
           <Form
@@ -65,7 +67,7 @@ export default function SupportPage() {
             layout="vertical"
             onFinish={onFinish}
             requiredMark={false}
-            initialValues={{ priority: "Normal" }}
+            initialValues={{ priority: "Normal" satisfies TicketPriority }}
           >
             <Form.Item<TicketFormValues>
               label="Subject"
@@ -78,11 +80,10 @@ export default function SupportPage() {
             <Form.Item<TicketFormValues> label="Priority" name="priority">
               <Select
                 size="large"
-                options={[
-                  { value: "Low", label: "Low" },
-                  { value: "Normal", label: "Normal" },
-                  { value: "High", label: "High" },
-                ]}
+                options={TICKET_PRIORITIES.map((value) => ({
+                  value,
+                  label: value,
+                }))}
               />
             </Form.Item>
 
@@ -102,7 +103,7 @@ export default function SupportPage() {
 
         {/* Ticket list */}
         <div>
-          <h2 className="mb-4 text-base font-semibold text-gray-900 dark:text-gray-100">
+          <h2 className="mb-4 text-base font-semibold text-white">
             Your tickets
           </h2>
 
@@ -115,26 +116,38 @@ export default function SupportPage() {
           ) : (
             <ul className="space-y-3">
               {tickets.map((ticket) => (
-                <li
-                  key={ticket.id}
-                  className="bg-white dark:bg-primary/10 rounded-lg border border-gray-200 dark:border-gray-800 p-4"
-                >
+                <li key={ticket.id} className={`${CARD} p-4`}>
                   <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="font-medium text-gray-900 dark:text-gray-100 truncate">
-                        {ticket.subject}
-                      </p>
-                      <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                        {ticket.id} · {ticket.created}
-                      </p>
+                    <p className="min-w-0 flex-1 truncate font-medium text-white">
+                      {ticket.subject}
+                    </p>
+                    <div className="flex shrink-0 gap-1.5">
+                      <Tag color={PRIORITY_COLOR[ticket.priority]}>
+                        {ticket.priority}
+                      </Tag>
+                      <Tag color={STATUS_COLOR[ticket.status]}>
+                        {ticket.status}
+                      </Tag>
                     </div>
-                    <Tag color={priorityColor[ticket.priority]}>
-                      {ticket.priority}
-                    </Tag>
                   </div>
-                  <p className="mt-3 text-sm text-gray-600 dark:text-gray-400">
-                    {ticket.message}
-                  </p>
+
+                  <p className="mt-1 text-xs text-zinc-500">{ticket.created}</p>
+                  <p className="mt-3 text-sm text-zinc-400">{ticket.message}</p>
+
+                  {/* Staff answers, so a reply isn't stranded in the admin UI. */}
+                  {ticket.replies.map((reply) => (
+                    <article
+                      key={reply.id}
+                      className="mt-3 rounded-lg bg-violet-500/10 p-3"
+                    >
+                      <p className="text-[11px] text-zinc-400">
+                        Support · {reply.sent}
+                      </p>
+                      <p className="mt-1 text-sm text-zinc-300">
+                        {reply.message}
+                      </p>
+                    </article>
+                  ))}
                 </li>
               ))}
             </ul>

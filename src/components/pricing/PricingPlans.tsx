@@ -1,71 +1,21 @@
 "use client";
 
+import {
+  BILLING_PERIODS,
+  monthlyPrice,
+  planCatalog,
+  type Billing,
+  type PlanDefinition,
+} from "@/config/plans";
 import PillButton from "@/components/shared/PillButton";
 import { Tooltip } from "antd";
 import { useEffect, useRef, useState } from "react";
 import { FiArrowUpRight, FiCheckCircle } from "react-icons/fi";
 
-type Billing = "monthly" | "yearly";
-
-/** Yearly is billed up front at 20% off; both figures are shown per month. */
-const YEARLY_DISCOUNT = 0.2;
-
-export interface Plan {
-  name: string;
-  tagline: string;
-  price: string;
-  features: string[];
-  popular: boolean;
-}
-
-export const plans: Plan[] = [
-  {
-    name: "Free",
-    tagline: "For hobby collectors",
-    price: "0",
-    features: [
-      "5 card scans per month",
-      "AI grade prediction with confidence score",
-      "Centering, corner, edge & surface analysis",
-      "Watermarked PDF inspection report",
-      "Store up to 25 cards in your collection",
-    ],
-    popular: false,
-  },
-  {
-    name: "Pro",
-    tagline: "For serious collectors",
-    price: "9",
-    features: [
-      "200 card scans per month",
-      "Live market valuation & price tracking",
-      "Investor-ready PDF reports, no watermark",
-      "Unlimited collection storage",
-      "Priority scan queue & email support",
-    ],
-    popular: true,
-  },
-  {
-    name: "Enterprise",
-    tagline: "For businesses & shops",
-    price: "19",
-    features: [
-      "Unlimited card scans",
-      "Bulk upload & batch grading",
-      "API access for storefronts and marketplaces",
-      "Team seats with a shared collection",
-      "Dedicated support with 24-hour response",
-    ],
-    popular: false,
-  },
-];
-
-/** Monthly list price -> what that plan costs per month on the yearly plan. */
-function priceFor(plan: Plan, billing: Billing) {
-  const monthly = Number(plan.price);
-  if (billing === "monthly" || monthly === 0) return plan.price;
-  return Math.round(monthly * (1 - YEARLY_DISCOUNT)).toString();
-}
+/** Plans come from the shared catalogue so the admin editor, the dashboard,
+ *  and this table can never drift apart. */
+export type Plan = PlanDefinition;
+export const plans = planCatalog;
 
 /** One line of the feature list. Long copy is clipped to a single line and only
  *  then gets a tooltip — short features would otherwise hover to repeat themselves. */
@@ -102,7 +52,7 @@ function BillingToggle({
   billing: Billing;
   onChange: (next: Billing) => void;
 }) {
-  const options: Billing[] = ["monthly", "yearly"];
+  const options = BILLING_PERIODS;
 
   return (
     <div className="mt-7 flex items-center justify-center gap-3">
@@ -187,7 +137,7 @@ export default function PricingPlans({ ctaHref, onSelect }: PricingPlansProps) {
 
               <p className="mt-5 flex items-baseline gap-1.5">
                 <span className="text-3xl font-semibold text-white">
-                  $ {priceFor(plan, billing)}
+                  $ {monthlyPrice(plan.price, billing)}
                 </span>
                 <span className="text-xs text-zinc-500">/per month</span>
               </p>

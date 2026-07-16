@@ -1,19 +1,21 @@
 /* Frontend-only placeholder data. Swap for RTK Query hooks when the API exists. */
 
-/** One plan per name, so this list also caps how many plans can exist. */
-export const PLAN_NAMES = ["Basic Plan", "Plus Plan", "Premium Plan"] as const;
-export type PlanName = (typeof PLAN_NAMES)[number];
+import {
+  EXPIRY_OPTIONS,
+  MAX_PLANS,
+  PLAN_NAMES,
+  planCatalog,
+  type PlanExpiry,
+  type PlanName,
+  type ScanQuota,
+} from "@/config/plans";
 
-export const EXPIRY_OPTIONS = [
-  "1 Week",
-  "1 Month",
-  "2 Month",
-  "3 Month",
-  "6 Month",
-] as const;
-export type PlanExpiry = (typeof EXPIRY_OPTIONS)[number];
-
-export const MAX_PLANS = PLAN_NAMES.length;
+// Names, expiries, and the plan cap live in the shared catalogue
+// (`src/config/plans.ts`) so this editor can only ever produce plans that match
+// what customers see on the pricing page. Re-exported here so the subscription
+// components keep importing from one local module.
+export { EXPIRY_OPTIONS, MAX_PLANS, PLAN_NAMES };
+export type { PlanExpiry, PlanName, ScanQuota };
 
 /** How many facility rows the form offers. Blank ones are dropped on save. */
 export const FACILITY_ROWS = 6;
@@ -30,50 +32,18 @@ export interface Plan {
   /** Whole dollars — the form only accepts digits. */
   price: number;
   expiry: PlanExpiry;
+  /** Scans included per period; `null` is unlimited. */
+  scanQuota: ScanQuota;
   facilities: Facility[];
 }
 
-const facilities = (...texts: string[]): Facility[] =>
-  texts.map((text) => ({ text, included: true }));
-
-export const seedPlans: Plan[] = [
-  {
-    id: "1",
-    name: "Basic Plan",
-    price: 0,
-    expiry: "1 Month",
-    facilities: facilities(
-      "5 card scans per month",
-      "AI grade prediction with confidence score",
-      "Centering, corner, edge & surface analysis",
-      "Watermarked PDF inspection report",
-      "Store up to 25 cards in your collection",
-    ),
-  },
-  {
-    id: "2",
-    name: "Plus Plan",
-    price: 9,
-    expiry: "1 Month",
-    facilities: facilities(
-      "200 card scans per month",
-      "Live market valuation & price tracking",
-      "Investor-ready PDF reports, no watermark",
-      "Unlimited collection storage",
-      "Priority scan queue & email support",
-    ),
-  },
-  {
-    id: "3",
-    name: "Premium Plan",
-    price: 19,
-    expiry: "1 Month",
-    facilities: facilities(
-      "Unlimited card scans",
-      "Bulk upload & batch grading",
-      "API access for storefronts and marketplaces",
-      "Team seats with a shared collection",
-      "Dedicated support with 24-hour response",
-    ),
-  },
-];
+/** Seeded from the catalogue, so the editor opens showing the live plans
+ *  rather than a second, divergent set of defaults. */
+export const seedPlans: Plan[] = planCatalog.map((plan, i) => ({
+  id: String(i + 1),
+  name: plan.name,
+  price: plan.price,
+  expiry: plan.expiry,
+  scanQuota: plan.scanQuota,
+  facilities: plan.features.map((text) => ({ text, included: true })),
+}));

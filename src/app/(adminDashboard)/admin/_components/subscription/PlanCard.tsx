@@ -1,3 +1,4 @@
+import { formatQuota } from "@/config/plans";
 import { FiArrowUpRight, FiCheck } from "react-icons/fi";
 import { HiOutlineSparkles } from "react-icons/hi2";
 import type { Plan } from "./data";
@@ -27,6 +28,21 @@ export default function PlanCard({ plan, onEdit, onDelete }: PlanCardProps) {
         </span>
         <span className="text-xs text-zinc-500">/per month</span>
       </p>
+
+      {/* The two metered terms, kept out of the facility copy so they stay
+          machine-readable rather than buried in marketing text. */}
+      <dl className="mt-4 flex flex-wrap gap-2">
+        <div className="rounded-full border border-white/15 px-3 py-1">
+          <dt className="sr-only">Scans included</dt>
+          <dd className="text-[11px] text-zinc-300">
+            {formatQuota(plan.scanQuota)}
+          </dd>
+        </div>
+        <div className="rounded-full border border-white/15 px-3 py-1">
+          <dt className="sr-only">Renews every</dt>
+          <dd className="text-[11px] text-zinc-300">{plan.expiry}</dd>
+        </div>
+      </dl>
 
       {/* flex-1 pins the buttons to the bottom so cards of unequal length still
           line their actions up across the row. */}

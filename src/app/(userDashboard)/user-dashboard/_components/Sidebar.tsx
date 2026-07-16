@@ -17,6 +17,7 @@ import {
   MdOutlinePieChart,
   MdOutlineQrCodeScanner,
   MdOutlineSettings,
+  MdOutlineSupportAgent,
   MdOutlineTravelExplore,
   MdOutlineVerifiedUser,
   MdOutlineWorkspacePremium,
@@ -60,6 +61,11 @@ const navItems = [
     href: "/user-dashboard/subscription",
     label: "Subscription",
     Icon: MdOutlineWorkspacePremium,
+  },
+  {
+    href: "/user-dashboard/support",
+    label: "Support",
+    Icon: MdOutlineSupportAgent,
   },
 ];
 

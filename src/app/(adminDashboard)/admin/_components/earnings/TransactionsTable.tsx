@@ -71,6 +71,14 @@ export default function TransactionsTable() {
       render: cell,
     },
     {
+      title: "Plan",
+      dataIndex: "plan",
+      key: "plan",
+      align: "center",
+      width: 110,
+      render: cell,
+    },
+    {
       title: "Total",
       dataIndex: "total",
       key: "total",

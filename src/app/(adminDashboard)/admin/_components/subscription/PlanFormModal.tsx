@@ -45,6 +45,8 @@ export default function PlanFormModal({
   const [name, setName] = useState<PlanName>(firstFree);
   const [price, setPrice] = useState("");
   const [expiry, setExpiry] = useState<PlanExpiry>("1 Month");
+  const [quota, setQuota] = useState("");
+  const [unlimited, setUnlimited] = useState(false);
   const [facilities, setFacilities] = useState<Facility[]>(toRows());
 
   // Reset on each open so an edit never leaks into the next create.
@@ -54,6 +56,8 @@ export default function PlanFormModal({
     setName(plan?.name ?? firstFree);
     setPrice(plan ? String(plan.price) : "");
     setExpiry(plan?.expiry ?? "1 Month");
+    setUnlimited(plan ? plan.scanQuota === null : false);
+    setQuota(plan?.scanQuota != null ? String(plan.scanQuota) : "");
     setFacilities(toRows(plan?.facilities));
     // `firstFree` is derived from props and stable for a given open.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -70,6 +74,11 @@ export default function PlanFormModal({
       return;
     }
 
+    if (!unlimited && !/^\d+$/.test(quota.trim())) {
+      message.error("Enter the scan quota, or mark the plan unlimited.");
+      return;
+    }
+
     const kept = facilities.filter(
       (facility) => facility.included && facility.text.trim(),
     );
@@ -83,6 +92,7 @@ export default function PlanFormModal({
       name,
       price: Number(price),
       expiry,
+      scanQuota: unlimited ? null : Number(quota),
       facilities: kept.map((facility) => ({
         text: facility.text.trim(),
         included: true,
@@ -167,6 +177,46 @@ export default function PlanFormModal({
                 <FiChevronDown className="pointer-events-none absolute top-1/2 right-4 -translate-y-1/2 text-white" />
               </div>
             </label>
+          </div>
+
+          {/* Scan quota is what the plan actually meters, so it belongs on the
+              plan itself rather than being implied by the facility copy. */}
+          <div className="mt-6">
+            <span className="text-lg font-semibold text-white">
+              Scans Included
+            </span>
+            <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center">
+              <input
+                value={unlimited ? "" : quota}
+                onChange={(event) =>
+                  setQuota(event.target.value.replace(/\D/g, ""))
+                }
+                disabled={unlimited}
+                inputMode="numeric"
+                placeholder="200"
+                aria-label="Scans included per period"
+                className={`${fieldClass} sm:max-w-48 disabled:cursor-not-allowed disabled:text-zinc-500 disabled:placeholder:text-zinc-600`}
+              />
+
+              <button
+                type="button"
+                role="switch"
+                aria-checked={unlimited}
+                onClick={() => setUnlimited((on) => !on)}
+                className="inline-flex items-center gap-2.5 text-sm text-white"
+              >
+                <span
+                  className={`inline-flex h-5 w-5 shrink-0 items-center justify-center rounded transition-colors ${
+                    unlimited
+                      ? "bg-emerald-500 text-white"
+                      : "border border-white/30 text-transparent hover:border-white/60"
+                  }`}
+                >
+                  <FiCheck size={12} />
+                </span>
+                Unlimited
+              </button>
+            </div>
           </div>
 
           <div className="mt-6">

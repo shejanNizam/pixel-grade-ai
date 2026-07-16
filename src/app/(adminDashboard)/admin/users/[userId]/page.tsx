@@ -1,9 +1,17 @@
+import { formatQuota } from "@/config/plans";
 import Image from "next/image";
 import BackHeading from "../../_components/BackHeading";
 import { userDetails } from "../../_components/users/data";
 
 export default function UserDetailsPage() {
-  const { name, email, state, cards } = userDetails;
+  const { name, email, state, plan, scansUsed, scanQuota, renewsOn, cards } =
+    userDetails;
+
+  // Unlimited plans have no bar to fill; percent is only meaningful when metered.
+  const usedPercent =
+    scanQuota === null
+      ? null
+      : Math.min(100, Math.round((scansUsed / scanQuota) * 100));
 
   return (
     <div>
@@ -27,6 +35,43 @@ export default function UserDetailsPage() {
               <p className="truncate text-zinc-400">Email : {email}</p>
               <p className="truncate text-zinc-400">State : {state}</p>
             </div>
+          </article>
+
+          {/* Plan usage — the quota the plan meters, so support can see at a
+              glance whether a user is near their limit. */}
+          <h2 className="mt-8 mb-3 text-sm text-zinc-400">Plan</h2>
+
+          <article className="rounded-2xl border border-violet-500/30 bg-linear-to-br from-violet-950/50 to-black p-4">
+            <div className="flex items-baseline justify-between gap-3">
+              <p className="text-base font-medium text-white">{plan}</p>
+              <p className="text-[11px] text-zinc-400">Renews {renewsOn}</p>
+            </div>
+
+            <p className="mt-3 text-xs text-zinc-400">
+              Scans used{" "}
+              <span className="font-medium text-white tabular-nums">
+                {scansUsed}
+              </span>{" "}
+              of {formatQuota(scanQuota)}
+            </p>
+
+            {usedPercent !== null && (
+              <div
+                role="progressbar"
+                aria-valuenow={usedPercent}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-label="Scan quota used"
+                className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10"
+              >
+                <div
+                  className={`h-full rounded-full ${
+                    usedPercent >= 90 ? "bg-red-400" : "bg-violet-500"
+                  }`}
+                  style={{ width: `${usedPercent}%` }}
+                />
+              </div>
+            )}
           </article>
         </section>
 

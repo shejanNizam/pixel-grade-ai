@@ -17,6 +17,7 @@ import {
   MdOutlinePeopleOutline,
   MdOutlinePieChart,
   MdOutlineSettings,
+  MdOutlineSupportAgent,
 } from "react-icons/md";
 
 const navItems = [
@@ -37,6 +38,7 @@ const navItems = [
     label: "Subscription Plan",
     Icon: MdOutlineAddCard,
   },
+  { href: "/admin/support", label: "Support", Icon: MdOutlineSupportAgent },
 ];
 
 const SETTINGS_ROOT = "/admin/settings";
