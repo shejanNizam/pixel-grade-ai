@@ -9,6 +9,10 @@ export const inspection = {
   language: "English",
   grade: 9.0,
   gradeLabel: "MINT",
+  confidence: 92,
+  /** Server-set: true only when the scan used PixelScope AND confidence >= 90.
+   *  Never user-selectable. */
+  pixelVerified: true,
   marketValue: 1928,
   trend: "8.7 %",
   subScores: [

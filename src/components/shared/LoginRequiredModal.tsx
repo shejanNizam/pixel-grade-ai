@@ -74,13 +74,13 @@ export default function LoginRequiredModal({
         {/* CTA buttons */}
         <div className="flex flex-col sm:flex-row gap-3 w-full mt-1">
           <Link
-            href="/login?redirect=/user-dashboard/settings/billing"
+            href="/login?redirect=/user-dashboard/subscription"
             className="flex-1 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold text-center transition-colors"
           >
             Log In
           </Link>
           <Link
-            href="/signup?redirect=/user-dashboard/settings/billing"
+            href="/signup?redirect=/user-dashboard/subscription"
             className="flex-1 py-3 rounded-xl border-2 border-blue-600 dark:border-blue-500 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-sm font-semibold text-center transition-colors"
           >
             Create Account

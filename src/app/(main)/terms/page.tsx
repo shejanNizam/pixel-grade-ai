@@ -30,9 +30,9 @@ export default function Terms() {
           ],
         },
         {
-          heading: "Accounts and Credits",
+          heading: "Accounts and Subscriptions",
           paragraphs: [
-            "You are responsible for activity under your account and for keeping your password secure. Paid credits and subscriptions are charged in advance and are consumed when an analysis runs.",
+            "You are responsible for activity under your account and for keeping your password secure. Subscriptions are charged in advance and include a monthly scan allowance that resets each billing period.",
           ],
         },
         {

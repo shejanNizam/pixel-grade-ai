@@ -109,7 +109,6 @@ const baseApi = createApi({
     "unreadCount",
     "notificationSettings",
     "settings",
-    "demo",
   ],
   endpoints: () => ({}),
 });

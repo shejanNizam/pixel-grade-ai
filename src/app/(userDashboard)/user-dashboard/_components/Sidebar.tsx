@@ -10,6 +10,7 @@ import { useEffect, useState } from "react";
 import { FiChevronDown, FiX } from "react-icons/fi";
 import { useDispatch } from "react-redux";
 import {
+  MdOutlineAutoAwesome,
   MdOutlineCollectionsBookmark,
   MdOutlineInsertChart,
   MdOutlineLogout,
@@ -34,6 +35,11 @@ const navItems = [
     href: "/user-dashboard/analysis-report",
     label: "Analysis report",
     Icon: MdOutlineQrCodeScanner,
+  },
+  {
+    href: "/user-dashboard/slab-generator",
+    label: "Slab Generator",
+    Icon: MdOutlineAutoAwesome,
   },
   {
     href: "/user-dashboard/my-collection",

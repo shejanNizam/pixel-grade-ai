@@ -4,13 +4,23 @@ import { App } from "antd";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { FiPlus, FiRefreshCw, FiTrendingUp } from "react-icons/fi";
+import { MdAutoAwesome, MdVerified } from "react-icons/md";
 import { CARD_IMAGE, inspection } from "./data";
 
 const MAX_GRADE = 10;
 
 export default function RecentInspection() {
-  const { name, set, language, grade, gradeLabel, marketValue, trend } =
-    inspection;
+  const {
+    name,
+    set,
+    language,
+    grade,
+    gradeLabel,
+    confidence,
+    pixelVerified,
+    marketValue,
+    trend,
+  } = inspection;
   const router = useRouter();
   const { message } = App.useApp();
 
@@ -49,15 +59,39 @@ export default function RecentInspection() {
               Add card
             </button>
           </div>
+
+          <button
+            type="button"
+            onClick={() => router.push("/user-dashboard/slab-generator")}
+            aria-label={`Create a custom slab label for ${name}`}
+            className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-violet-500/40 bg-violet-500/10 py-2 text-xs font-medium text-violet-300 transition-colors hover:bg-violet-500/20"
+          >
+            <MdAutoAwesome size={13} />
+            Create slab
+          </button>
         </div>
 
         <div className="flex flex-col">
           <h3 className="text-base font-medium text-white">{name}</h3>
           <p className="mt-1 text-xs text-zinc-500">{set}</p>
 
-          <span className="mt-3 inline-flex w-fit rounded-md border border-violet-500/40 px-2 py-0.5 text-[11px] text-violet-300">
-            {language}
-          </span>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <span className="inline-flex w-fit rounded-md border border-violet-500/40 px-2 py-0.5 text-[11px] text-violet-300">
+              {language}
+            </span>
+
+            {/* Awarded automatically by the server when the scan used
+                PixelScope and confidence cleared the threshold. */}
+            {pixelVerified && (
+              <span
+                title="Inspected with PixelScope — awarded automatically"
+                className="inline-flex w-fit items-center gap-1 rounded-md bg-blue-500/15 px-2 py-0.5 text-[11px] font-medium text-blue-400"
+              >
+                <MdVerified size={12} />
+                Pixel Verified
+              </span>
+            )}
+          </div>
 
           <p className="mt-6 flex items-baseline gap-2.5">
             <span className="text-4xl font-semibold text-white">
@@ -68,7 +102,7 @@ export default function RecentInspection() {
                 {gradeLabel}
               </span>
               <span className="block text-[11px] text-zinc-500">
-                AI Grade Estimate
+                AI Grade Estimate · {confidence} % confidence
               </span>
             </span>
           </p>

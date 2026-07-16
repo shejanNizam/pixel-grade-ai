@@ -1,6 +1,6 @@
 import AdvancedImport from "../_components/new-analysis/AdvancedImport";
 import BestResultTips from "../_components/new-analysis/BestResultTips";
-import CreditsCard from "../_components/new-analysis/CreditsCard";
+import ScanQuotaCard from "../_components/new-analysis/ScanQuotaCard";
 import QuickImport from "../_components/new-analysis/QuickImport";
 import ScanSettings from "../_components/new-analysis/ScanSettings";
 
@@ -15,7 +15,7 @@ export default function NewAnalysis() {
           </p>
         </div>
 
-        <CreditsCard />
+        <ScanQuotaCard />
       </div>
 
       <div className="grid gap-10 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] lg:gap-12">

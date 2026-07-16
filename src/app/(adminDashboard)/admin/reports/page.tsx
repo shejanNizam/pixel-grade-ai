@@ -6,7 +6,7 @@ import { App, Button, Select } from "antd";
 import { useState } from "react";
 import { FiFileText } from "react-icons/fi";
 
-type ReportType = "revenue" | "users" | "orders";
+type ReportType = "revenue" | "users" | "grading";
 
 interface Report {
   id: string;
@@ -17,7 +17,7 @@ interface Report {
 const typeLabel: Record<ReportType, string> = {
   revenue: "Revenue report",
   users: "User growth report",
-  orders: "Orders report",
+  grading: "Grading report",
 };
 
 // Demo page showing the Skeleton (loading) and EmptyState components together.
@@ -64,7 +64,7 @@ export default function AdminReportsPage() {
           options={[
             { value: "revenue", label: "Revenue report" },
             { value: "users", label: "User growth report" },
-            { value: "orders", label: "Orders report" },
+            { value: "grading", label: "Grading report" },
           ]}
         />
         <Button
