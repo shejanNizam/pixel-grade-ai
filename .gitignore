@@ -10,9 +10,7 @@
 !.yarn/releases
 !.yarn/versions
 
-# all env files
-.env*
-!.env.example
+
 
 # testing
 /coverage
