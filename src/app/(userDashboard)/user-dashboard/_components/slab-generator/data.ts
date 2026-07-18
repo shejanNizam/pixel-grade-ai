@@ -6,22 +6,39 @@ export const CARD_IMAGE = "/assets/user-dashboard/recent_scan_card.png";
 // ---------------------------------------------------------------------------
 // Slab specs
 //
-// NOTE: these measurements are PLACEHOLDERS. The exact slab dimensions and
-// bleed margin must be confirmed by the client (ideally from their printing
-// partner's spec sheet) before the export is production-ready.
+// Confirmed by the client (Jul 2026):
+//   Overall slab (trim): 94 mm × 138 mm
+//   Card opening (fixed): 65 mm × 90 mm — never shifts
+//   Bleed: 3 mm all sides · Safe area: keep text/QR ≥ 3 mm inside trim
+//   Export: PNG + PDF @ 300 DPI at exact slab dimensions
+// The client noted these may be adjusted once the physical prototype /
+// printer's final spec sheet arrives, so they stay data-driven here.
 // ---------------------------------------------------------------------------
 export interface SlabSpec {
   id: string;
   label: string;
+  /** Overall trim size. */
   widthMm: number;
   heightMm: number;
+  /** Fixed card window cut into the slab. */
+  openingWidthMm: number;
+  openingHeightMm: number;
   bleedMm: number;
+  /** Keep important content this far inside the trim line. */
+  safeMm: number;
 }
 
 export const slabSpecs: SlabSpec[] = [
-  { id: "standard", label: "Standard", widthMm: 82.5, heightMm: 133, bleedMm: 3 },
-  { id: "wide", label: "Wide", widthMm: 85, heightMm: 130, bleedMm: 3 },
-  { id: "tall", label: "Tall", widthMm: 80, heightMm: 140, bleedMm: 3 },
+  {
+    id: "standard",
+    label: "Standard slab",
+    widthMm: 94,
+    heightMm: 138,
+    openingWidthMm: 65,
+    openingHeightMm: 90,
+    bleedMm: 3,
+    safeMm: 3,
+  },
 ];
 
 // ---------------------------------------------------------------------------

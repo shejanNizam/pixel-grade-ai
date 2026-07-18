@@ -1,15 +1,21 @@
 // ---------------------------------------------------------------------------
 // The subscription catalogue — the single source of truth for plan names,
-// prices, features, and scan quotas.
+// prices, features, and credit allowances.
 //
 // The marketing pricing table, the user dashboard's subscription screen, and
 // the admin plan editor all read from here, so a plan renamed or repriced once
-// is renamed or repriced everywhere. Previously the admin editor carried its
-// own list ("Basic/Plus/Premium") that silently disagreed with the names
-// customers saw, and no admin could ever produce the plans on the pricing page.
+// is renamed or repriced everywhere.
+//
+// BUSINESS MODEL — CREDITS (confirmed by client, Jul 2026)
+// The product meters usage in *credits*, not a raw scan count.
+//   • 10 credits = 1 scan (see CREDITS_PER_SCAN).
+//   • Free is topped up DAILY; paid plans get a MONTHLY allowance.
+//   • Credits are also spent by future premium AI features.
+// Pricing/tiers come from the client's "Pricing Plans (Developer
+// Specification)" sheet: Free / Collector / Pro / Enterprise.
 // ---------------------------------------------------------------------------
 
-export const PLAN_NAMES = ["Free", "Pro", "Enterprise"] as const;
+export const PLAN_NAMES = ["Free", "Collector", "Pro", "Enterprise"] as const;
 export type PlanName = (typeof PLAN_NAMES)[number];
 
 /** One plan per name, so the catalogue also caps how many plans can exist. */
@@ -18,12 +24,11 @@ export const MAX_PLANS = PLAN_NAMES.length;
 export const BILLING_PERIODS = ["monthly", "yearly"] as const;
 export type Billing = (typeof BILLING_PERIODS)[number];
 
-/** Yearly is billed up front at 20% off; both figures are shown per month. */
-export const YEARLY_DISCOUNT = 0.2;
+/** Credits burned per AI grading scan. 10 credits = 1 scan. */
+export const CREDITS_PER_SCAN = 10;
 
 /** How long a plan runs before it renews. `1 Year` backs the yearly billing
- *  toggle on the pricing page — without it the admin could not express the
- *  annual plan the site actually sells. */
+ *  toggle on the pricing page. */
 export const EXPIRY_OPTIONS = [
   "1 Week",
   "1 Month",
@@ -34,79 +39,147 @@ export const EXPIRY_OPTIONS = [
 ] as const;
 export type PlanExpiry = (typeof EXPIRY_OPTIONS)[number];
 
-/** Scans allowed per billing period. `null` is unlimited — the Enterprise
- *  promise of "Unlimited card scans". */
-export type ScanQuota = number | null;
+/** When the credit allowance is refilled. Free = daily, paid = monthly. */
+export const CREDIT_INTERVALS = ["daily", "monthly"] as const;
+export type CreditInterval = (typeof CREDIT_INTERVALS)[number];
+
+/** Credits granted per interval. `null` is unlimited — the Enterprise plan. */
+export type CreditAllowance = number | null;
 
 export interface PlanDefinition {
   name: PlanName;
   tagline: string;
-  /** Whole dollars per month at list price. */
+  /** Whole dollars per month at monthly list price. */
   price: number;
+  /** Effective per-month price when billed yearly (charged up front ×12). */
+  priceYearly: number;
   expiry: PlanExpiry;
   features: string[];
   /** Drives the "Most popular" ribbon; exactly one plan should set this. */
   popular: boolean;
-  scanQuota: ScanQuota;
+  /** Credits granted each interval; `null` is unlimited. */
+  credits: CreditAllowance;
+  /** Whether the allowance refills daily or monthly. */
+  creditInterval: CreditInterval;
+  /** PixelScope (Advanced multi-image scan) + Pixel Verified are paid-only. */
+  pixelscope: boolean;
 }
 
 export const planCatalog: PlanDefinition[] = [
   {
     name: "Free",
-    tagline: "For hobby collectors",
+    tagline: "For trying it out",
     price: 0,
+    priceYearly: 0,
     expiry: "1 Month",
     features: [
-      "5 card scans per month",
-      "AI grade prediction with confidence score",
-      "Centering, corner, edge & surface analysis",
-      "Watermarked PDF inspection report",
-      "Store up to 25 cards in your collection",
+      "Standard scan (phone camera)",
+      "Basic AI grading report",
+      "Order custom slab labels",
+      "No PixelScope",
+      "No Pixel Verified badge",
     ],
     popular: false,
-    scanQuota: 5,
+    credits: 20,
+    creditInterval: "daily",
+    pixelscope: false,
+  },
+  {
+    name: "Collector",
+    tagline: "For active collectors",
+    price: 10,
+    priceYearly: 8,
+    expiry: "1 Month",
+    features: [
+      "Standard & Advanced (PixelScope) scans",
+      "Pixel Verified badge",
+      "Full AI grading reports",
+      "Unlimited report history",
+      "Collection management",
+      "Price tracking",
+      "Order custom slab labels",
+    ],
+    popular: true,
+    credits: 1500,
+    creditInterval: "monthly",
+    pixelscope: true,
   },
   {
     name: "Pro",
-    tagline: "For serious collectors",
-    price: 9,
+    tagline: "For power users",
+    price: 25,
+    priceYearly: 20,
     expiry: "1 Month",
     features: [
-      "200 card scans per month",
-      "Live market valuation & price tracking",
-      "Investor-ready PDF reports, no watermark",
-      "Unlimited collection storage",
-      "Priority scan queue & email support",
+      "Everything in Collector",
+      "Priority AI processing",
+      "Bulk grading",
+      "Advanced analytics",
+      "Collection insights",
+      "Early access to new AI features",
+      "Priority support",
     ],
-    popular: true,
-    scanQuota: 200,
+    popular: false,
+    credits: 6000,
+    creditInterval: "monthly",
+    pixelscope: true,
   },
   {
     name: "Enterprise",
-    tagline: "For businesses & shops",
-    price: 19,
+    tagline: "For businesses & card shops",
+    price: 119,
+    priceYearly: 99,
     expiry: "1 Month",
     features: [
-      "Unlimited card scans",
-      "Bulk upload & batch grading",
-      "API access for storefronts and marketplaces",
-      "Team seats with a shared collection",
-      "Dedicated support with 24-hour response",
+      "Everything in Pro",
+      "Custom grading reports",
+      "Team accounts",
+      "Card Shop Dashboard",
+      "API access (coming soon)",
+      "Dedicated account manager",
+      "Priority feature requests",
     ],
     popular: false,
-    scanQuota: null,
+    credits: null,
+    creditInterval: "monthly",
+    pixelscope: true,
   },
 ];
 
-/** Monthly list price -> what that plan costs per month on the given billing
- *  period. Free stays free rather than rendering a discounted $0. */
-export function monthlyPrice(price: number, billing: Billing): number {
-  if (billing === "monthly" || price === 0) return price;
-  return Math.round(price * (1 - YEARLY_DISCOUNT));
+/** Look a plan up by name. */
+export function getPlan(name: PlanName): PlanDefinition {
+  return planCatalog.find((plan) => plan.name === name) ?? planCatalog[0];
 }
 
-/** How a quota reads in the UI. Kept here so admin tables and user-facing
- *  quota cards phrase "unlimited" the same way. */
-export function formatQuota(quota: ScanQuota): string {
-  return quota === null ? "Unlimited" : `${quota} / month`;
+/** What a plan costs per month on the given billing period. Free stays free. */
+export function monthlyPrice(plan: PlanDefinition, billing: Billing): number {
+  return billing === "yearly" ? plan.priceYearly : plan.price;
+}
+
+/** Total charged up front for a year (the effective monthly rate × 12). This
+ *  is the real amount that leaves the customer's card when they pick yearly. */
+export function yearlyTotal(plan: PlanDefinition): number {
+  return plan.priceYearly * 12;
+}
+
+/** Dollars saved over a year by paying yearly instead of monthly. */
+export function yearlySavings(plan: PlanDefinition): number {
+  return plan.price * 12 - plan.priceYearly * 12;
+}
+
+/** Credits shown as a metered term, e.g. "1,500 credits / month" or
+ *  "20 credits / day". Kept here so admin tables and user-facing cards phrase
+ *  "unlimited" the same way. */
+export function formatCredits(
+  credits: CreditAllowance,
+  interval: CreditInterval,
+): string {
+  if (credits === null) return "Unlimited credits";
+  const per = interval === "daily" ? "day" : "month";
+  return `${credits.toLocaleString()} credits / ${per}`;
+}
+
+/** Roughly how many scans an allowance buys, for a friendly "≈ N scans" hint. */
+export function creditsToScans(credits: CreditAllowance): number | null {
+  return credits === null ? null : Math.floor(credits / CREDITS_PER_SCAN);
 }

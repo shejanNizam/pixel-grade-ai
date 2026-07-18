@@ -43,6 +43,14 @@ export default function SlabPreview({
   const bleedX = (spec.bleedMm / spec.widthMm) * 100;
   const bleedY = (spec.bleedMm / spec.heightMm) * 100;
 
+  // The card window is a FIXED opening (65 × 90 mm on a 94 × 138 mm slab).
+  // Content sits inside a padded safe area, so size the window relative to that
+  // inner box rather than the full slab, keeping the real opening proportions.
+  const contentInsetX = bleedX * 1.6;
+  const openingWidthPct =
+    ((spec.openingWidthMm / spec.widthMm) * 100) /
+    (1 - (2 * contentInsetX) / 100);
+
   return (
     <div
       className="relative mx-auto w-full max-w-xs overflow-hidden rounded-2xl ring-1 ring-white/15"
@@ -117,15 +125,24 @@ export default function SlabPreview({
           </div>
         </div>
 
-        {/* Card window — FIXED placeholder */}
-        <div className="flex flex-1 items-center justify-center py-[6%]">
-          <Image
-            src={CARD_IMAGE}
-            alt={`${card.name} — graded ${card.grade.toFixed(1)}`}
-            width={280}
-            height={392}
-            className="max-h-full w-[76%] rounded-[3px] object-contain shadow-[0_4px_20px_rgba(0,0,0,0.6)] ring-1 ring-black/30"
-          />
+        {/* Card window — FIXED placeholder, sized to the real 65 × 90 mm
+            opening so the preview matches the print. */}
+        <div className="flex flex-1 items-center justify-center py-[5%]">
+          <div
+            className="relative overflow-hidden rounded-[3px] shadow-[0_4px_20px_rgba(0,0,0,0.6)] ring-1 ring-black/30"
+            style={{
+              width: `${openingWidthPct}%`,
+              aspectRatio: `${spec.openingWidthMm} / ${spec.openingHeightMm}`,
+            }}
+          >
+            <Image
+              src={CARD_IMAGE}
+              alt={`${card.name} — graded ${card.grade.toFixed(1)}`}
+              fill
+              sizes="200px"
+              className="object-cover"
+            />
+          </div>
         </div>
 
         {/* Cert footer — part of the fixed label system */}

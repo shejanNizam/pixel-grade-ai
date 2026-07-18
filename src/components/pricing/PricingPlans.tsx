@@ -2,8 +2,12 @@
 
 import {
   BILLING_PERIODS,
+  creditsToScans,
+  formatCredits,
   monthlyPrice,
   planCatalog,
+  yearlySavings,
+  yearlyTotal,
   type Billing,
   type PlanDefinition,
 } from "@/config/plans";
@@ -107,10 +111,22 @@ export default function PricingPlans({ ctaHref, onSelect }: PricingPlansProps) {
         </h2>
 
         <BillingToggle billing={billing} onChange={setBilling} />
+
+        {billing === "yearly" && (
+          <p className="mt-3 text-[11px] text-zinc-500">
+            Billed once per year · credits still refresh monthly
+          </p>
+        )}
       </div>
 
-      <div className="mx-auto mt-12 grid max-w-5xl gap-6 md:grid-cols-3">
+      <div className="mx-auto mt-12 grid max-w-6xl gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {plans.map((plan) => {
+          const scans = creditsToScans(plan.credits);
+          // On yearly, spell out the real up-front charge and the saving so the
+          // "/per month" figure isn't mistaken for a monthly bill.
+          const showYearly = billing === "yearly" && plan.price > 0;
+          const billedYearly = yearlyTotal(plan);
+          const saved = yearlySavings(plan);
           const ctaIcon = (
             <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-white text-violet-600">
               <FiArrowUpRight />
@@ -137,12 +153,37 @@ export default function PricingPlans({ ctaHref, onSelect }: PricingPlansProps) {
 
               <p className="mt-5 flex items-baseline gap-1.5">
                 <span className="text-3xl font-semibold text-white">
-                  $ {monthlyPrice(plan.price, billing)}
+                  $ {monthlyPrice(plan, billing)}
                 </span>
                 <span className="text-xs text-zinc-500">/per month</span>
               </p>
 
-              <ul className="mt-7 flex-1 space-y-3">
+              {/* Real annual charge — reserve the line height on monthly so the
+                  cards don't jump when the billing toggle flips. */}
+              <p className="mt-1 min-h-4 text-[11px]">
+                {showYearly ? (
+                  <>
+                    <span className="text-zinc-400">
+                      ${billedYearly} billed yearly
+                    </span>
+                    {saved > 0 && (
+                      <span className="text-emerald-400"> · save ${saved}</span>
+                    )}
+                  </>
+                ) : (
+                  " "
+                )}
+              </p>
+
+              {/* Credits are the metered term the plan actually sells. */}
+              <p className="mt-2 text-xs font-medium text-violet-300">
+                {formatCredits(plan.credits, plan.creditInterval)}
+                {scans !== null && (
+                  <span className="text-zinc-500"> · ≈ {scans} scans</span>
+                )}
+              </p>
+
+              <ul className="mt-6 flex-1 space-y-3">
                 {plan.features.map((feature) => (
                   <li
                     key={feature}

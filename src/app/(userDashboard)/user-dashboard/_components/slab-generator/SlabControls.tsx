@@ -165,23 +165,24 @@ export default function SlabControls({
 
         <div className="mt-3 flex items-center justify-between rounded-xl border border-white/10 bg-[#0d0d0f] px-3 py-2.5">
           <div>
-            <p className="text-xs text-white">Show bleed guide</p>
+            <p className="text-xs text-white">Show bleed &amp; trim guide</p>
             <p className="text-[10px] text-zinc-500">
-              {spec.bleedMm} mm trim margin
+              {spec.bleedMm} mm bleed · {spec.safeMm} mm safe area
             </p>
           </div>
           <Switch
             size="small"
             checked={showBleed}
             onChange={onBleedChange}
-            aria-label="Show bleed guide"
+            aria-label="Show bleed and trim guide"
           />
         </div>
 
-        {/* The client still owes us the real numbers — flag it in the UI so it
-            isn't silently shipped with placeholder measurements. */}
-        <p className="mt-2 text-[10px] text-amber-500/80">
-          Placeholder measurements — pending the printing spec sheet.
+        {/* Confirmed slab spec. The card opening is fixed; artwork only fills
+            the printable area around it. */}
+        <p className="mt-2 text-[10px] text-zinc-500">
+          Card opening fixed at {spec.openingWidthMm} × {spec.openingHeightMm}{" "}
+          mm. May be adjusted when the printer&apos;s final spec sheet arrives.
         </p>
       </section>
     </div>

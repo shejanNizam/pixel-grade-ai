@@ -1,17 +1,26 @@
-import { formatQuota } from "@/config/plans";
+import { formatCredits } from "@/config/plans";
 import Image from "next/image";
 import BackHeading from "../../_components/BackHeading";
 import { userDetails } from "../../_components/users/data";
 
 export default function UserDetailsPage() {
-  const { name, email, state, plan, scansUsed, scanQuota, renewsOn, cards } =
-    userDetails;
+  const {
+    name,
+    email,
+    state,
+    plan,
+    creditsUsed,
+    creditAllowance,
+    creditInterval,
+    renewsOn,
+    cards,
+  } = userDetails;
 
   // Unlimited plans have no bar to fill; percent is only meaningful when metered.
   const usedPercent =
-    scanQuota === null
+    creditAllowance === null
       ? null
-      : Math.min(100, Math.round((scansUsed / scanQuota) * 100));
+      : Math.min(100, Math.round((creditsUsed / creditAllowance) * 100));
 
   return (
     <div>
@@ -48,11 +57,11 @@ export default function UserDetailsPage() {
             </div>
 
             <p className="mt-3 text-xs text-zinc-400">
-              Scans used{" "}
+              Credits used{" "}
               <span className="font-medium text-white tabular-nums">
-                {scansUsed}
+                {creditsUsed.toLocaleString()}
               </span>{" "}
-              of {formatQuota(scanQuota)}
+              of {formatCredits(creditAllowance, creditInterval)}
             </p>
 
             {usedPercent !== null && (
@@ -61,7 +70,7 @@ export default function UserDetailsPage() {
                 aria-valuenow={usedPercent}
                 aria-valuemin={0}
                 aria-valuemax={100}
-                aria-label="Scan quota used"
+                aria-label="Credit allowance used"
                 className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10"
               >
                 <div

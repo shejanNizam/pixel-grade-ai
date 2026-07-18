@@ -1,6 +1,6 @@
 /* Frontend-only placeholder data. Swap for RTK Query hooks when the API exists. */
 
-import type { PlanName, ScanQuota } from "@/config/plans";
+import type { CreditAllowance, CreditInterval, PlanName } from "@/config/plans";
 
 /** "Blocked" is the only status the table renders in red; the rest read as active. */
 export type UserStatus = "New users" | "Subscribed" | "Blocked";
@@ -46,15 +46,16 @@ export const PAGE_SIZE = 6;
 export const ALL_USERS = "All users";
 
 /** The details screen — one poster, their plan usage, plus the cards they
- *  submitted. `scansUsed` against the plan's quota is what support needs when a
- *  user writes in about a scan that failed but still counted. */
+ *  submitted. `creditsUsed` against the plan's allowance is what support needs
+ *  when a user writes in about a scan that failed but still spent credits. */
 export const userDetails: {
   name: string;
   email: string;
   state: string;
   plan: PlanName;
-  scansUsed: number;
-  scanQuota: ScanQuota;
+  creditsUsed: number;
+  creditAllowance: CreditAllowance;
+  creditInterval: CreditInterval;
   renewsOn: string;
   cards: Array<{
     id: string;
@@ -66,8 +67,9 @@ export const userDetails: {
   email: "abc@gmail.com",
   state: "New York, USA",
   plan: "Pro",
-  scansUsed: 47,
-  scanQuota: 200,
+  creditsUsed: 1820,
+  creditAllowance: 6000,
+  creditInterval: "monthly",
   renewsOn: "2026-08-13",
   cards: [
     {

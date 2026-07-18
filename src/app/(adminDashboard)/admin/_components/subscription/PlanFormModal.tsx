@@ -4,9 +4,10 @@ import { App, ConfigProvider, Modal } from "antd";
 import { useEffect, useState } from "react";
 import { FiCheck, FiChevronDown } from "react-icons/fi";
 import {
+  CREDIT_INTERVALS,
   EXPIRY_OPTIONS,
   FACILITY_ROWS,
-  PLAN_NAMES,
+  type CreditInterval,
   type Facility,
   type Plan,
   type PlanExpiry,
@@ -15,52 +16,57 @@ import {
 
 interface PlanFormModalProps {
   open: boolean;
-  /** Present when editing; absent when creating. */
+  /** The plan being edited. The four plans are fixed, so this is edit-only —
+   *  there is no create mode. */
   plan?: Plan;
-  /** Names already used by other plans — one plan per name. */
-  takenNames: PlanName[];
   onCancel: () => void;
   onSubmit: (values: Omit<Plan, "id">) => void;
 }
 
-/** Pads the plan's facilities out to a full set of form rows. */
-const toRows = (facilities: Facility[] = []): Facility[] =>
-  Array.from({ length: FACILITY_ROWS }, (_, i) => ({
+/** Pads the plan's facilities out to a full set of form rows, never fewer than
+ *  the plan already has so no bullet is dropped. */
+const toRows = (facilities: Facility[] = []): Facility[] => {
+  const count = Math.max(FACILITY_ROWS, facilities.length);
+  return Array.from({ length: count }, (_, i) => ({
     text: facilities[i]?.text ?? "",
     included: facilities[i]?.included ?? false,
   }));
+};
 
 export default function PlanFormModal({
   open,
   plan,
-  takenNames,
   onCancel,
   onSubmit,
 }: PlanFormModalProps) {
   const { message } = App.useApp();
 
-  const available = PLAN_NAMES.filter((name) => !takenNames.includes(name));
-  const firstFree = available[0] ?? PLAN_NAMES[0];
-
-  const [name, setName] = useState<PlanName>(firstFree);
+  // Name is the plan's identity — the frontend gates features on it — so it is
+  // shown but not editable. Everything else is admin-editable.
+  const [name, setName] = useState<PlanName>("Free");
   const [price, setPrice] = useState("");
+  const [priceYearly, setPriceYearly] = useState("");
   const [expiry, setExpiry] = useState<PlanExpiry>("1 Month");
-  const [quota, setQuota] = useState("");
+  const [credits, setCredits] = useState("");
+  const [creditInterval, setCreditInterval] =
+    useState<CreditInterval>("monthly");
   const [unlimited, setUnlimited] = useState(false);
+  const [pixelscope, setPixelscope] = useState(false);
   const [facilities, setFacilities] = useState<Facility[]>(toRows());
 
-  // Reset on each open so an edit never leaks into the next create.
+  // Reload from the plan on each open so one edit never leaks into the next.
   useEffect(() => {
-    if (!open) return;
+    if (!open || !plan) return;
 
-    setName(plan?.name ?? firstFree);
-    setPrice(plan ? String(plan.price) : "");
-    setExpiry(plan?.expiry ?? "1 Month");
-    setUnlimited(plan ? plan.scanQuota === null : false);
-    setQuota(plan?.scanQuota != null ? String(plan.scanQuota) : "");
-    setFacilities(toRows(plan?.facilities));
-    // `firstFree` is derived from props and stable for a given open.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    setName(plan.name);
+    setPrice(String(plan.price));
+    setPriceYearly(String(plan.priceYearly));
+    setExpiry(plan.expiry);
+    setUnlimited(plan.credits === null);
+    setCredits(plan.credits != null ? String(plan.credits) : "");
+    setCreditInterval(plan.creditInterval);
+    setPixelscope(plan.pixelscope);
+    setFacilities(toRows(plan.facilities));
   }, [open, plan]);
 
   const updateFacility = (index: number, patch: Partial<Facility>) =>
@@ -70,12 +76,22 @@ export default function PlanFormModal({
 
   const submit = () => {
     if (!/^\d+$/.test(price.trim())) {
-      message.error("Enter the plan price in whole dollars.");
+      message.error("Enter the monthly price in whole dollars.");
       return;
     }
 
-    if (!unlimited && !/^\d+$/.test(quota.trim())) {
-      message.error("Enter the scan quota, or mark the plan unlimited.");
+    if (!/^\d+$/.test(priceYearly.trim())) {
+      message.error("Enter the yearly price (effective per month).");
+      return;
+    }
+
+    if (Number(priceYearly) > Number(price)) {
+      message.error("Yearly price should not exceed the monthly price.");
+      return;
+    }
+
+    if (!unlimited && !/^\d+$/.test(credits.trim())) {
+      message.error("Enter the credit allowance, or mark the plan unlimited.");
       return;
     }
 
@@ -91,8 +107,11 @@ export default function PlanFormModal({
     onSubmit({
       name,
       price: Number(price),
+      priceYearly: Number(priceYearly),
       expiry,
-      scanQuota: unlimited ? null : Number(quota),
+      credits: unlimited ? null : Number(credits),
+      creditInterval,
+      pixelscope,
       facilities: kept.map((facility) => ({
         text: facility.text.trim(),
         included: true,
@@ -109,36 +128,21 @@ export default function PlanFormModal({
     <ConfigProvider theme={{ components: { Modal: { contentBg: "#3f3f46" } } }}>
       <Modal open={open} onCancel={onCancel} footer={null} centered width={620}>
         <div className="py-2">
-          <label className="block">
+          <div className="block">
             <span className="text-lg font-semibold text-white">Plan Name</span>
-            <div className="relative mt-3">
-              <select
-                value={name}
-                onChange={(event) => setName(event.target.value as PlanName)}
-                className={`${fieldClass} appearance-none pr-10`}
-              >
-                {PLAN_NAMES.map((option) => (
-                  <option
-                    key={option}
-                    value={option}
-                    // Taken by another plan — but keep the one we're editing.
-                    disabled={
-                      takenNames.includes(option) && option !== plan?.name
-                    }
-                    className="bg-zinc-800"
-                  >
-                    {option}
-                  </option>
-                ))}
-              </select>
-              <FiChevronDown className="pointer-events-none absolute top-1/2 right-4 -translate-y-1/2 text-white" />
+            <div
+              className={`${fieldClass} mt-3 flex items-center justify-between text-zinc-300`}
+              aria-readonly
+            >
+              {name}
+              <span className="text-[11px] text-zinc-500">Fixed tier</span>
             </div>
-          </label>
+          </div>
 
           <div className="mt-6 grid gap-5 sm:grid-cols-2">
             <label className="block">
               <span className="text-lg font-semibold text-white">
-                Plan Price
+                Monthly Price
               </span>
               <div className="relative mt-3">
                 <span className="absolute top-1/2 left-4 -translate-y-1/2 text-sm text-white">
@@ -150,7 +154,8 @@ export default function PlanFormModal({
                     setPrice(event.target.value.replace(/\D/g, ""))
                   }
                   inputMode="numeric"
-                  placeholder="17"
+                  placeholder="10"
+                  aria-label="Monthly price in dollars"
                   className={`${fieldClass} pl-8`}
                 />
               </div>
@@ -158,45 +163,89 @@ export default function PlanFormModal({
 
             <label className="block">
               <span className="text-lg font-semibold text-white">
-                Plan Expiry
+                Yearly Price
               </span>
               <div className="relative mt-3">
-                <select
-                  value={expiry}
+                <span className="absolute top-1/2 left-4 -translate-y-1/2 text-sm text-white">
+                  $
+                </span>
+                <input
+                  value={priceYearly}
                   onChange={(event) =>
-                    setExpiry(event.target.value as PlanExpiry)
+                    setPriceYearly(event.target.value.replace(/\D/g, ""))
                   }
-                  className={`${fieldClass} appearance-none pr-10`}
+                  inputMode="numeric"
+                  placeholder="8"
+                  aria-label="Yearly price, effective per month"
+                  className={`${fieldClass} pl-8`}
+                />
+              </div>
+              <p className="mt-1.5 text-[11px] text-zinc-400">
+                Effective / month · charged{" "}
+                <span className="text-zinc-300">
+                  ${(Number(priceYearly) || 0) * 12}
+                </span>{" "}
+                up front per year
+              </p>
+            </label>
+          </div>
+
+          <div className="mt-6">
+            <span className="text-lg font-semibold text-white">Plan Expiry</span>
+            <div className="relative mt-3 sm:max-w-64">
+              <select
+                value={expiry}
+                onChange={(event) => setExpiry(event.target.value as PlanExpiry)}
+                className={`${fieldClass} appearance-none pr-10`}
+              >
+                {EXPIRY_OPTIONS.map((option) => (
+                  <option key={option} value={option} className="bg-zinc-800">
+                    {option}
+                  </option>
+                ))}
+              </select>
+              <FiChevronDown className="pointer-events-none absolute top-1/2 right-4 -translate-y-1/2 text-white" />
+            </div>
+          </div>
+
+          {/* Credits are what the plan actually meters (10 credits = 1 scan),
+              so they belong on the plan itself rather than being implied by the
+              facility copy. Free refills daily; paid plans refill monthly. */}
+          <div className="mt-6">
+            <span className="text-lg font-semibold text-white">
+              Credits Included
+            </span>
+            <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center">
+              <input
+                value={unlimited ? "" : credits}
+                onChange={(event) =>
+                  setCredits(event.target.value.replace(/\D/g, ""))
+                }
+                disabled={unlimited}
+                inputMode="numeric"
+                placeholder="1500"
+                aria-label="Credits included per interval"
+                className={`${fieldClass} sm:max-w-40 disabled:cursor-not-allowed disabled:text-zinc-500 disabled:placeholder:text-zinc-600`}
+              />
+
+              <div className="relative">
+                <select
+                  value={creditInterval}
+                  onChange={(event) =>
+                    setCreditInterval(event.target.value as CreditInterval)
+                  }
+                  disabled={unlimited}
+                  aria-label="Credit refill interval"
+                  className={`${fieldClass} appearance-none pr-10 capitalize disabled:cursor-not-allowed disabled:text-zinc-500`}
                 >
-                  {EXPIRY_OPTIONS.map((option) => (
+                  {CREDIT_INTERVALS.map((option) => (
                     <option key={option} value={option} className="bg-zinc-800">
-                      {option}
+                      per {option === "daily" ? "day" : "month"}
                     </option>
                   ))}
                 </select>
                 <FiChevronDown className="pointer-events-none absolute top-1/2 right-4 -translate-y-1/2 text-white" />
               </div>
-            </label>
-          </div>
-
-          {/* Scan quota is what the plan actually meters, so it belongs on the
-              plan itself rather than being implied by the facility copy. */}
-          <div className="mt-6">
-            <span className="text-lg font-semibold text-white">
-              Scans Included
-            </span>
-            <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center">
-              <input
-                value={unlimited ? "" : quota}
-                onChange={(event) =>
-                  setQuota(event.target.value.replace(/\D/g, ""))
-                }
-                disabled={unlimited}
-                inputMode="numeric"
-                placeholder="200"
-                aria-label="Scans included per period"
-                className={`${fieldClass} sm:max-w-48 disabled:cursor-not-allowed disabled:text-zinc-500 disabled:placeholder:text-zinc-600`}
-              />
 
               <button
                 type="button"
@@ -219,6 +268,35 @@ export default function PlanFormModal({
             </div>
           </div>
 
+          {/* PixelScope (Advanced scan) + Pixel Verified are paid-only; this
+              flag is what the scan screen gates the feature on. */}
+          <div className="mt-6 flex items-center justify-between rounded-xl border border-white/15 px-4 py-3">
+            <div>
+              <p className="text-sm font-semibold text-white">
+                PixelScope &amp; Pixel Verified
+              </p>
+              <p className="text-[11px] text-zinc-400">
+                Allow Advanced multi-image scans and the Pixel Verified badge.
+              </p>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={pixelscope}
+              aria-label="Enable PixelScope for this plan"
+              onClick={() => setPixelscope((on) => !on)}
+              className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${
+                pixelscope ? "bg-violet-500" : "bg-white/20"
+              }`}
+            >
+              <span
+                className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-all ${
+                  pixelscope ? "left-[calc(100%-1.375rem)]" : "left-0.5"
+                }`}
+              />
+            </button>
+          </div>
+
           <div className="mt-6">
             <h3 className="text-lg font-semibold text-white">Facilities</h3>
 
@@ -230,7 +308,7 @@ export default function PlanFormModal({
                     onChange={(event) =>
                       updateFacility(i, { text: event.target.value })
                     }
-                    placeholder="Add quote"
+                    placeholder="Add feature"
                     aria-label={`Facility ${i + 1}`}
                     className="min-w-0 flex-1 border-b border-transparent bg-transparent py-1 text-xs text-white outline-none placeholder:text-zinc-400 focus:border-white/30"
                   />
@@ -261,7 +339,7 @@ export default function PlanFormModal({
               onClick={submit}
               className="w-full max-w-xs rounded-full bg-violet-600 py-3 text-sm font-medium text-white transition-colors hover:bg-violet-700"
             >
-              {plan ? "Save plan" : "Create plan"}
+              Save plan
             </button>
           </div>
         </div>
