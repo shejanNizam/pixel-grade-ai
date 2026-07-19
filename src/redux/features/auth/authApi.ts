@@ -1,124 +1,122 @@
 import baseApi from "@/redux/api/baseApi";
+import type {
+  LoginData,
+  SignupData,
+  TResponse,
+  TUser,
+} from "@/types/auth";
 
-interface ResetPasswordPayload {
-  uidb64: string;
-  token: string;
-  new_password: string;
-}
-
-interface ResetPasswordResponse {
-  detail?: string;
-  message?: string;
-}
+// ---------------------------------------------------------------------------
+// Auth + onboarding endpoints, mapped 1:1 onto the Express backend.
+//
+// The signup flow is three calls: register → otp/send → otp/verify. Login is
+// refused (403) until the email is verified. Password reset arrives as an
+// emailed link to /reset-password?id=…&token=… — the token goes back as a
+// Bearer header, not in the body.
+// ---------------------------------------------------------------------------
 
 export const authApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    // 01. signup api endpoint
-    signup: builder.mutation({
-      query: (userData) => {
-        return {
-          url: "/api/auth/register/",
-          method: "POST",
-          body: userData,
-        };
-      },
-      invalidatesTags: ["auth"],
-    }),
-
-    // 02. login api endpoint
-    login: builder.mutation({
-      query: (credentials) => {
-        return {
-          url: "/api/auth/login/",
-          method: "POST",
-          body: credentials,
-        };
-      },
-      invalidatesTags: ["auth"],
-    }),
-
-    // 03. forget password api endpoint
-    forgetPassword: builder.mutation({
-      query: (email) => {
-        return {
-          url: "/api/auth/password/reset/",
-          method: "POST",
-          body: email,
-        };
-      },
-      invalidatesTags: ["auth"],
-    }),
-
-    // 04. verify forget otp api endpoint
-    verifyForgetOtp: builder.mutation({
-      query: ({ otp }) => {
-        return {
-          url: `/user/verify-forget-otp`,
-          method: "POST",
-          body: otp,
-        };
-      },
-      invalidatesTags: ["auth"],
-    }),
-
-    // 05. resend otp api endpoint
-    resendOtp: builder.mutation({
-      query: (email) => {
-        return {
-          url: `/user/resend?email=${encodeURIComponent(email)}`,
-          method: "POST",
-        };
-      },
-      invalidatesTags: ["auth"],
-    }),
-
-    // 06. confirm reset password api endpoint
-    resetPassword: builder.mutation<
-      ResetPasswordResponse,
-      ResetPasswordPayload
+    signup: builder.mutation<
+      SignupData,
+      { name: string; email: string; password: string; phone?: string }
     >({
-      query: (body) => {
-        return {
-          url: "/api/auth/password/reset/confirm/",
-          method: "POST",
-          body,
-        };
-      },
-      invalidatesTags: ["auth"],
+      query: (body) => ({
+        url: "/user/register",
+        method: "POST",
+        body,
+      }),
+      transformResponse: (res: TResponse<SignupData>) => res.data,
     }),
 
-    // 07. verify email api endpoint
-    verifyEmail: builder.mutation({
-      query: (email) => {
-        return {
-          url: `/user/verify-email?email=${encodeURIComponent(email)}`,
-          method: "POST",
-        };
-      },
-      invalidatesTags: ["auth"],
+    login: builder.mutation<LoginData, { email: string; password: string }>({
+      query: (body) => ({
+        url: "/auth/login",
+        method: "POST",
+        body,
+      }),
+      transformResponse: (res: TResponse<LoginData>) => res.data,
+      invalidatesTags: ["auth", "user"],
     }),
 
-    // 08. verify otp api endpoint
-    changePassword: builder.mutation({
-      query: (body) => {
-        return {
-          url: "/user/change-password",
-          method: "POST",
-          body,
-        };
-      },
-      invalidatesTags: ["auth"],
+    logoutApi: builder.mutation<null, void>({
+      query: () => ({
+        url: "/auth/logout",
+        method: "POST",
+      }),
+      invalidatesTags: ["auth", "user"],
+    }),
+
+    /** Email verification + any OTP-driven step. Rate limit: 5/hour. */
+    sendOtp: builder.mutation<null, { email: string }>({
+      query: (body) => ({
+        url: "/otp/send",
+        method: "POST",
+        body,
+      }),
+    }),
+
+    verifyOtp: builder.mutation<null, { email: string; otp: string }>({
+      query: (body) => ({
+        url: "/otp/verify",
+        method: "POST",
+        body,
+      }),
+    }),
+
+    forgetPassword: builder.mutation<null, { email: string }>({
+      query: (body) => ({
+        url: "/auth/forgot-password",
+        method: "POST",
+        body,
+      }),
+    }),
+
+    /** `token` comes from the emailed link's query string. */
+    resetPassword: builder.mutation<
+      null,
+      { id: string; token: string; newPassword: string }
+    >({
+      query: ({ id, token, newPassword }) => ({
+        url: "/auth/reset-password",
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: { id, newPassword },
+      }),
+    }),
+
+    changePassword: builder.mutation<
+      null,
+      { oldPassword: string; newPassword: string }
+    >({
+      query: (body) => ({
+        url: "/auth/change-password",
+        method: "POST",
+        body,
+      }),
+    }),
+
+    /** For Google-born accounts that have no password yet. */
+    setPassword: builder.mutation<null, { password: string }>({
+      query: (body) => ({
+        url: "/auth/set-password",
+        method: "POST",
+        body,
+      }),
     }),
   }),
 });
 
+export type { TUser };
+
 export const {
-  useSignupMutation, // 01
-  useLoginMutation, // 02
-  useForgetPasswordMutation, // 03
-  useVerifyForgetOtpMutation, // 04
-  useResendOtpMutation, // 05
-  useResetPasswordMutation, // 06
-  useVerifyEmailMutation, // 07
-  useChangePasswordMutation, // 08
+  useSignupMutation,
+  useLoginMutation,
+  useLogoutApiMutation,
+  useSendOtpMutation,
+  useVerifyOtpMutation,
+  useForgetPasswordMutation,
+  useResetPasswordMutation,
+  useChangePasswordMutation,
+  useSetPasswordMutation,
 } = authApi;

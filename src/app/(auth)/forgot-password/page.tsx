@@ -5,31 +5,66 @@ import AuthHeader, {
   authFootnote,
   authPrimaryBtn,
 } from "@/components/auth/AuthHeader";
+import { useForgetPasswordMutation } from "@/redux/features/auth/authApi";
+import { getApiErrorMessage } from "@/utils/apiError";
 import { App, Button, Form, Input } from "antd";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { FiMail } from "react-icons/fi";
+import { FiCheckCircle, FiMail } from "react-icons/fi";
 
 interface ForgotPasswordFormValues {
   email: string;
 }
 
+/**
+ * The backend emails a RESET LINK (to /reset-password?id=…&token=…), not an
+ * OTP — so on success this page becomes a "check your inbox" state rather
+ * than routing to the verify-code screen.
+ */
 const ForgotPassword: React.FC = () => {
-  const router = useRouter();
   const [form] = Form.useForm<ForgotPasswordFormValues>();
   const { message } = App.useApp();
-  const [isLoading, setIsLoading] = useState(false);
 
-  const onFinish = (values: ForgotPasswordFormValues): void => {
-    // Frontend-only demo: no API call. Route to the verify-code screen.
-    setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
-      message.success("OTP sent (demo).");
-      router.push(`/verify-code?email=${encodeURIComponent(values.email)}`);
-    }, 500);
+  const [forgetPassword, { isLoading }] = useForgetPasswordMutation();
+  const [sentTo, setSentTo] = useState<string | null>(null);
+
+  const onFinish = async (values: ForgotPasswordFormValues): Promise<void> => {
+    try {
+      await forgetPassword({ email: values.email }).unwrap();
+      setSentTo(values.email);
+    } catch (error) {
+      message.error(
+        getApiErrorMessage(error, "Could not send the reset email."),
+      );
+    }
   };
+
+  if (sentTo) {
+    return (
+      <>
+        <AuthHeader title="Check your email" />
+        <div className="text-center">
+          <FiCheckCircle className="mx-auto mb-4 text-4xl text-emerald-500" />
+          <p className="text-sm text-zinc-600 dark:text-zinc-300">
+            We sent a password reset link to{" "}
+            <span className="font-medium">{sentTo}</span>. Open it to choose a
+            new password. The link expires shortly, and the email may take a
+            minute to arrive.
+          </p>
+          <p className={authFootnote}>
+            Wrong address?{" "}
+            <button
+              type="button"
+              onClick={() => setSentTo(null)}
+              className={`ml-1 cursor-pointer ${authAccentLink}`}
+            >
+              Try again
+            </button>
+          </p>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
@@ -68,7 +103,7 @@ const ForgotPassword: React.FC = () => {
           loading={isLoading}
           className={authPrimaryBtn}
         >
-          Send OTP
+          Send reset link
         </Button>
 
         <p className={authFootnote}>

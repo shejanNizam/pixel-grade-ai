@@ -5,28 +5,50 @@ import AuthHeader, {
   authFootnote,
   authPrimaryBtn,
 } from "@/components/auth/AuthHeader";
+import {
+  useSendOtpMutation,
+  useSignupMutation,
+} from "@/redux/features/auth/authApi";
 import { SignupFormValues } from "@/types/auth";
+import { getApiErrorMessage } from "@/utils/apiError";
 import { App, Button, Form, Input } from "antd";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 import { FiKey, FiMail, FiPhone, FiUser } from "react-icons/fi";
 
 const Signup: React.FC = () => {
   const router = useRouter();
   const [form] = Form.useForm<SignupFormValues>();
   const { message } = App.useApp();
-  const [isLoading, setIsLoading] = useState(false);
 
-  const onFinish = (values: SignupFormValues): void => {
-    // Frontend-only demo: no API call. Simulate a successful signup.
-    void values;
-    setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
-      message.success("Account created (demo). Please sign in.");
-      router.push("/login");
-    }, 500);
+  const [signup, { isLoading: isSigningUp }] = useSignupMutation();
+  const [sendOtp, { isLoading: isSendingOtp }] = useSendOtpMutation();
+
+  const onFinish = async (values: SignupFormValues): Promise<void> => {
+    try {
+      await signup({
+        name: values.name,
+        email: values.email,
+        password: values.password,
+        phone: values.phone || undefined,
+      }).unwrap();
+
+      // Registration alone cannot log in — the email must be verified first.
+      // Send the OTP now and hand over to the verify screen.
+      try {
+        await sendOtp({ email: values.email }).unwrap();
+        message.success("Account created. We emailed you a 6-digit code.");
+      } catch {
+        message.warning(
+          "Account created, but the code could not be sent. Use Resend on the next screen.",
+        );
+      }
+      router.push(`/verify-code?email=${encodeURIComponent(values.email)}`);
+    } catch (error) {
+      message.error(
+        getApiErrorMessage(error, "Signup failed. Please try again."),
+      );
+    }
   };
 
   return (
@@ -42,7 +64,10 @@ const Signup: React.FC = () => {
         <Form.Item<SignupFormValues>
           name="name"
           className="mb-4!"
-          rules={[{ required: true, message: "Name is required" }]}
+          rules={[
+            { required: true, message: "Name is required" },
+            { min: 2, message: "Name must be at least 2 characters" },
+          ]}
         >
           <Input
             size="large"
@@ -71,12 +96,18 @@ const Signup: React.FC = () => {
         <Form.Item<SignupFormValues>
           name="phone"
           className="mb-4!"
-          rules={[{ required: true, message: "Phone number is required" }]}
+          rules={[
+            { required: true, message: "Phone number is required" },
+            {
+              pattern: /^\+[1-9]\d{6,14}$/,
+              message: "Use international format, e.g. +8801712345678",
+            },
+          ]}
         >
           <Input
             size="large"
             prefix={<FiPhone />}
-            placeholder="Enter phone no"
+            placeholder="e.g. +8801712345678"
             autoComplete="tel"
           />
         </Form.Item>
@@ -86,7 +117,11 @@ const Signup: React.FC = () => {
           className="mb-4!"
           rules={[
             { required: true, message: "Password is required" },
-            { min: 6, message: "Password must be at least 6 characters" },
+            { min: 8, message: "At least 8 characters" },
+            {
+              pattern: /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])/,
+              message: "Needs an uppercase letter, a number, and a special character",
+            },
           ]}
         >
           <Input.Password
@@ -126,7 +161,7 @@ const Signup: React.FC = () => {
           htmlType="submit"
           size="large"
           block
-          loading={isLoading}
+          loading={isSigningUp || isSendingOtp}
           className={authPrimaryBtn}
         >
           Create account

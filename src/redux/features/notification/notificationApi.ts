@@ -1,82 +1,94 @@
 import baseApi from "@/redux/api/baseApi";
+import type { TMeta, TResponse } from "@/types/auth";
+
+// ---------------------------------------------------------------------------
+// Notifications — bell dropdown, badge count, and the settings page.
+//
+// Notifications are minted server-side only (grade ready, price alert,
+// subscription, support) — there is no create endpoint. The settings PATCH
+// carries exactly the five preference booleans the backend stores; anything
+// else the old template UI showed does not exist.
+// ---------------------------------------------------------------------------
+
+export type NotifType =
+  | "grade_ready"
+  | "price_alert"
+  | "subscription"
+  | "support"
+  | "system";
+
+export interface TNotification {
+  _id: string;
+  type: NotifType;
+  title: string;
+  body?: string;
+  isRead: boolean;
+  createdAt: string;
+}
+
+export interface NotificationSettings {
+  inappEnabled: boolean;
+  emailGradeReady: boolean;
+  emailPriceAlert: boolean;
+  emailSubscription: boolean;
+  emailSupport: boolean;
+}
 
 export const notificationApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    // GET api - list all notifications
-    listNotifications: builder.query({
-      query: ({ unread, type, severity }) => ({
-        url: "/api/notifications/",
+    listNotifications: builder.query<
+      { data: TNotification[]; meta?: TMeta },
+      { page?: number; limit?: number } | void
+    >({
+      query: (params) => ({
+        url: "/notification",
         method: "GET",
-        params: {
-          ...(unread !== undefined && { unread }),
-          ...(type && { type }),
-          ...(severity && { severity }),
-        },
+        params: params ?? undefined,
+      }),
+      transformResponse: (res: TResponse<TNotification[]>) => ({
+        data: res.data,
+        meta: res.meta,
       }),
       providesTags: ["notification"],
     }),
 
-    // GET api - get unread notifications with count
-    getUnreadNotifications: builder.query({
-      query: () => ({
-        url: "/api/notifications/unread/",
-        method: "GET",
-      }),
-      providesTags: ["notification", "unreadCount"],
+    getUnreadCount: builder.query<{ unreadCount: number }, void>({
+      query: () => ({ url: "/notification/unread-count", method: "GET" }),
+      transformResponse: (res: TResponse<{ unreadCount: number }>) => res.data,
+      providesTags: ["unreadCount"],
     }),
 
-    // PATCH api - mark single notification as read
-    markAsRead: builder.mutation({
-      query: (id) => ({
-        url: `/api/notifications/${id}/read/`,
-        method: "PATCH",
-      }),
+    markAsRead: builder.mutation<null, string>({
+      query: (id) => ({ url: `/notification/${id}/read`, method: "PATCH" }),
       invalidatesTags: ["notification", "unreadCount"],
     }),
 
-    // PATCH api - mark all notifications as read
-    markAllAsRead: builder.mutation({
-      query: () => ({
-        url: "/api/notifications/read-all/",
-        method: "PATCH",
-      }),
+    markAllAsRead: builder.mutation<null, void>({
+      query: () => ({ url: "/notification/read-all", method: "PATCH" }),
       invalidatesTags: ["notification", "unreadCount"],
     }),
 
-    // DELETE api - delete single notification
-    deleteNotification: builder.mutation({
-      query: (id) => ({
-        url: `/api/notifications/${id}/delete/`,
-        method: "DELETE",
-      }),
+    deleteNotification: builder.mutation<null, string>({
+      query: (id) => ({ url: `/notification/${id}`, method: "DELETE" }),
       invalidatesTags: ["notification", "unreadCount"],
     }),
 
-    // DELETE api - clear all notifications
-    clearAllNotifications: builder.mutation({
-      query: () => ({
-        url: "/api/notifications/clear-all/",
-        method: "DELETE",
-      }),
-      invalidatesTags: ["notification", "unreadCount"],
-    }),
-
-    // GET api - get notification settings
-    getNotificationSettings: builder.query({
-      query: () => ({
-        url: "/api/notifications/settings/",
-        method: "GET",
-      }),
+    getNotificationSettings: builder.query<NotificationSettings, void>({
+      query: () => ({ url: "/notification/settings", method: "GET" }),
+      transformResponse: (res: TResponse<NotificationSettings>) => res.data,
       providesTags: ["notificationSettings"],
     }),
 
-    // PATCH api - update notification settings
-    updateNotificationSettings: builder.mutation({
-      query: (payload) => ({
-        url: "/api/notifications/settings/",
+    updateNotificationSettings: builder.mutation<
+      NotificationSettings,
+      Partial<NotificationSettings>
+    >({
+      query: (body) => ({
+        url: "/notification/settings",
         method: "PATCH",
-        body: payload,
+        body,
       }),
+      transformResponse: (res: TResponse<NotificationSettings>) => res.data,
       invalidatesTags: ["notificationSettings"],
     }),
   }),
@@ -84,11 +96,10 @@ export const notificationApi = baseApi.injectEndpoints({
 
 export const {
   useListNotificationsQuery,
-  useGetUnreadNotificationsQuery,
+  useGetUnreadCountQuery,
   useMarkAsReadMutation,
   useMarkAllAsReadMutation,
   useDeleteNotificationMutation,
-  useClearAllNotificationsMutation,
   useGetNotificationSettingsQuery,
   useUpdateNotificationSettingsMutation,
 } = notificationApi;

@@ -1,5 +1,7 @@
 "use client";
 
+import { ACCESS_TOKEN_KEY } from "@/redux/api/baseApi";
+import { useLogoutApiMutation } from "@/redux/features/auth/authApi";
 import { logout } from "@/redux/features/auth/authSlice";
 import { clearAuthCookie } from "@/utils/cookieUtils";
 import { App, Modal } from "antd";
@@ -84,21 +86,27 @@ export default function Sidebar({ isOpen, toggleSidebar }: SidebarProps) {
   const router = useRouter();
   const dispatch = useDispatch();
   const { message } = App.useApp();
+  const [logoutApi] = useLogoutApiMutation();
 
   const inSettings = pathname.startsWith(SETTINGS_ROOT);
   const [settingsOpen, setSettingsOpen] = useState(inSettings);
   const [confirmingSignOut, setConfirmingSignOut] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
 
-  const signOut = () => {
+  const signOut = async () => {
     setIsSigningOut(true);
 
-    // Clear both auth layers: the redux store + the cookie middleware reads,
-    // and the localStorage tokens baseApi attaches to requests.
+    // Best-effort server logout first — it clears the httpOnly refresh cookie
+    // this client cannot touch. Local cleanup happens regardless of outcome.
+    try {
+      await logoutApi().unwrap();
+    } catch {
+      // Offline or already-expired session — local sign-out still proceeds.
+    }
+
     dispatch(logout());
     clearAuthCookie();
-    localStorage.removeItem("token");
-    localStorage.removeItem("refresh");
+    localStorage.removeItem(ACCESS_TOKEN_KEY);
 
     setConfirmingSignOut(false);
     setIsSigningOut(false);

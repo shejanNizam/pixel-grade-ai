@@ -4,34 +4,71 @@ import AuthHeader, {
   authAccentLink,
   authPrimaryBtn,
 } from "@/components/auth/AuthHeader";
-import { App, Button, Checkbox, Form, Input } from "antd";
+import { useResetPasswordMutation } from "@/redux/features/auth/authApi";
+import { getApiErrorMessage } from "@/utils/apiError";
+import { App, Button, Form, Input } from "antd";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 import { FiKey } from "react-icons/fi";
 
 interface ResetPasswordFormValues {
   password: string;
   confirmPassword: string;
-  remember?: boolean;
 }
 
-const ResetPassword: React.FC = () => {
+/**
+ * Landing page for the emailed reset link: /reset-password?id=…&token=…
+ * The token authenticates the request (as a Bearer header) — without both
+ * params this page cannot work, so it says so instead of rendering a form
+ * that is guaranteed to fail.
+ */
+const ResetPasswordInner: React.FC = () => {
   const router = useRouter();
   const [form] = Form.useForm<ResetPasswordFormValues>();
   const { message } = App.useApp();
-  const [isLoading, setIsLoading] = useState(false);
+  const searchParams = useSearchParams();
 
-  const onFinish = (values: ResetPasswordFormValues): void => {
-    // Frontend-only demo: no API call. Simulate a successful reset.
-    void values;
-    setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
-      message.success("Password changed (demo). Please sign in.");
+  const id = searchParams.get("id") ?? "";
+  const token = searchParams.get("token") ?? "";
+
+  const [resetPassword, { isLoading }] = useResetPasswordMutation();
+
+  const onFinish = async (values: ResetPasswordFormValues): Promise<void> => {
+    try {
+      await resetPassword({
+        id,
+        token,
+        newPassword: values.password,
+      }).unwrap();
+      message.success("Password changed. Please sign in.");
       router.push("/login");
-    }, 500);
+    } catch (error) {
+      message.error(
+        getApiErrorMessage(
+          error,
+          "Reset failed — the link may have expired. Request a new one.",
+        ),
+      );
+    }
   };
+
+  if (!id || !token) {
+    return (
+      <>
+        <AuthHeader title="Reset password" />
+        <p className="text-center text-sm text-zinc-600 dark:text-zinc-300">
+          This page only works from the link in your reset email, and this
+          link looks incomplete or expired.
+        </p>
+        <p className="mt-4 text-center">
+          <Link href="/forgot-password" className={authAccentLink}>
+            Request a new reset link
+          </Link>
+        </p>
+      </>
+    );
+  }
 
   return (
     <>
@@ -42,14 +79,18 @@ const ResetPassword: React.FC = () => {
         layout="vertical"
         onFinish={onFinish}
         requiredMark={false}
-        initialValues={{ remember: true }}
       >
         <Form.Item<ResetPasswordFormValues>
           name="password"
           className="mb-4!"
           rules={[
             { required: true, message: "Password is required" },
-            { min: 6, message: "Password must be at least 6 characters" },
+            { min: 8, message: "At least 8 characters" },
+            {
+              pattern: /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])/,
+              message:
+                "Needs an uppercase letter, a number, and a special character",
+            },
           ]}
         >
           <Input.Password
@@ -63,7 +104,7 @@ const ResetPassword: React.FC = () => {
         <Form.Item<ResetPasswordFormValues>
           name="confirmPassword"
           dependencies={["password"]}
-          className="mb-3!"
+          className="mb-6!"
           rules={[
             { required: true, message: "Please confirm your password" },
             ({ getFieldValue }) => ({
@@ -84,21 +125,6 @@ const ResetPassword: React.FC = () => {
           />
         </Form.Item>
 
-        <div className="mb-6 flex items-center justify-between px-1">
-          <Form.Item<ResetPasswordFormValues>
-            name="remember"
-            valuePropName="checked"
-            className="mb-0!"
-          >
-            <Checkbox className="text-sm text-zinc-700 dark:text-zinc-200">
-              Remember me
-            </Checkbox>
-          </Form.Item>
-          <Link href="/forgot-password" className={`text-sm ${authAccentLink}`}>
-            Forgot password?
-          </Link>
-        </div>
-
         <Button
           type="primary"
           htmlType="submit"
@@ -113,5 +139,12 @@ const ResetPassword: React.FC = () => {
     </>
   );
 };
+
+// useSearchParams demands a Suspense boundary in the App Router.
+const ResetPassword: React.FC = () => (
+  <Suspense fallback={null}>
+    <ResetPasswordInner />
+  </Suspense>
+);
 
 export default ResetPassword;

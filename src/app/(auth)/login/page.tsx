@@ -5,28 +5,70 @@ import AuthHeader, {
   authFootnote,
   authPrimaryBtn,
 } from "@/components/auth/AuthHeader";
+import { ACCESS_TOKEN_KEY } from "@/redux/api/baseApi";
+import {
+  useLoginMutation,
+  useSendOtpMutation,
+} from "@/redux/features/auth/authApi";
+import { setCredentials } from "@/redux/features/auth/authSlice";
+import { useAppDispatch } from "@/redux/hooks";
 import { LoginFormValues } from "@/types/auth";
+import { getApiErrorMessage } from "@/utils/apiError";
+import { setAuthCookie } from "@/utils/cookieUtils";
 import { App, Button, Checkbox, Form, Input } from "antd";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 import { FiKey, FiMail } from "react-icons/fi";
 
 const Login: React.FC = () => {
   const router = useRouter();
   const [form] = Form.useForm<LoginFormValues>();
   const { message } = App.useApp();
-  const [isLoading, setIsLoading] = useState(false);
+  const dispatch = useAppDispatch();
 
-  const onFinish = (values: LoginFormValues): void => {
-    // Frontend-only demo: no API call. Simulate a successful login.
-    void values;
-    setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
-      message.success("Logged in (demo).");
-      router.push("/user-dashboard");
-    }, 500);
+  const [login, { isLoading }] = useLoginMutation();
+  const [sendOtp] = useSendOtpMutation();
+
+  const onFinish = async (values: LoginFormValues): Promise<void> => {
+    try {
+      const { user, accessToken } = await login({
+        email: values.email,
+        password: values.password,
+      }).unwrap();
+
+      localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
+      setAuthCookie(accessToken, user.role);
+      dispatch(setCredentials({ token: accessToken, user }));
+
+      message.success(`Welcome back, ${user.name}!`);
+
+      // Honor the middleware's ?next= redirect when it points somewhere
+      // internal; otherwise land on the role's home. A user aiming at /admin
+      // without the role just bounces back through the middleware.
+      const next = new URLSearchParams(window.location.search).get("next");
+      const roleHome =
+        user.role === "admin" || user.role === "super_admin"
+          ? "/admin"
+          : "/user-dashboard";
+      router.push(next?.startsWith("/") ? next : roleHome);
+    } catch (error) {
+      const text = getApiErrorMessage(error, "Login failed. Please try again.");
+
+      // Unverified accounts are refused with a 403 naming the problem — send
+      // the user straight into the OTP flow instead of leaving them stuck.
+      if (/verify your email/i.test(text)) {
+        message.info("Please verify your email first. Sending a new code…");
+        try {
+          await sendOtp({ email: values.email }).unwrap();
+        } catch {
+          // The verify page has its own resend button; failing here is fine.
+        }
+        router.push(`/verify-code?email=${encodeURIComponent(values.email)}`);
+        return;
+      }
+
+      message.error(text);
+    }
   };
 
   return (
