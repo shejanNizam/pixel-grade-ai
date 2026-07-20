@@ -1,91 +1,156 @@
 "use client";
 
+import {
+  useGetAllTransactionsQuery,
+  type TTransaction,
+  type TTxnStatus,
+} from "@/redux/features/transaction/transactionApi";
 import { Table, type TableColumnsType } from "antd";
-import { useMemo, useState } from "react";
-import { FiChevronLeft, FiChevronRight, FiSearch } from "react-icons/fi";
-import { PAGE_SIZE, transactions, type Transaction } from "./data";
+import { useState } from "react";
+import {
+  FiChevronDown,
+  FiChevronLeft,
+  FiChevronRight,
+} from "react-icons/fi";
+import { formatUserDate } from "../users/format";
+
+const PAGE_SIZE = 6;
+
+const STATUS_FILTERS = [
+  { value: "all", label: "All statuses" },
+  { value: "succeeded", label: "Succeeded" },
+  { value: "pending", label: "Pending" },
+  { value: "failed", label: "Failed" },
+  { value: "refunded", label: "Refunded" },
+] as const;
+
+type StatusFilter = (typeof STATUS_FILTERS)[number]["value"];
+
+const statusColor: Record<TTxnStatus, string> = {
+  succeeded: "text-emerald-400",
+  pending: "text-amber-400",
+  failed: "text-red-400",
+  refunded: "text-zinc-400",
+};
+
+const userName = (row: TTransaction) =>
+  typeof row.user === "object" ? row.user.name : "—";
+
+const userEmail = (row: TTransaction) =>
+  typeof row.user === "object" ? row.user.email : null;
 
 export default function TransactionsTable() {
-  const [query, setQuery] = useState("");
+  const [page, setPage] = useState(1);
+  const [status, setStatus] = useState<StatusFilter>("all");
 
-  const rows = useMemo(() => {
-    const term = query.trim().toLowerCase();
-    if (!term) return transactions;
+  const { data, isFetching } = useGetAllTransactionsQuery({
+    page,
+    limit: PAGE_SIZE,
+    sort: "-createdAt",
+    ...(status !== "all" ? { status } : {}),
+  });
 
-    return transactions.filter(
-      (row) =>
-        row.name.toLowerCase().includes(term) ||
-        row.ref.toLowerCase().includes(term) ||
-        row.tranId.toLowerCase().includes(term),
-    );
-  }, [query]);
+  const rows = data?.data ?? [];
+  const total = data?.meta?.total ?? 0;
 
-  const cell = (value: string) => (
-    <span className="text-xs text-zinc-300">{value}</span>
-  );
-
-  const columns: TableColumnsType<Transaction> = [
+  const columns: TableColumnsType<TTransaction> = [
     {
       title: "Id",
-      dataIndex: "ref",
       key: "ref",
       width: 100,
-      render: (ref: string) => (
-        <span className="text-xs text-zinc-400">{ref}</span>
+      render: (_, row) => (
+        <span className="text-xs text-zinc-400">#{row._id.slice(-4)}</span>
       ),
     },
     {
       title: "Name",
-      dataIndex: "name",
       key: "name",
       align: "center",
-      sorter: (a, b) => a.name.localeCompare(b.name),
-      render: cell,
+      sorter: (a, b) => userName(a).localeCompare(userName(b)),
+      render: (_, row) => (
+        <span className="text-xs text-zinc-300">{userName(row)}</span>
+      ),
     },
     {
-      title: "Tran. ID",
-      dataIndex: "tranId",
-      key: "tranId",
+      title: "Invoice",
+      key: "invoice",
       align: "center",
-      render: cell,
+      render: (_, row) => (
+        <span className="text-xs text-zinc-300">
+          {row.invoiceNumber ?? row.stripeRef ?? "—"}
+        </span>
+      ),
     },
     {
       title: "Email",
-      dataIndex: "email",
       key: "email",
       align: "center",
-      render: cell,
+      render: (_, row) => {
+        const email = userEmail(row);
+        return email ? (
+          // `text-*!` beats antd's `.ant-app a { color: colorLink }`.
+          <a
+            href={`mailto:${email}`}
+            className="text-xs text-violet-400! hover:underline"
+          >
+            {email}
+          </a>
+        ) : (
+          <span className="text-xs text-zinc-500">—</span>
+        );
+      },
     },
     {
       title: "Date",
-      dataIndex: "date",
       key: "date",
       align: "center",
-      render: cell,
+      render: (_, row) => (
+        <span className="text-xs text-zinc-300">
+          {formatUserDate(row.createdAt)}
+        </span>
+      ),
     },
     {
-      title: "Country",
-      dataIndex: "country",
-      key: "country",
-      align: "center",
-      render: cell,
-    },
-    {
-      title: "Plan",
-      dataIndex: "plan",
-      key: "plan",
+      title: "Type",
+      key: "type",
       align: "center",
       width: 110,
-      render: cell,
+      render: (_, row) => (
+        <span className="text-xs text-zinc-300">
+          {row.type === "subscription"
+            ? typeof row.plan === "object"
+              ? row.plan.name
+              : "Subscription"
+            : "Slab order"}
+        </span>
+      ),
+    },
+    {
+      title: "Status",
+      key: "status",
+      align: "center",
+      width: 110,
+      render: (_, row) => (
+        <span
+          className={`inline-flex items-center gap-1.5 text-xs capitalize ${statusColor[row.status]}`}
+        >
+          <span className="h-1 w-1 rounded-full bg-current" />
+          {row.status}
+        </span>
+      ),
     },
     {
       title: "Total",
-      dataIndex: "total",
       key: "total",
       align: "center",
       width: 110,
-      render: (total: string) => (
-        <span className="text-xs text-white tabular-nums">{total}</span>
+      render: (_, row) => (
+        <span className="text-xs text-white tabular-nums">
+          {row.amount.toLocaleString("en-US", {
+            style: "currency",
+            currency: (row.currency || "usd").toUpperCase(),
+          })}
+        </span>
       ),
     },
   ];
@@ -94,31 +159,41 @@ export default function TransactionsTable() {
     <section>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <h2 className="text-lg font-medium text-white">
-          Total transactions ( {rows.length} )
+          Total transactions ( {total} )
         </h2>
 
-        <div className="relative w-full sm:w-80">
-          <input
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search by name or ID"
-            aria-label="Search transactions by name or ID"
-            className="w-full rounded-full bg-white py-2.5 pr-13 pl-4 text-sm text-zinc-900 outline-none placeholder:text-zinc-400"
-          />
-          <span className="absolute top-1/2 right-1 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-violet-600 text-white">
-            <FiSearch size={16} />
-          </span>
+        <div className="relative">
+          <select
+            value={status}
+            onChange={(event) => {
+              setStatus(event.target.value as StatusFilter);
+              setPage(1);
+            }}
+            aria-label="Filter transactions by status"
+            className="w-44 appearance-none rounded-full bg-white py-2.5 pr-9 pl-4 text-sm text-zinc-900 outline-none"
+          >
+            {STATUS_FILTERS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+          <FiChevronDown className="pointer-events-none absolute top-1/2 right-3.5 -translate-y-1/2 text-zinc-600" />
         </div>
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-white/8">
-        <Table<Transaction>
+        <Table<TTransaction>
           columns={columns}
           dataSource={rows}
-          rowKey="id"
+          rowKey="_id"
+          loading={isFetching}
           pagination={{
+            current: page,
             pageSize: PAGE_SIZE,
+            total,
             showSizeChanger: false,
+            onChange: setPage,
             // The design labels the arrows "Back" and "Next" rather than using
             // bare chevrons.
             itemRender: (_page, type, element) => {

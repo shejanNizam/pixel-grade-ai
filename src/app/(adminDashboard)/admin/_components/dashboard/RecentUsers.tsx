@@ -1,35 +1,73 @@
 "use client";
 
+import {
+  useGetAllUsersQuery,
+  useUpdateUserByAdminMutation,
+} from "@/redux/features/user/userApi";
+import type { TUser } from "@/types/auth";
 import { App, Dropdown, Table, type TableColumnsType } from "antd";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { FiMoreVertical, FiSearch } from "react-icons/fi";
-import { recentUsers, recentUsersTotal, type RecentUser } from "./data";
+import BlockUserModal from "../users/BlockUserModal";
+import { formatUserDate, userRef } from "../users/format";
 
 export default function RecentUsers() {
   const router = useRouter();
   const { message } = App.useApp();
+
   const [query, setQuery] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [blockingUser, setBlockingUser] = useState<TUser | null>(null);
 
-  const rows = useMemo(() => {
-    const term = query.trim().toLowerCase();
-    if (!term) return recentUsers;
-
-    return recentUsers.filter(
-      (user) =>
-        user.name.toLowerCase().includes(term) ||
-        user.ref.toLowerCase().includes(term),
-    );
+  // Search runs server-side (QueryBuilder regex on name/email) — debounce so
+  // typing doesn't fire a request per keystroke.
+  useEffect(() => {
+    const t = setTimeout(() => setSearchTerm(query.trim()), 400);
+    return () => clearTimeout(t);
   }, [query]);
 
-  const columns: TableColumnsType<RecentUser> = [
+  const { data, isFetching } = useGetAllUsersQuery({
+    limit: 5,
+    sort: "-createdAt",
+    ...(searchTerm ? { searchTerm } : {}),
+  });
+  const [updateUser] = useUpdateUserByAdminMutation();
+
+  const users = data?.data ?? [];
+  const total = data?.meta?.total ?? 0;
+
+  const confirmBlock = async (reason: string, description: string) => {
+    if (!blockingUser) return;
+    if (!reason.trim()) {
+      message.error("A block reason is required.");
+      return;
+    }
+
+    try {
+      await updateUser({
+        userId: blockingUser._id,
+        body: {
+          status: "blocked",
+          blockReason: description.trim()
+            ? `${reason.trim()} — ${description.trim()}`
+            : reason.trim(),
+        },
+      }).unwrap();
+      message.success(`${blockingUser.name} blocked.`);
+      setBlockingUser(null);
+    } catch {
+      message.error("Couldn't block the user. Try again.");
+    }
+  };
+
+  const columns: TableColumnsType<TUser> = [
     {
       title: "Id",
-      dataIndex: "ref",
       key: "ref",
       width: 100,
-      render: (ref: string) => (
-        <span className="text-xs text-zinc-400">{ref}</span>
+      render: (_, user) => (
+        <span className="text-xs text-zinc-400">{userRef(user)}</span>
       ),
     },
     {
@@ -58,12 +96,13 @@ export default function RecentUsers() {
       ),
     },
     {
-      title: "Date",
-      dataIndex: "date",
+      title: "Joined",
       key: "date",
       align: "center",
-      render: (date: string) => (
-        <span className="text-xs text-zinc-300">{date}</span>
+      render: (_, user) => (
+        <span className="text-xs text-zinc-300">
+          {formatUserDate(user.createdAt)}
+        </span>
       ),
     },
     {
@@ -71,20 +110,26 @@ export default function RecentUsers() {
       dataIndex: "status",
       key: "status",
       align: "center",
-      render: (status: string) => (
-        <span className="inline-flex items-center gap-1.5 text-xs text-emerald-400">
+      render: (status: TUser["status"]) => (
+        <span
+          className={`inline-flex items-center gap-1.5 text-xs capitalize ${
+            status === "blocked" ? "text-red-400" : "text-emerald-400"
+          }`}
+        >
           <span className="h-1 w-1 rounded-full bg-current" />
           {status}
         </span>
       ),
     },
     {
-      title: "Country",
-      dataIndex: "country",
-      key: "country",
+      title: "Role",
+      dataIndex: "role",
+      key: "role",
       align: "center",
-      render: (country: string) => (
-        <span className="text-xs text-zinc-300">{country}</span>
+      render: (role: TUser["role"]) => (
+        <span className="text-xs text-zinc-300 capitalize">
+          {role.replace("_", " ")}
+        </span>
       ),
     },
     {
@@ -102,8 +147,8 @@ export default function RecentUsers() {
               { key: "block", label: "Block user", danger: true },
             ],
             onClick: ({ key }) => {
-              if (key === "details") router.push(`/admin/users/${user.id}`);
-              else message.info(`Block ${user.name} (demo).`);
+              if (key === "details") router.push(`/admin/users/${user._id}`);
+              else setBlockingUser(user);
             },
           }}
         >
@@ -123,15 +168,15 @@ export default function RecentUsers() {
     <section>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <h2 className="text-lg font-medium text-white">
-          Most recent users ( {recentUsersTotal} )
+          Most recent users ( {total} )
         </h2>
 
         <div className="relative w-full sm:w-80">
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search by name or ID"
-            aria-label="Search users by name or ID"
+            placeholder="Search by name or email"
+            aria-label="Search users by name or email"
             className="w-full rounded-full bg-white py-2.5 pr-13 pl-4 text-sm text-zinc-900 outline-none placeholder:text-zinc-400"
           />
           <span className="absolute top-1/2 right-1 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-violet-600 text-white">
@@ -141,15 +186,23 @@ export default function RecentUsers() {
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-white/8">
-        <Table<RecentUser>
+        <Table<TUser>
           columns={columns}
-          dataSource={rows}
-          rowKey="id"
+          dataSource={users}
+          rowKey="_id"
+          loading={isFetching}
           pagination={false}
           scroll={{ x: 900 }}
           size="middle"
         />
       </div>
+
+      <BlockUserModal
+        open={blockingUser !== null}
+        userName={blockingUser?.name ?? ""}
+        onCancel={() => setBlockingUser(null)}
+        onSend={confirmBlock}
+      />
     </section>
   );
 }

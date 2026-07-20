@@ -85,9 +85,11 @@ export const backgroundStyles: BackgroundStyle[] = [
 ];
 
 // ---------------------------------------------------------------------------
-// Graded cards available to slab
+// Graded cards available to slab — the view model the preview renders. Built
+// from real grading reports on the page; only graded cards can be slabbed.
 // ---------------------------------------------------------------------------
 export interface GradedCard {
+  /** The grading report id — what POST /slab takes as reportId. */
   id: string;
   name: string;
   set: string;
@@ -100,42 +102,3 @@ export interface GradedCard {
   pixelVerified: boolean;
   certNumber: string;
 }
-
-export const gradedCards: GradedCard[] = [
-  {
-    id: "rep-1",
-    name: "Charizard ex",
-    set: "Pokemon 151",
-    number: "199/165",
-    language: "English",
-    grade: 9.0,
-    gradeLabel: "MINT",
-    confidence: 92,
-    pixelVerified: true,
-    certNumber: "PG-2026-0001",
-  },
-  {
-    id: "rep-2",
-    name: "Blastoise",
-    set: "Base Set Unlimited",
-    number: "2/102",
-    language: "English",
-    grade: 8.5,
-    gradeLabel: "NM-MT",
-    confidence: 87,
-    pixelVerified: false,
-    certNumber: "PG-2026-0002",
-  },
-  {
-    id: "rep-3",
-    name: "Pikachu",
-    set: "Base Set Unlimited",
-    number: "58/102",
-    language: "Japanese",
-    grade: 9.5,
-    gradeLabel: "GEM-MT",
-    confidence: 95,
-    pixelVerified: true,
-    certNumber: "PG-2026-0003",
-  },
-];

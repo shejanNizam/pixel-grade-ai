@@ -1,14 +1,17 @@
 "use client";
 
-import { App } from "antd";
 import { useState } from "react";
 import ImageDropzone from "./ImageDropzone";
 import StartInspectionButton from "./StartInspectionButton";
 
-export default function QuickImport() {
+interface QuickImportProps {
+  /** Hands the chosen files to the scan pipeline (front, back). */
+  onStart: (front: File[], back: File[]) => void;
+}
+
+export default function QuickImport({ onStart }: QuickImportProps) {
   const [front, setFront] = useState<File | null>(null);
   const [back, setBack] = useState<File | null>(null);
-  const { message } = App.useApp();
 
   const ready = Boolean(front && back);
 
@@ -28,7 +31,9 @@ export default function QuickImport() {
         className="mt-5"
         disabled={!ready}
         hint={ready ? undefined : "Import a front and a back image to continue"}
-        onStart={() => message.success("Inspection started (demo).")}
+        onStart={() => {
+          if (front && back) onStart([front], [back]);
+        }}
       />
     </section>
   );

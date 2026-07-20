@@ -1,30 +1,41 @@
+"use client";
+
 import { CREDITS_PER_SCAN } from "@/config/plans";
+import { useGetMySubscriptionQuery } from "@/redux/features/subscription/subscriptionApi";
 import Link from "next/link";
-import { DEMO_CREDITS_USED, demoPlan } from "./demoAccount";
 
 /** Credits balance for the current interval.
  *
  * The product meters usage in credits (10 credits = 1 scan). Free tops up
- * daily; paid plans top up monthly. Swap the demo values for the user's real
- * balance when the subscription API exists. */
-const PLAN_NAME = demoPlan.name;
-const CREDITS_USED = DEMO_CREDITS_USED;
-const CREDIT_ALLOWANCE = demoPlan.credits; // null = unlimited (Enterprise)
-const INTERVAL = demoPlan.creditInterval;
-
+ * daily; paid plans top up monthly. */
 export default function CreditBalanceCard() {
-  const unlimited = CREDIT_ALLOWANCE === null;
-  const remaining = unlimited
-    ? null
-    : Math.max(CREDIT_ALLOWANCE - CREDITS_USED, 0);
-  const pct = unlimited
-    ? 0
-    : Math.min((CREDITS_USED / CREDIT_ALLOWANCE) * 100, 100);
+  const { data, isLoading } = useGetMySubscriptionQuery();
+
+  if (isLoading || !data) {
+    return (
+      <div className="flex items-center gap-4">
+        <div className="h-24 min-w-56 animate-pulse rounded-xl border border-white/10 bg-[#111113]" />
+      </div>
+    );
+  }
+
+  const { plan, credits } = data;
+  const allowance = plan.creditAmount; // null = unlimited (Enterprise)
+  const unlimited = allowance === null || credits.balance === null;
+  const remaining = unlimited ? null : Math.max(credits.balance ?? 0, 0);
+  const used =
+    unlimited || allowance === null
+      ? 0
+      : Math.max(allowance - (remaining ?? 0), 0);
+  const pct =
+    unlimited || allowance === null || allowance === 0
+      ? 0
+      : Math.min((used / allowance) * 100, 100);
   // "Low" once there aren't enough credits left for a full scan.
   const low = remaining !== null && remaining < CREDITS_PER_SCAN;
-  const scansLeft = remaining === null ? null : Math.floor(remaining / CREDITS_PER_SCAN);
+  const scansLeft = credits.scansLeft;
   const resetLabel =
-    INTERVAL === "daily" ? "Resets daily" : "Resets monthly";
+    plan.creditInterval === "daily" ? "Resets daily" : "Resets monthly";
 
   return (
     <div className="flex items-center gap-4">
@@ -33,11 +44,11 @@ export default function CreditBalanceCard() {
           <p className="text-xs text-zinc-400">
             Credits left
             <span className="ml-1.5 rounded bg-violet-500/20 px-1.5 py-0.5 text-[10px] font-medium text-violet-300">
-              {PLAN_NAME}
+              {plan.name}
             </span>
           </p>
           <p className="text-sm font-semibold text-white tabular-nums">
-            {unlimited ? (
+            {unlimited || allowance === null ? (
               "Unlimited"
             ) : (
               <>
@@ -46,20 +57,20 @@ export default function CreditBalanceCard() {
                 </span>
                 <span className="text-zinc-500">
                   {" "}
-                  / {CREDIT_ALLOWANCE.toLocaleString()}
+                  / {allowance.toLocaleString()}
                 </span>
               </>
             )}
           </p>
         </div>
 
-        {!unlimited && (
+        {!unlimited && allowance !== null && (
           <div
             role="progressbar"
-            aria-valuenow={CREDITS_USED}
+            aria-valuenow={used}
             aria-valuemin={0}
-            aria-valuemax={CREDIT_ALLOWANCE}
-            aria-label={`${CREDITS_USED} of ${CREDIT_ALLOWANCE} credits used`}
+            aria-valuemax={allowance}
+            aria-label={`${used} of ${allowance} credits used`}
             className="mt-2.5 h-1.5 w-full overflow-hidden rounded-full bg-white/10"
           >
             <div

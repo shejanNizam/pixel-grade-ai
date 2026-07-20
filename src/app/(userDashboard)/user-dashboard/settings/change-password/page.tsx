@@ -1,8 +1,8 @@
 "use client";
 
+import { useChangePasswordMutation } from "@/redux/features/auth/authApi";
 import { App, Button, Form, Input } from "antd";
 import Link from "next/link";
-import { useState } from "react";
 import { FiKey } from "react-icons/fi";
 import BackLink from "../../_components/settings/BackLink";
 
@@ -15,17 +15,20 @@ interface ChangePasswordValues {
 export default function ChangePassword() {
   const [form] = Form.useForm<ChangePasswordValues>();
   const { message } = App.useApp();
-  const [isSaving, setIsSaving] = useState(false);
+  const [changePassword, { isLoading: isSaving }] = useChangePasswordMutation();
 
-  const onFinish = (values: ChangePasswordValues): void => {
-    // Frontend-only demo: no API call.
-    void values;
-    setIsSaving(true);
-    setTimeout(() => {
-      setIsSaving(false);
+  const onFinish = async (values: ChangePasswordValues) => {
+    try {
+      await changePassword({
+        oldPassword: values.oldPassword,
+        newPassword: values.newPassword,
+      }).unwrap();
       form.resetFields();
-      message.success("Password changed (demo).");
-    }, 500);
+      message.success("Password changed.");
+    } catch (err) {
+      const data = (err as { data?: { message?: string } })?.data;
+      message.error(data?.message ?? "Couldn't change the password. Try again.");
+    }
   };
 
   return (

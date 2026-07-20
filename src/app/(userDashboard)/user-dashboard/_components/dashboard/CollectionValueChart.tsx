@@ -1,29 +1,38 @@
 "use client";
 
+import { useGetCollectionValueOverTimeQuery } from "@/redux/features/collection/collectionApi";
 import { chartInk } from "@/utils/chartPalette";
-import { useRef, useState } from "react";
-import { FiCalendar, FiChevronDown, FiTrendingUp } from "react-icons/fi";
-import { collectionValue } from "./data";
+import { useMemo, useRef, useState } from "react";
+import { FiCalendar, FiTrendingUp } from "react-icons/fi";
 
 const W = 820;
 const H = 380;
 const PAD = { top: 20, right: 16, bottom: 32, left: 52 };
 
-const MAX = 250_000;
-const TICKS = [0, 50_000, 100_000, 150_000, 200_000, 250_000];
-
 const plotW = W - PAD.left - PAD.right;
 const plotH = H - PAD.top - PAD.bottom;
 
-const xAt = (i: number) =>
-  PAD.left + (i / (collectionValue.length - 1)) * plotW;
-const yAt = (v: number) => PAD.top + plotH - (v / MAX) * plotH;
+const TICK_COUNT = 5;
 
-const points = collectionValue.map((d, i) => ({
-  ...d,
-  x: xAt(i),
-  y: yAt(d.value),
-}));
+/** "2026-07" → "Jul"; the year lives in the range button and tooltip. */
+const monthLabel = (key: string) => {
+  const [year, month] = key.split("-").map(Number);
+  return new Date(Date.UTC(year, month - 1, 1)).toLocaleDateString("en-US", {
+    month: "short",
+    timeZone: "UTC",
+  });
+};
+
+/** Round the axis max up to a clean step so ticks land on round numbers. */
+const niceMax = (raw: number) => {
+  if (raw <= 0) return 100;
+  const step = Math.pow(10, Math.floor(Math.log10(raw)));
+  return Math.ceil(raw / step) * step;
+};
+
+const fmtAxis = (v: number) => (v >= 1000 ? `${v / 1000}K` : String(v));
+const fmtValue = (v: number) =>
+  v >= 1000 ? `$${(v / 1000).toFixed(1)}K` : `$${v.toFixed(0)}`;
 
 /** Catmull-Rom through every point, emitted as cubic beziers. */
 function smoothPath(pts: { x: number; y: number }[]): string {
@@ -42,22 +51,47 @@ function smoothPath(pts: { x: number; y: number }[]): string {
   return d;
 }
 
-const linePath = smoothPath(points);
-const areaPath = `${linePath} L ${points[points.length - 1].x} ${
-  PAD.top + plotH
-} L ${points[0].x} ${PAD.top + plotH} Z`;
-
-const fmtAxis = (v: number) => `${v / 1000}K`;
-const fmtValue = (v: number) => `$${(v / 1000).toFixed(1)}K`;
-
 export default function CollectionValueChart() {
   const svgRef = useRef<SVGSVGElement>(null);
   const [hover, setHover] = useState<number | null>(null);
 
-  // Map the pointer's client x into viewBox units, then snap to the nearest month.
+  const { data, isLoading } = useGetCollectionValueOverTimeQuery({
+    months: 12,
+  });
+
+  const series = useMemo(() => data ?? [], [data]);
+
+  const { points, ticks, yAt, rangeLabel, latest, deltaPct } = useMemo(() => {
+    const max = niceMax(Math.max(...series.map((d) => d.value), 0));
+    const tickStep = max / TICK_COUNT;
+    const ticks = Array.from({ length: TICK_COUNT + 1 }, (_, i) => i * tickStep);
+
+    const yAt = (v: number) => PAD.top + plotH - (v / max) * plotH;
+    const xAt = (i: number) =>
+      PAD.left + (series.length > 1 ? (i / (series.length - 1)) * plotW : 0);
+
+    const points = series.map((d, i) => ({ ...d, x: xAt(i), y: yAt(d.value) }));
+
+    const first = series[0];
+    const last = series[series.length - 1];
+    const rangeLabel =
+      first && last
+        ? `${monthLabel(first.month)} ${first.month.slice(0, 4)} - ${monthLabel(last.month)} ${last.month.slice(0, 4)}`
+        : "";
+
+    const prev = series[series.length - 2];
+    // % vs the previous month; a zero baseline has no meaningful percentage.
+    const deltaPct =
+      prev && prev.value > 0 && last
+        ? ((last.value - prev.value) / prev.value) * 100
+        : null;
+
+    return { points, ticks, yAt, rangeLabel, latest: last, deltaPct };
+  }, [series]);
+
   const handleMove = (e: React.PointerEvent<SVGSVGElement>) => {
     const rect = svgRef.current?.getBoundingClientRect();
-    if (!rect) return;
+    if (!rect || points.length < 2) return;
     const x = ((e.clientX - rect.left) / rect.width) * W;
     const i = Math.round(((x - PAD.left) / plotW) * (points.length - 1));
     setHover(Math.min(points.length - 1, Math.max(0, i)));
@@ -65,29 +99,48 @@ export default function CollectionValueChart() {
 
   const active = hover === null ? null : points[hover];
 
+  if (isLoading) {
+    return (
+      <section className="h-full min-h-96 animate-pulse rounded-2xl border border-violet-500/40 bg-[#111113]" />
+    );
+  }
+
+  const linePath = points.length > 1 ? smoothPath(points) : "";
+  const areaPath =
+    points.length > 1
+      ? `${linePath} L ${points[points.length - 1].x} ${PAD.top + plotH} L ${points[0].x} ${PAD.top + plotH} Z`
+      : "";
+
   return (
     <section className="rounded-2xl border border-violet-500/40 bg-[#111113] p-5">
       <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="text-sm text-zinc-400">Collection value over time</h2>
           <p className="mt-1.5 flex items-center gap-2.5">
-            <span className="text-xl font-semibold text-white">$ 5.2K</span>
-            <span className="inline-flex items-center gap-1 rounded-md bg-emerald-500/12 px-1.5 py-0.5 text-[11px] font-medium text-emerald-400">
-              24.6 %
-              <FiTrendingUp />
+            <span className="text-xl font-semibold text-white">
+              {fmtValue(latest?.value ?? 0)}
             </span>
+            {deltaPct !== null && (
+              <span
+                className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-medium ${
+                  deltaPct >= 0
+                    ? "bg-emerald-500/12 text-emerald-400"
+                    : "bg-red-500/12 text-red-400"
+                }`}
+              >
+                {deltaPct >= 0 ? "+" : ""}
+                {deltaPct.toFixed(1)} %
+                <FiTrendingUp />
+              </span>
+            )}
           </p>
         </div>
 
-        {/* Range picker is presentational until there's more than one range of data. */}
-        <button
-          type="button"
-          className="inline-flex items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-xs text-zinc-300"
-        >
+        {/* Fixed 12-month window; becomes a picker when more ranges exist. */}
+        <span className="inline-flex items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-xs text-zinc-300">
           <FiCalendar />
-          Jan 2026 - Dec 2026
-          <FiChevronDown />
-        </button>
+          {rangeLabel}
+        </span>
       </div>
 
       <div className="relative">
@@ -96,7 +149,7 @@ export default function CollectionValueChart() {
           viewBox={`0 0 ${W} ${H}`}
           className="w-full touch-none"
           role="img"
-          aria-label="Collection value per month, January to December 2026"
+          aria-label="Collection value per month over the last 12 months"
           onPointerMove={handleMove}
           onPointerLeave={() => setHover(null)}
         >
@@ -111,7 +164,7 @@ export default function CollectionValueChart() {
             </linearGradient>
           </defs>
 
-          {TICKS.map((t) => (
+          {ticks.map((t) => (
             <g key={t}>
               <line
                 x1={PAD.left}
@@ -132,13 +185,15 @@ export default function CollectionValueChart() {
             </g>
           ))}
 
-          <path d={areaPath} fill="url(#pg-area)" />
-          <path
-            d={linePath}
-            fill="none"
-            stroke={chartInk.accent}
-            strokeWidth="2"
-          />
+          {areaPath && <path d={areaPath} fill="url(#pg-area)" />}
+          {linePath && (
+            <path
+              d={linePath}
+              fill="none"
+              stroke={chartInk.accent}
+              strokeWidth="2"
+            />
+          )}
 
           {points.map((p) => (
             <text
@@ -149,7 +204,7 @@ export default function CollectionValueChart() {
               fontSize="11"
               fill={chartInk.axis}
             >
-              {p.month}
+              {monthLabel(p.month)}
             </text>
           ))}
 
@@ -186,7 +241,9 @@ export default function CollectionValueChart() {
             <p className="text-xs font-semibold text-white">
               {fmtValue(active.value)}
             </p>
-            <p className="text-[10px] text-violet-200">{active.month} 2026</p>
+            <p className="text-[10px] text-violet-200">
+              {monthLabel(active.month)} {active.month.slice(0, 4)}
+            </p>
           </div>
         )}
       </div>

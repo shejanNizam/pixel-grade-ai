@@ -2,48 +2,163 @@
 
 import EmptyState from "@/components/shared/EmptyState";
 import {
-  PRIORITY_COLOR,
-  STATUS_COLOR,
-  TICKET_PRIORITIES,
-  type Ticket,
-  type TicketPriority,
-} from "@/types/support";
-import { App, Button, Form, Input, Select, Tag } from "antd";
+  useAddTicketMessageMutation,
+  useCreateTicketMutation,
+  useGetMyTicketsQuery,
+  useGetTicketQuery,
+  type TSupportTicket,
+  type TTicketStatus,
+} from "@/redux/features/support/supportApi";
+import { App, Button, Form, Input, Tag } from "antd";
 import { useState } from "react";
-import { FiLifeBuoy } from "react-icons/fi";
-import { myTickets } from "../_components/support/data";
+import { FiChevronDown, FiChevronUp, FiLifeBuoy } from "react-icons/fi";
 
 interface TicketFormValues {
   subject: string;
-  priority: TicketPriority;
   message: string;
 }
 
 const CARD = "rounded-xl border border-white/8 bg-[#111113]";
 
+const STATUS_COLOR: Record<TTicketStatus, string> = {
+  open: "orange",
+  answered: "blue",
+  resolved: "green",
+  closed: "default",
+};
+
+const dateOf = (iso?: string) =>
+  iso
+    ? new Date(iso).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      })
+    : "—";
+
+/** One ticket row; expanding it fetches and shows the message thread. */
+function TicketRow({ ticket }: { ticket: TSupportTicket }) {
+  const { message } = App.useApp();
+  const [expanded, setExpanded] = useState(false);
+  const [reply, setReply] = useState("");
+
+  const { data: thread, isFetching } = useGetTicketQuery(ticket._id, {
+    skip: !expanded,
+  });
+  const [addMessage, { isLoading: isSending }] = useAddTicketMessageMutation();
+
+  const closed = ticket.status === "closed";
+
+  const sendReply = async () => {
+    if (!reply.trim() || isSending) return;
+    try {
+      await addMessage({ ticketId: ticket._id, message: reply.trim() }).unwrap();
+      setReply("");
+      message.success("Reply sent.");
+    } catch {
+      message.error("Couldn't send the reply. Try again.");
+    }
+  };
+
+  return (
+    <li className={`${CARD} p-4`}>
+      <button
+        type="button"
+        onClick={() => setExpanded((open) => !open)}
+        className="flex w-full items-start justify-between gap-3 text-left"
+        aria-expanded={expanded}
+      >
+        <p className="min-w-0 flex-1 truncate font-medium text-white">
+          {ticket.subject}
+        </p>
+        <div className="flex shrink-0 items-center gap-1.5">
+          <Tag color={STATUS_COLOR[ticket.status]} className="capitalize">
+            {ticket.status}
+          </Tag>
+          {expanded ? (
+            <FiChevronUp className="text-zinc-400" />
+          ) : (
+            <FiChevronDown className="text-zinc-400" />
+          )}
+        </div>
+      </button>
+
+      <p className="mt-1 text-xs text-zinc-500">{dateOf(ticket.createdAt)}</p>
+
+      {expanded && (
+        <div className="mt-3 space-y-3">
+          {isFetching && !thread ? (
+            <div className="h-16 animate-pulse rounded-lg bg-white/5" />
+          ) : (
+            (thread?.messages ?? []).map((entry) => (
+              <article
+                key={entry._id}
+                className={`rounded-lg p-3 ${
+                  entry.isAdmin ? "bg-violet-500/10" : "bg-white/5"
+                }`}
+              >
+                <p className="text-[11px] text-zinc-400">
+                  {entry.isAdmin ? "Support" : "You"} ·{" "}
+                  {dateOf(entry.createdAt)}
+                </p>
+                <p className="mt-1 text-sm text-zinc-300">{entry.message}</p>
+              </article>
+            ))
+          )}
+
+          {closed ? (
+            <p className="rounded-lg border border-white/10 p-3 text-xs text-zinc-500">
+              This ticket is closed. Open a new one to continue.
+            </p>
+          ) : (
+            <div className="flex gap-2">
+              <Input
+                value={reply}
+                onChange={(e) => setReply(e.target.value)}
+                onPressEnter={sendReply}
+                placeholder="Write a reply…"
+                size="large"
+              />
+              <Button
+                type="primary"
+                size="large"
+                loading={isSending}
+                onClick={sendReply}
+              >
+                Send
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
+    </li>
+  );
+}
+
 export default function SupportPage() {
   const { message } = App.useApp();
   const [form] = Form.useForm<TicketFormValues>();
-  const [tickets, setTickets] = useState<Ticket[]>(myTickets);
 
-  const onFinish = (values: TicketFormValues) => {
-    setTickets((prev) => [
-      {
-        id: crypto.randomUUID(),
-        subject: values.subject,
-        message: values.message,
-        priority: values.priority,
-        // New tickets always land in the admin queue as Open.
-        status: "Open",
-        created: new Date().toISOString().slice(0, 10),
-        user: { name: "You", email: "you@example.com" },
-        plan: "Pro",
-        replies: [],
-      },
-      ...prev,
-    ]);
-    form.resetFields();
-    message.success("Ticket submitted. Support will reply by email.");
+  const { data, isLoading } = useGetMyTicketsQuery({
+    limit: 20,
+    sort: "-createdAt",
+  });
+  const [createTicket, { isLoading: isCreating }] = useCreateTicketMutation();
+
+  const tickets = data?.data ?? [];
+
+  const onFinish = async (values: TicketFormValues) => {
+    if (isCreating) return;
+    try {
+      await createTicket({
+        subject: values.subject.trim(),
+        message: values.message.trim(),
+      }).unwrap();
+      form.resetFields();
+      message.success("Ticket submitted. Support will reply here.");
+    } catch {
+      message.error("Couldn't submit the ticket. Try again.");
+    }
   };
 
   return (
@@ -67,7 +182,6 @@ export default function SupportPage() {
             layout="vertical"
             onFinish={onFinish}
             requiredMark={false}
-            initialValues={{ priority: "Normal" satisfies TicketPriority }}
           >
             <Form.Item<TicketFormValues>
               label="Subject"
@@ -75,16 +189,6 @@ export default function SupportPage() {
               rules={[{ required: true, message: "Subject is required" }]}
             >
               <Input size="large" placeholder="Brief summary of the issue" />
-            </Form.Item>
-
-            <Form.Item<TicketFormValues> label="Priority" name="priority">
-              <Select
-                size="large"
-                options={TICKET_PRIORITIES.map((value) => ({
-                  value,
-                  label: value,
-                }))}
-              />
             </Form.Item>
 
             <Form.Item<TicketFormValues>
@@ -95,7 +199,13 @@ export default function SupportPage() {
               <Input.TextArea rows={4} placeholder="Describe what happened…" />
             </Form.Item>
 
-            <Button type="primary" htmlType="submit" size="large" block>
+            <Button
+              type="primary"
+              htmlType="submit"
+              size="large"
+              block
+              loading={isCreating}
+            >
               Submit ticket
             </Button>
           </Form>
@@ -107,7 +217,13 @@ export default function SupportPage() {
             Your tickets
           </h2>
 
-          {tickets.length === 0 ? (
+          {isLoading ? (
+            <ul className="space-y-3">
+              {Array.from({ length: 3 }, (_, i) => (
+                <li key={i} className={`${CARD} h-20 animate-pulse`} />
+              ))}
+            </ul>
+          ) : tickets.length === 0 ? (
             <EmptyState
               icon={<FiLifeBuoy />}
               title="No tickets yet"
@@ -116,39 +232,7 @@ export default function SupportPage() {
           ) : (
             <ul className="space-y-3">
               {tickets.map((ticket) => (
-                <li key={ticket.id} className={`${CARD} p-4`}>
-                  <div className="flex items-start justify-between gap-3">
-                    <p className="min-w-0 flex-1 truncate font-medium text-white">
-                      {ticket.subject}
-                    </p>
-                    <div className="flex shrink-0 gap-1.5">
-                      <Tag color={PRIORITY_COLOR[ticket.priority]}>
-                        {ticket.priority}
-                      </Tag>
-                      <Tag color={STATUS_COLOR[ticket.status]}>
-                        {ticket.status}
-                      </Tag>
-                    </div>
-                  </div>
-
-                  <p className="mt-1 text-xs text-zinc-500">{ticket.created}</p>
-                  <p className="mt-3 text-sm text-zinc-400">{ticket.message}</p>
-
-                  {/* Staff answers, so a reply isn't stranded in the admin UI. */}
-                  {ticket.replies.map((reply) => (
-                    <article
-                      key={reply.id}
-                      className="mt-3 rounded-lg bg-violet-500/10 p-3"
-                    >
-                      <p className="text-[11px] text-zinc-400">
-                        Support · {reply.sent}
-                      </p>
-                      <p className="mt-1 text-sm text-zinc-300">
-                        {reply.message}
-                      </p>
-                    </article>
-                  ))}
-                </li>
+                <TicketRow key={ticket._id} ticket={ticket} />
               ))}
             </ul>
           )}

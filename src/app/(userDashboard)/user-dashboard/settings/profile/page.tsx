@@ -1,8 +1,13 @@
 "use client";
 
 import { useObjectUrl } from "@/hooks/useObjectUrl";
+import {
+  useGetMeQuery,
+  useUpdateProfileMutation,
+  useUploadFilesMutation,
+} from "@/redux/features/user/userApi";
 import { ACCEPT_ATTR, validateImage } from "@/utils/imageUpload";
-import { App, Form, Input, Select } from "antd";
+import { App, Form, Input } from "antd";
 import Image from "next/image";
 import { useId, useState } from "react";
 import { FiCamera } from "react-icons/fi";
@@ -11,35 +16,22 @@ import BackLink from "../../_components/settings/BackLink";
 interface ProfileValues {
   name: string;
   email: string;
-  dialCode: string;
+  /** Full E.164 number, e.g. +8801712345678 — what the backend validates. */
   phone: string;
 }
-
-/* Placeholder profile — swap for the signed-in user when the API exists. */
-const initialProfile: ProfileValues = {
-  name: "Abdullah",
-  email: "abdullah@gmail.com",
-  dialCode: "+1242",
-  phone: "3000597212",
-};
-
-/* A short list to start with — extend or replace with a real country dataset. */
-const dialCodes = [
-  { value: "+1", label: "🇺🇸 +1" },
-  { value: "+1242", label: "🇧🇸 +1242" },
-  { value: "+44", label: "🇬🇧 +44" },
-  { value: "+880", label: "🇧🇩 +880" },
-];
 
 export default function ProfileSettings() {
   const [form] = Form.useForm<ProfileValues>();
   const { message } = App.useApp();
   const avatarInputId = useId();
 
+  const { data: me, isLoading } = useGetMeQuery();
+  const [updateProfile, { isLoading: isSaving }] = useUpdateProfileMutation();
+  const [uploadFiles, { isLoading: isUploading }] = useUploadFilesMutation();
+
   const [isEditing, setIsEditing] = useState(false);
-  const [profile, setProfile] = useState(initialProfile);
   const [avatar, setAvatar] = useState<File | null>(null);
-  const avatarUrl = useObjectUrl(avatar);
+  const avatarPreview = useObjectUrl(avatar);
 
   const pickAvatar = (file: File | undefined) => {
     if (!file) return;
@@ -51,22 +43,71 @@ export default function ProfileSettings() {
     setAvatar(file);
   };
 
-  const onFinish = (values: ProfileValues) => {
-    // Frontend-only demo: no API call.
-    setProfile((prev) => ({ ...prev, ...values }));
-    setIsEditing(false);
-    message.success("Profile updated (demo).");
+  const onFinish = async (values: ProfileValues) => {
+    if (!me || isSaving || isUploading) return;
+
+    const phone = values.phone.trim();
+    if (phone && !/^\+[1-9]\d{6,14}$/.test(phone)) {
+      message.error("Phone must be in international format, e.g. +14155551234");
+      return;
+    }
+
+    try {
+      // Two steps by design: the file goes to POST /upload (Cloudinary),
+      // then the user is PATCHed with the resulting object.
+      let uploadedAvatar: { url: string; publicId: string } | undefined;
+      if (avatar) {
+        const formData = new FormData();
+        formData.append("files", avatar);
+        const result = await uploadFiles(formData).unwrap();
+        uploadedAvatar = Array.isArray(result) ? result[0] : result;
+      }
+
+      await updateProfile({
+        userId: me._id,
+        body: {
+          name: values.name.trim(),
+          ...(phone ? { phone } : {}),
+          ...(uploadedAvatar ? { avatar: uploadedAvatar } : {}),
+        },
+      }).unwrap();
+
+      setAvatar(null);
+      setIsEditing(false);
+      message.success("Profile updated.");
+    } catch (err) {
+      const data = (err as { data?: { message?: string } })?.data;
+      message.error(data?.message ?? "Couldn't save your profile. Try again.");
+    }
   };
 
   const startEditing = () => {
-    form.setFieldsValue(profile);
+    if (!me) return;
+    form.setFieldsValue({
+      name: me.name,
+      email: me.email,
+      phone: me.phone ?? "",
+    });
     setIsEditing(true);
   };
 
   const cancelEditing = () => {
     form.resetFields();
+    setAvatar(null);
     setIsEditing(false);
   };
+
+  if (isLoading || !me) {
+    return (
+      <div className="space-y-6">
+        <BackLink title="Profile" />
+        <div className="h-64 max-w-2xl animate-pulse rounded-2xl border border-white/10 bg-[#0d0d0f]" />
+      </div>
+    );
+  }
+
+  const avatarUrl = avatarPreview ?? me.avatar?.url;
+  const busy = isSaving || isUploading;
 
   return (
     <div className="space-y-6">
@@ -85,9 +126,10 @@ export default function ProfileSettings() {
             <button
               type="submit"
               form="profile-form"
-              className="rounded-full border border-amber-500/60 px-5 py-2 text-sm text-amber-400 transition-colors hover:bg-amber-500/10"
+              disabled={busy}
+              className="rounded-full border border-amber-500/60 px-5 py-2 text-sm text-amber-400 transition-colors hover:bg-amber-500/10 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Save changes
+              {busy ? "Saving…" : "Save changes"}
             </button>
           </div>
         ) : (
@@ -117,7 +159,7 @@ export default function ProfileSettings() {
                 />
               ) : (
                 <span className="inline-flex h-22 w-22 items-center justify-center rounded-full bg-linear-to-br from-violet-500 to-cyan-400 text-xl font-semibold text-white">
-                  {profile.name.slice(0, 2).toUpperCase()}
+                  {me.name.slice(0, 2).toUpperCase()}
                 </span>
               )}
 
@@ -142,7 +184,9 @@ export default function ProfileSettings() {
             </div>
 
             <p className="mt-2 text-sm text-white">Profile</p>
-            <p className="text-xs text-zinc-500">Admin</p>
+            <p className="text-xs text-zinc-500 capitalize">
+              {me.role.replace("_", " ")}
+            </p>
           </div>
 
           {/* Fields */}
@@ -150,7 +194,11 @@ export default function ProfileSettings() {
             id="profile-form"
             form={form}
             layout="vertical"
-            initialValues={profile}
+            initialValues={{
+              name: me.name,
+              email: me.email,
+              phone: me.phone ?? "",
+            }}
             onFinish={onFinish}
             requiredMark={false}
             className="flex-1"
@@ -164,42 +212,25 @@ export default function ProfileSettings() {
             </Form.Item>
 
             {/* Email is identity — shown, but not editable here. */}
-            {!isEditing && (
-              <Form.Item<ProfileValues>
-                label={<span className="text-sm text-white">Email</span>}
-                name="email"
-              >
-                <Input readOnly />
-              </Form.Item>
-            )}
-
-            <Form.Item
-              label={<span className="text-sm text-white">Phone No.</span>}
-              required={false}
-              className="mb-0"
+            <Form.Item<ProfileValues>
+              label={<span className="text-sm text-white">Email</span>}
+              name="email"
             >
-              <div className="flex gap-3">
-                <Form.Item<ProfileValues> name="dialCode" noStyle>
-                  <Select
-                    options={dialCodes}
-                    disabled={!isEditing}
-                    className="w-28 shrink-0"
-                    aria-label="Country dialling code"
-                  />
-                </Form.Item>
+              <Input readOnly />
+            </Form.Item>
 
-                <Form.Item<ProfileValues>
-                  name="phone"
-                  noStyle
-                  rules={[
-                    { required: true, message: "Phone number is required" },
-                    {
-                      pattern: /^\d{6,15}$/,
-                      message: "Enter 6–15 digits",
-                    },
-                  ]}
-                ></Form.Item>
-              </div>
+            <Form.Item<ProfileValues>
+              label={<span className="text-sm text-white">Phone No.</span>}
+              name="phone"
+              rules={[
+                {
+                  pattern: /^\+[1-9]\d{6,14}$/,
+                  message:
+                    "Use international format, e.g. +14155551234",
+                },
+              ]}
+            >
+              <Input readOnly={!isEditing} placeholder="+14155551234" />
             </Form.Item>
           </Form>
         </div>

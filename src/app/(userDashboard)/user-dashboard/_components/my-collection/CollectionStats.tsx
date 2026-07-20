@@ -1,4 +1,12 @@
+"use client";
+
 import StatCard, { type StatCardProps } from "@/components/shared/StatCard";
+import {
+  useGetCollectionBySetQuery,
+  useGetCollectionSummaryQuery,
+  useGetCollectionValueOverTimeQuery,
+  useGetMyCollectionQuery,
+} from "@/redux/features/collection/collectionApi";
 import {
   MdOutlineBarChart,
   MdOutlineDiamond,
@@ -6,37 +14,68 @@ import {
   MdOutlineStyle,
 } from "react-icons/md";
 
-interface CollectionStatsProps {
-  totalCards: number;
-  favorites: number;
-}
+const money = (value: number) =>
+  value.toLocaleString("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  });
 
-export default function CollectionStats({
-  totalCards,
-  favorites,
-}: CollectionStatsProps) {
+export default function CollectionStats() {
+  const { data: summary, isLoading } = useGetCollectionSummaryQuery();
+  const { data: bySet } = useGetCollectionBySetQuery();
+  const { data: valueSeries } = useGetCollectionValueOverTimeQuery({
+    months: 2,
+  });
+  // A one-row query whose meta.total is the favorites count.
+  const { data: favorites } = useGetMyCollectionQuery({
+    favorite: true,
+    limit: 1,
+  });
+
+  if (isLoading) {
+    return (
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {Array.from({ length: 4 }, (_, i) => (
+          <div
+            key={i}
+            className="h-24 animate-pulse rounded-2xl border border-violet-500/30 bg-linear-to-br from-violet-950/50 to-black"
+          />
+        ))}
+      </div>
+    );
+  }
+
+  const setCount = bySet?.length ?? 0;
+
+  // This month's value minus last month's — only meaningful with both points.
+  const [prev, current] = valueSeries ?? [];
+  const gain =
+    prev !== undefined && current !== undefined
+      ? current.value - prev.value
+      : null;
+
   const stats: StatCardProps[] = [
     {
-      value: String(totalCards),
+      value: (summary?.totalCards ?? 0).toLocaleString("en-US"),
       label: "Total Cards",
-      caption: "Across 28 sets",
+      caption: `Across ${setCount} set${setCount === 1 ? "" : "s"}`,
       Icon: MdOutlineStyle,
     },
     {
-      value: "$ 6762",
+      value: money(summary?.totalValue ?? 0),
       label: "Estimated value",
       caption: "Total market value",
       Icon: MdOutlineDiamond,
     },
     {
-      value: "$ 874",
+      value: gain === null ? "—" : money(gain),
       label: "Collection Gain",
       caption: "vs Last Month",
-      delta: "11.3 %",
       Icon: MdOutlineBarChart,
     },
     {
-      value: String(favorites),
+      value: String(favorites?.meta?.total ?? 0),
       label: "Favorites",
       caption: "Mark as favorite",
       Icon: MdOutlineFavoriteBorder,

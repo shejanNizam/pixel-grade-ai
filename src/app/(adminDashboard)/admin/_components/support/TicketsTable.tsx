@@ -1,81 +1,75 @@
 "use client";
 
 import {
-  PRIORITY_COLOR,
-  STATUS_COLOR,
-  TICKET_STATUSES,
-  type Ticket,
-  type TicketStatus,
-} from "@/types/support";
-import { App, Table, Tag, type TableColumnsType } from "antd";
-import { useMemo, useState } from "react";
+  useGetAllTicketsQuery,
+  type TSupportTicket,
+  type TTicketStatus,
+} from "@/redux/features/support/supportApi";
+import { Table, Tag, type TableColumnsType } from "antd";
+import { useEffect, useState } from "react";
 import {
   FiChevronDown,
   FiChevronLeft,
   FiChevronRight,
   FiSearch,
 } from "react-icons/fi";
-import { ALL_TICKETS, PAGE_SIZE, tickets as seed } from "./data";
+import { formatUserDate } from "../users/format";
 import ReplyTicketModal from "./ReplyTicketModal";
 
-const today = () => new Date().toISOString().slice(0, 10);
+const PAGE_SIZE = 6;
+
+const STATUS_FILTERS = [
+  { value: "all", label: "All tickets" },
+  { value: "open", label: "Open" },
+  { value: "answered", label: "Answered" },
+  { value: "resolved", label: "Resolved" },
+  { value: "closed", label: "Closed" },
+] as const;
+
+type StatusFilter = (typeof STATUS_FILTERS)[number]["value"];
+
+export const STATUS_COLOR: Record<TTicketStatus, string> = {
+  open: "orange",
+  answered: "blue",
+  resolved: "green",
+  closed: "default",
+};
+
+const ticketUser = (ticket: TSupportTicket) =>
+  typeof ticket.user === "object" ? ticket.user : null;
 
 export default function TicketsTable() {
-  const { message } = App.useApp();
-
-  // Local copy: replying flips status until the API exists.
-  const [rows, setRows] = useState<Ticket[]>(seed);
-  const [filter, setFilter] = useState<string>("Open");
+  const [page, setPage] = useState(1);
+  const [filter, setFilter] = useState<StatusFilter>("open");
   const [query, setQuery] = useState("");
-  const [replyingId, setReplyingId] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [openTicketId, setOpenTicketId] = useState<string | null>(null);
 
-  const filters = [ALL_TICKETS, ...TICKET_STATUSES];
+  // Search matches subjects server-side; debounce and reset the page.
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setSearchTerm(query.trim());
+      setPage(1);
+    }, 400);
+    return () => clearTimeout(t);
+  }, [query]);
 
-  const visible = useMemo(() => {
-    const term = query.trim().toLowerCase();
+  const { data, isFetching } = useGetAllTicketsQuery({
+    page,
+    limit: PAGE_SIZE,
+    sort: "-createdAt",
+    ...(filter !== "all" ? { status: filter } : {}),
+    ...(searchTerm ? { searchTerm } : {}),
+  });
 
-    return rows.filter((ticket) => {
-      const matchesFilter = filter === ALL_TICKETS || ticket.status === filter;
-      const matchesQuery =
-        !term ||
-        ticket.subject.toLowerCase().includes(term) ||
-        ticket.user.name.toLowerCase().includes(term) ||
-        ticket.user.email.toLowerCase().includes(term);
+  // A one-row query whose meta.total is the live open count for the badge.
+  const { data: openData } = useGetAllTicketsQuery({ status: "open", limit: 1 });
 
-      return matchesFilter && matchesQuery;
-    });
-  }, [rows, filter, query]);
+  const rows = data?.data ?? [];
+  const total = data?.meta?.total ?? 0;
+  const openCount = openData?.meta?.total ?? 0;
 
-  const replying = rows.find((ticket) => ticket.id === replyingId) ?? null;
-
-  const sendReply = (body: string, resolve: boolean) => {
-    if (!replyingId) return;
-
-    setRows((current) =>
-      current.map((ticket) =>
-        ticket.id === replyingId
-          ? {
-              ...ticket,
-              status: (resolve ? "Resolved" : "Answered") as TicketStatus,
-              replies: [
-                ...ticket.replies,
-                {
-                  id: crypto.randomUUID(),
-                  from: "support" as const,
-                  message: body,
-                  sent: today(),
-                },
-              ],
-            }
-          : ticket,
-      ),
-    );
-
-    setReplyingId(null);
-    message.success(resolve ? "Replied and resolved." : "Reply sent.");
-  };
-
-  const columns: TableColumnsType<Ticket> = [
+  const columns: TableColumnsType<TSupportTicket> = [
     {
       title: "Subject",
       dataIndex: "subject",
@@ -88,54 +82,44 @@ export default function TicketsTable() {
       title: "User",
       key: "user",
       align: "center",
-      render: (_, ticket) => (
-        <div className="leading-tight">
-          <p className="text-xs text-zinc-300">{ticket.user.name}</p>
-          {/* `text-*!` beats antd's `.ant-app a { color: colorLink }`. */}
-          <a
-            href={`mailto:${ticket.user.email}`}
-            className="text-[11px] text-violet-400! hover:underline"
-          >
-            {ticket.user.email}
-          </a>
-        </div>
-      ),
-    },
-    {
-      title: "Plan",
-      dataIndex: "plan",
-      key: "plan",
-      align: "center",
-      render: (plan: string) => (
-        <span className="text-xs text-zinc-300">{plan}</span>
-      ),
-    },
-    {
-      title: "Priority",
-      dataIndex: "priority",
-      key: "priority",
-      align: "center",
-      render: (priority: Ticket["priority"]) => (
-        <Tag color={PRIORITY_COLOR[priority]}>{priority}</Tag>
-      ),
+      render: (_, ticket) => {
+        const user = ticketUser(ticket);
+        if (!user) return <span className="text-xs text-zinc-500">—</span>;
+        return (
+          <div className="leading-tight">
+            <p className="text-xs text-zinc-300">{user.name}</p>
+            {/* `text-*!` beats antd's `.ant-app a { color: colorLink }`. */}
+            <a
+              href={`mailto:${user.email}`}
+              className="text-[11px] text-violet-400! hover:underline"
+            >
+              {user.email}
+            </a>
+          </div>
+        );
+      },
     },
     {
       title: "Status",
       dataIndex: "status",
       key: "status",
       align: "center",
-      render: (status: TicketStatus) => (
-        <Tag color={STATUS_COLOR[status]}>{status}</Tag>
+      render: (status: TTicketStatus) => (
+        <Tag color={STATUS_COLOR[status]} className="capitalize">
+          {status}
+        </Tag>
       ),
     },
     {
       title: "Created",
-      dataIndex: "created",
       key: "created",
       align: "center",
-      sorter: (a, b) => a.created.localeCompare(b.created),
-      render: (created: string) => (
-        <span className="text-xs text-zinc-300">{created}</span>
+      sorter: (a, b) =>
+        (a.createdAt ?? "").localeCompare(b.createdAt ?? ""),
+      render: (_, ticket) => (
+        <span className="text-xs text-zinc-300">
+          {formatUserDate(ticket.createdAt)}
+        </span>
       ),
     },
     {
@@ -146,22 +130,20 @@ export default function TicketsTable() {
       render: (_, ticket) => (
         <button
           type="button"
-          onClick={() => setReplyingId(ticket.id)}
+          onClick={() => setOpenTicketId(ticket._id)}
           className="rounded-full bg-violet-600 px-4 py-1.5 text-xs text-white transition-colors hover:bg-violet-700"
         >
-          {ticket.status === "Open" ? "Reply" : "View"}
+          {ticket.status === "open" ? "Reply" : "View"}
         </button>
       ),
     },
   ];
 
-  const openCount = rows.filter((ticket) => ticket.status === "Open").length;
-
   return (
     <section>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <h2 className="text-lg font-medium text-white">
-          Support tickets ( {visible.length} )
+          Support tickets ( {total} )
           {openCount > 0 && (
             <span className="ml-2 rounded-full bg-orange-500/15 px-2.5 py-1 text-[11px] font-medium text-orange-400">
               {openCount} open
@@ -173,13 +155,16 @@ export default function TicketsTable() {
           <div className="relative">
             <select
               value={filter}
-              onChange={(event) => setFilter(event.target.value)}
+              onChange={(event) => {
+                setFilter(event.target.value as StatusFilter);
+                setPage(1);
+              }}
               aria-label="Filter tickets by status"
               className="w-40 appearance-none rounded-full bg-white py-2.5 pr-9 pl-4 text-sm text-zinc-900 outline-none"
             >
-              {filters.map((option) => (
-                <option key={option} value={option}>
-                  {option}
+              {STATUS_FILTERS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
                 </option>
               ))}
             </select>
@@ -190,8 +175,8 @@ export default function TicketsTable() {
             <input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search by subject or user"
-              aria-label="Search tickets by subject or user"
+              placeholder="Search by subject"
+              aria-label="Search tickets by subject"
               className="w-full rounded-full bg-white py-2.5 pr-13 pl-4 text-sm text-zinc-900 outline-none placeholder:text-zinc-400"
             />
             <span className="absolute top-1/2 right-1 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-violet-600 text-white">
@@ -202,13 +187,17 @@ export default function TicketsTable() {
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-white/8">
-        <Table<Ticket>
+        <Table<TSupportTicket>
           columns={columns}
-          dataSource={visible}
-          rowKey="id"
+          dataSource={rows}
+          rowKey="_id"
+          loading={isFetching}
           pagination={{
+            current: page,
             pageSize: PAGE_SIZE,
+            total,
             showSizeChanger: false,
+            onChange: setPage,
             // The design labels the arrows "Back" and "Next" rather than using
             // bare chevrons.
             itemRender: (_page, type, element) => {
@@ -237,9 +226,8 @@ export default function TicketsTable() {
       </div>
 
       <ReplyTicketModal
-        ticket={replying}
-        onCancel={() => setReplyingId(null)}
-        onSend={sendReply}
+        ticketId={openTicketId}
+        onClose={() => setOpenTicketId(null)}
       />
     </section>
   );

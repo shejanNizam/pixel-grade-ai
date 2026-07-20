@@ -4,7 +4,6 @@ import { Select, Switch } from "antd";
 import { FiRefreshCw } from "react-icons/fi";
 import {
   backgroundStyles,
-  gradedCards,
   slabSpecs,
   type BackgroundStyle,
   type GradedCard,
@@ -12,6 +11,8 @@ import {
 } from "./data";
 
 interface SlabControlsProps {
+  /** The user's graded reports — the only cards that can be slabbed. */
+  cards: GradedCard[];
   card: GradedCard;
   style: BackgroundStyle;
   spec: SlabSpec;
@@ -25,6 +26,7 @@ interface SlabControlsProps {
 }
 
 export default function SlabControls({
+  cards,
   card,
   style,
   spec,
@@ -48,12 +50,12 @@ export default function SlabControls({
         <Select
           value={card.id}
           onChange={(id) => {
-            const next = gradedCards.find((c) => c.id === id);
+            const next = cards.find((c) => c.id === id);
             if (next) onCardChange(next);
           }}
           size="large"
           className="mt-3 w-full"
-          options={gradedCards.map((c) => ({
+          options={cards.map((c) => ({
             value: c.id,
             label: `${c.name} — ${c.grade.toFixed(1)} ${c.gradeLabel}`,
           }))}

@@ -93,8 +93,9 @@ function BillingToggle({
 interface PricingPlansProps {
   /** Marketing site: the CTA is a link. */
   ctaHref?: string;
-  /** Dashboard: the CTA is a button that starts a plan change. */
-  onSelect?: (plan: Plan) => void;
+  /** Dashboard: the CTA is a button that starts a plan change. The active
+   *  billing toggle rides along — checkout needs the interval. */
+  onSelect?: (plan: Plan, billing: Billing) => void;
 }
 
 /** Shared by the marketing landing page and the dashboard subscription screen. */
@@ -197,7 +198,7 @@ export default function PricingPlans({ ctaHref, onSelect }: PricingPlansProps) {
 
               <PillButton
                 href={onSelect ? undefined : (ctaHref ?? "/signup")}
-                onClick={onSelect ? () => onSelect(plan) : undefined}
+                onClick={onSelect ? () => onSelect(plan, billing) : undefined}
                 icon={ctaIcon}
                 aria-label={
                   onSelect

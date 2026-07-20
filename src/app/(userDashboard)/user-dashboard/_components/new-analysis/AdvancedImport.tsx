@@ -1,6 +1,5 @@
 "use client";
 
-import { App } from "antd";
 import Link from "next/link";
 import { useState } from "react";
 import { FiLock } from "react-icons/fi";
@@ -11,12 +10,16 @@ interface AdvancedImportProps {
   /** PixelScope is a paid feature — Free plans see a locked, upgrade-gated
    *  version of this section rather than a working uploader. */
   locked?: boolean;
+  /** Hands the chosen files to the scan pipeline (front, back). */
+  onStart: (front: File[], back: File[]) => void;
 }
 
-export default function AdvancedImport({ locked = false }: AdvancedImportProps) {
+export default function AdvancedImport({
+  locked = false,
+  onStart,
+}: AdvancedImportProps) {
   const [front, setFront] = useState<File[]>([]);
   const [back, setBack] = useState<File[]>([]);
-  const { message } = App.useApp();
 
   const ready = front.length > 0 && back.length > 0;
 
@@ -80,11 +83,7 @@ export default function AdvancedImport({ locked = false }: AdvancedImportProps) 
                 ? undefined
                 : "Add at least one front and one back image to continue"
             }
-            onStart={() =>
-              message.success(
-                `Inspection started with ${front.length + back.length} images (demo).`,
-              )
-            }
+            onStart={() => onStart(front, back)}
           />
         </>
       )}

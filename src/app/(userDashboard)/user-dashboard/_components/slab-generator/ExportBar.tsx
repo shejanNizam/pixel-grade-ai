@@ -13,6 +13,9 @@ interface ExportBarProps {
   card: GradedCard;
   spec: SlabSpec;
   disabled: boolean;
+  /** Server-rendered exports — present once the slab has been generated. */
+  pngUrl?: string;
+  pdfUrl?: string;
 }
 
 /** mm -> pixels at the export DPI, including bleed on both edges. */
@@ -20,16 +23,28 @@ function pxWithBleed(mm: number, bleedMm: number) {
   return Math.round(((mm + bleedMm * 2) / MM_PER_INCH) * EXPORT_DPI);
 }
 
-export default function ExportBar({ card, spec, disabled }: ExportBarProps) {
+export default function ExportBar({
+  card,
+  spec,
+  disabled,
+  pngUrl,
+  pdfUrl,
+}: ExportBarProps) {
   const { message } = App.useApp();
 
   const widthPx = pxWithBleed(spec.widthMm, spec.bleedMm);
   const heightPx = pxWithBleed(spec.heightMm, spec.bleedMm);
 
-  // Export happens server-side once the API exists — the card and label are
-  // composited there so the placeholders can't be knocked out of place.
-  const download = (format: "PNG" | "PDF") =>
-    message.info(`${format} export for ${card.name} runs server-side (demo).`);
+  // Exports are rendered server-side — the card and label are composited
+  // there so the placeholders can't be knocked out of place.
+  const download = (format: "PNG" | "PDF") => {
+    const url = format === "PNG" ? pngUrl : pdfUrl;
+    if (!url) {
+      message.info(`Generate ${card.name}'s slab first, then export.`);
+      return;
+    }
+    window.open(url, "_blank", "noopener");
+  };
 
   return (
     <div className="rounded-2xl border border-white/10 bg-[#111113] p-4">

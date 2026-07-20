@@ -1,5 +1,6 @@
 "use client";
 
+import { useChangePasswordMutation } from "@/redux/features/auth/authApi";
 import {
   FiAlertTriangle as AlertTriangle,
   FiEye as Eye,
@@ -42,7 +43,7 @@ export default function Security() {
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [success, setSuccess] = useState(false);
 
-  const [isLoading, setIsLoading] = useState(false);
+  const [changePassword, { isLoading }] = useChangePasswordMutation();
   const strength = getPasswordStrength(newPassword);
 
   const validate = (): FieldErrors => {
@@ -56,7 +57,7 @@ export default function Security() {
     return e;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSuccess(false);
     setFieldErrors({});
@@ -65,15 +66,21 @@ export default function Security() {
       setFieldErrors(errs);
       return;
     }
-    // Frontend-only demo: no API call. Simulate a successful password change.
-    setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
+
+    try {
+      await changePassword({ oldPassword, newPassword }).unwrap();
       setSuccess(true);
       setOldPassword("");
       setNewPassword("");
       setConfirmPassword("");
-    }, 500);
+    } catch (err) {
+      const data = (err as { data?: { message?: string } })?.data;
+      // A 401 here means the current password was wrong; anything else is
+      // surfaced as a general error.
+      setFieldErrors({
+        general: data?.message ?? "Couldn't change the password. Try again.",
+      });
+    }
   };
 
   const inputCls =

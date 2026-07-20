@@ -1,75 +1,87 @@
 "use client";
 
-import { useObjectUrl } from "@/hooks/useObjectUrl";
-import { ACCEPT_ATTR, validateImage } from "@/utils/imageUpload";
-import { App, Form, Input, Modal } from "antd";
+import { useSearchCardsQuery } from "@/redux/features/card/cardApi";
+import { useAddCollectionItemMutation } from "@/redux/features/collection/collectionApi";
+import type { TCard } from "@/types/card";
+import { App, Input, Modal, Select, Spin } from "antd";
 import Image from "next/image";
-import { useId, useRef, useState } from "react";
-import { FiUploadCloud, FiX } from "react-icons/fi";
+import { useEffect, useMemo, useState } from "react";
 
-export interface AddCardValues {
-  name: string;
-  number: string;
-  set: string;
-  quantity: string;
-}
+// ---------------------------------------------------------------------------
+// Manual add. The card catalogue is READ-ONLY (rows come from the
+// identification pipeline), so a manual entry means picking an existing
+// catalogue card — not typing in a new one. Scanned cards join the collection
+// from the report screen instead.
+// ---------------------------------------------------------------------------
 
 interface AddCardModalProps {
   open: boolean;
   onClose: () => void;
-  onAdd: (values: AddCardValues, imageUrl: string) => void;
 }
 
-export default function AddCardModal({
-  open,
-  onClose,
-  onAdd,
-}: AddCardModalProps) {
-  const [form] = Form.useForm<AddCardValues>();
+export default function AddCardModal({ open, onClose }: AddCardModalProps) {
   const { message } = App.useApp();
-  const inputId = useId();
-  const inputRef = useRef<HTMLInputElement>(null);
 
-  const [image, setImage] = useState<File | null>(null);
-  const [isOver, setIsOver] = useState(false);
-  const preview = useObjectUrl(image);
+  const [query, setQuery] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [quantity, setQuantity] = useState("1");
+  const [externalGrade, setExternalGrade] = useState("");
 
-  const accept = (file: File | undefined) => {
-    if (!file) return;
-    const error = validateImage(file);
-    if (error) {
-      message.error(error);
+  useEffect(() => {
+    const t = setTimeout(() => setSearchTerm(query.trim()), 400);
+    return () => clearTimeout(t);
+  }, [query]);
+
+  // Reset per open so one add never leaks into the next.
+  useEffect(() => {
+    if (!open) return;
+    setQuery("");
+    setSearchTerm("");
+    setSelectedId(null);
+    setQuantity("1");
+    setExternalGrade("");
+  }, [open]);
+
+  const { data, isFetching } = useSearchCardsQuery(
+    { searchTerm: searchTerm || undefined, limit: 20 },
+    { skip: !open },
+  );
+  const [addItem, { isLoading: isSaving }] = useAddCollectionItemMutation();
+
+  const cards = useMemo(() => data?.data ?? [], [data]);
+  const selected: TCard | undefined = cards.find((c) => c._id === selectedId);
+
+  const submit = async () => {
+    if (isSaving) return;
+    if (!selectedId) {
+      message.error("Pick a card from the catalogue first.");
       return;
     }
-    setImage(file);
-  };
-
-  const reset = () => {
-    form.resetFields();
-    setImage(null);
-    if (inputRef.current) inputRef.current.value = "";
-  };
-
-  const close = () => {
-    reset();
-    onClose();
-  };
-
-  const onFinish = (values: AddCardValues) => {
-    if (!preview) {
-      message.error("Add a card image first.");
+    if (!/^[1-9]\d*$/.test(quantity.trim())) {
+      message.error("Enter a whole-number quantity above zero.");
       return;
     }
-    // The object URL outlives this component, so the grid owns it from here.
-    onAdd(values, URL.createObjectURL(image!));
-    message.success(`${values.name} added to your collection (demo).`);
-    close();
+
+    try {
+      await addItem({
+        card: selectedId,
+        quantity: Number(quantity),
+        ...(externalGrade.trim()
+          ? { externalGrade: externalGrade.trim() }
+          : {}),
+      }).unwrap();
+      message.success(`${selected?.name ?? "Card"} added to your collection.`);
+      onClose();
+    } catch {
+      message.error("Couldn't add the card. Try again.");
+    }
   };
 
   return (
     <Modal
       open={open}
-      onCancel={close}
+      onCancel={onClose}
       footer={null}
       centered
       destroyOnHidden
@@ -85,126 +97,109 @@ export default function AddCardModal({
         Add Card
       </h2>
 
-      {preview ? (
-        <div className="relative">
-          <Image
-            src={preview}
-            alt="Card preview"
-            width={420}
-            height={280}
-            unoptimized
-            className="mx-auto h-56 w-auto rounded-xl object-contain"
-          />
-          <button
-            type="button"
-            onClick={() => setImage(null)}
-            aria-label="Remove image"
-            className="absolute top-2 right-2 inline-flex h-7 w-7 items-center justify-center rounded-full bg-black/70 text-white transition-colors hover:bg-black"
-          >
-            <FiX />
-          </button>
+      <label className="block text-sm">
+        <span className="text-zinc-700">Search the card catalogue</span>
+        <Select
+          showSearch
+          value={selectedId ?? undefined}
+          onSearch={setQuery}
+          onChange={(value) => setSelectedId(value)}
+          filterOption={false}
+          notFoundContent={
+            isFetching ? (
+              <div className="flex justify-center py-3">
+                <Spin size="small" />
+              </div>
+            ) : (
+              "No cards found — cards enter the catalogue when they are scanned."
+            )
+          }
+          placeholder="Search by name, set, or number"
+          className="mt-2 w-full"
+          size="large"
+          options={cards.map((card) => ({
+            value: card._id,
+            label: [card.name, card.setExpansion, card.cardNumber]
+              .filter(Boolean)
+              .join(" · "),
+          }))}
+        />
+      </label>
+
+      {selected && (
+        <div className="mt-4 flex items-center gap-3 rounded-xl border border-violet-200 bg-violet-50 p-3">
+          {selected.officialImageUrl ? (
+            <Image
+              src={selected.officialImageUrl}
+              alt=""
+              width={40}
+              height={56}
+              unoptimized
+              className="h-14 w-10 shrink-0 rounded-md object-cover"
+            />
+          ) : (
+            <span className="h-14 w-10 shrink-0 rounded-md bg-violet-200" />
+          )}
+          <div className="min-w-0 text-xs">
+            <p className="truncate font-medium text-zinc-900">
+              {selected.name}
+            </p>
+            <p className="mt-0.5 truncate text-zinc-500">
+              {[selected.setExpansion, selected.cardNumber]
+                .filter(Boolean)
+                .join(" · ")}
+            </p>
+            {selected.latestPrice !== undefined && (
+              <p className="mt-0.5 text-zinc-500">
+                Market ≈ ${selected.latestPrice.toLocaleString("en-US")}
+              </p>
+            )}
+          </div>
         </div>
-      ) : (
-        <label
-          htmlFor={inputId}
-          onDragOver={(e) => {
-            e.preventDefault();
-            setIsOver(true);
-          }}
-          onDragLeave={() => setIsOver(false)}
-          onDrop={(e) => {
-            e.preventDefault();
-            setIsOver(false);
-            accept(e.dataTransfer.files[0]);
-          }}
-          className={`flex h-56 cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border text-center transition-colors ${
-            isOver
-              ? "border-violet-500 bg-violet-50"
-              : "border-violet-300 hover:bg-violet-50/60"
-          }`}
-        >
-          <FiUploadCloud className="mb-1 text-3xl text-violet-500" />
-          <span className="text-sm font-medium text-violet-600">
-            Upload card image
-          </span>
-          <span className="text-xs text-violet-400">
-            JPG, PNG, WEBP up to 10 MB
-          </span>
-        </label>
       )}
 
-      <input
-        ref={inputRef}
-        id={inputId}
-        type="file"
-        accept={ACCEPT_ATTR}
-        className="sr-only"
-        onChange={(e) => accept(e.target.files?.[0])}
-      />
+      <div className="mt-4 grid gap-4 sm:grid-cols-2">
+        <label className="block text-sm">
+          <span className="text-zinc-700">Quantity</span>
+          <Input
+            value={quantity}
+            onChange={(e) => setQuantity(e.target.value.replace(/\D/g, ""))}
+            inputMode="numeric"
+            placeholder="Ex : 3"
+            className="mt-2"
+            size="large"
+          />
+        </label>
 
-      <Form
-        form={form}
-        layout="vertical"
-        onFinish={onFinish}
-        requiredMark={false}
-        className="mt-6"
-      >
-        <div className="grid gap-x-4 sm:grid-cols-2">
-          <Form.Item<AddCardValues>
-            label="Card Name"
-            name="name"
-            rules={[{ required: true, message: "Card name is required" }]}
-          >
-            <Input placeholder="Ex. Gengar" />
-          </Form.Item>
+        <label className="block text-sm">
+          <span className="text-zinc-700">External grade (optional)</span>
+          <Input
+            value={externalGrade}
+            onChange={(e) => setExternalGrade(e.target.value)}
+            placeholder="Ex : PSA 9 MINT"
+            className="mt-2"
+            size="large"
+          />
+        </label>
+      </div>
 
-          <Form.Item<AddCardValues>
-            label="Card Number"
-            name="number"
-            rules={[{ required: true, message: "Card number is required" }]}
-          >
-            <Input placeholder="Ex : #5/64" />
-          </Form.Item>
-
-          <Form.Item<AddCardValues>
-            label="Set"
-            name="set"
-            rules={[{ required: true, message: "Set is required" }]}
-          >
-            <Input placeholder="Ex : Fossil ( 1999 )" />
-          </Form.Item>
-
-          <Form.Item<AddCardValues>
-            label="Quantity"
-            name="quantity"
-            rules={[
-              { required: true, message: "Quantity is required" },
-              {
-                pattern: /^[1-9]\d*$/,
-                message: "Enter a whole number above zero",
-              },
-            ]}
-          >
-            <Input inputMode="numeric" placeholder="Ex : 03" />
-          </Form.Item>
-        </div>
-
-        <div className="mt-2 flex justify-center gap-4">
-          <button
-            type="button"
-            onClick={close}
-            className="rounded-full border border-red-400 px-8 py-2 text-sm text-red-500 transition-colors hover:bg-red-50"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            className="rounded-full bg-violet-600 px-8 py-2 text-sm font-medium text-white transition-colors hover:bg-violet-700"
-          >
-            Add card
-          </button>
-        </div>
-      </Form>
+      <div className="mt-6 flex justify-center gap-4">
+        <button
+          type="button"
+          onClick={onClose}
+          className="rounded-full border border-red-400 px-8 py-2 text-sm text-red-500 transition-colors hover:bg-red-50"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          onClick={submit}
+          disabled={isSaving}
+          className="rounded-full bg-violet-600 px-8 py-2 text-sm font-medium text-white transition-colors hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {isSaving ? "Adding…" : "Add card"}
+        </button>
+      </div>
     </Modal>
   );
 }

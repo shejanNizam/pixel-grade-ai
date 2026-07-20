@@ -1,8 +1,13 @@
 "use client";
 
+import {
+  useGetAllUsersQuery,
+  useUpdateUserByAdminMutation,
+} from "@/redux/features/user/userApi";
+import type { TUser } from "@/types/auth";
 import { App, Dropdown, Table, type TableColumnsType } from "antd";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   FiChevronDown,
   FiChevronLeft,
@@ -11,79 +16,94 @@ import {
   FiSearch,
 } from "react-icons/fi";
 import BlockUserModal from "./BlockUserModal";
-import { ALL_USERS, PAGE_SIZE, type AdminUser, type UserStatus } from "./data";
+import { formatUserDate, userRef } from "./format";
 
-interface UsersTableProps {
-  /** Rendered as "{heading} ( n )" above the table. */
-  heading: string;
-  seed: AdminUser[];
-  /** The page's own status — the second filter option, and what an unblock restores. */
-  status: UserStatus;
-  /** Off where every row already shares one status, which makes filtering pointless. */
-  showFilter?: boolean;
-}
+export const PAGE_SIZE = 6;
 
-export default function UsersTable({
-  heading,
-  seed,
-  status,
-  showFilter = true,
-}: UsersTableProps) {
+/** Status filter options → the `status` query param ("all" sends none). */
+const FILTERS = [
+  { value: "all", label: "All users" },
+  { value: "active", label: "Active" },
+  { value: "blocked", label: "Blocked" },
+] as const;
+
+type FilterValue = (typeof FILTERS)[number]["value"];
+
+export default function UsersTable({ heading }: { heading: string }) {
   const router = useRouter();
   const { message } = App.useApp();
 
-  // Local copy: blocking a user flips their status until the API exists.
-  const [users, setUsers] = useState(seed);
-  const [filter, setFilter] = useState<string>(ALL_USERS);
+  const [page, setPage] = useState(1);
+  const [filter, setFilter] = useState<FilterValue>("all");
   const [query, setQuery] = useState("");
-  const [blockingId, setBlockingId] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [blockingUser, setBlockingUser] = useState<TUser | null>(null);
 
-  const filters = [ALL_USERS, status];
+  // Search and filters run server-side (QueryBuilder). Debounce typing, and
+  // snap back to page 1 whenever the result set changes shape.
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setSearchTerm(query.trim());
+      setPage(1);
+    }, 400);
+    return () => clearTimeout(t);
+  }, [query]);
 
-  const rows = useMemo(() => {
-    const term = query.trim().toLowerCase();
+  const { data, isFetching } = useGetAllUsersQuery({
+    page,
+    limit: PAGE_SIZE,
+    sort: "-createdAt",
+    ...(filter !== "all" ? { status: filter } : {}),
+    ...(searchTerm ? { searchTerm } : {}),
+  });
+  const [updateUser] = useUpdateUserByAdminMutation();
 
-    return users.filter((user) => {
-      const matchesFilter = filter === ALL_USERS || user.status === filter;
-      const matchesQuery =
-        !term ||
-        user.name.toLowerCase().includes(term) ||
-        user.ref.toLowerCase().includes(term);
+  const users = data?.data ?? [];
+  const total = data?.meta?.total ?? 0;
 
-      return matchesFilter && matchesQuery;
-    });
-  }, [users, filter, query]);
-
-  const blockingUser = users.find((user) => user.id === blockingId);
-
-  const setStatus = (id: string, next: UserStatus) =>
-    setUsers((current) =>
-      current.map((user) =>
-        user.id === id ? { ...user, status: next } : user,
-      ),
-    );
-
-  const confirmBlock = (reason: string) => {
-    if (!blockingId) return;
-
+  const confirmBlock = async (reason: string, description: string) => {
+    if (!blockingUser) return;
     if (!reason.trim()) {
       message.error("A block reason is required.");
       return;
     }
 
-    setStatus(blockingId, "Blocked");
-    setBlockingId(null);
-    message.success("User blocked.");
+    try {
+      await updateUser({
+        userId: blockingUser._id,
+        body: {
+          status: "blocked",
+          blockReason: description.trim()
+            ? `${reason.trim()} — ${description.trim()}`
+            : reason.trim(),
+        },
+      }).unwrap();
+      message.success(`${blockingUser.name} blocked.`);
+      setBlockingUser(null);
+    } catch {
+      message.error("Couldn't block the user. Try again.");
+    }
   };
 
-  const columns: TableColumnsType<AdminUser> = [
+  const unblock = async (user: TUser) => {
+    try {
+      await updateUser({
+        userId: user._id,
+        body: { status: "active" },
+      }).unwrap();
+      message.success(`${user.name} unblocked.`);
+    } catch {
+      message.error("Couldn't unblock the user. Try again.");
+    }
+  };
+
+  const columns: TableColumnsType<TUser> = [
     {
       title: "Id",
-      dataIndex: "ref",
       key: "ref",
       width: 100,
-      render: (ref: string) => (
-        <span className="text-xs text-zinc-400">{ref}</span>
+      render: (_, user) => (
+        <span className="text-xs text-zinc-400">{userRef(user)}</span>
       ),
     },
     {
@@ -112,12 +132,13 @@ export default function UsersTable({
       ),
     },
     {
-      title: "Date",
-      dataIndex: "date",
+      title: "Joined",
       key: "date",
       align: "center",
-      render: (date: string) => (
-        <span className="text-xs text-zinc-300">{date}</span>
+      render: (_, user) => (
+        <span className="text-xs text-zinc-300">
+          {formatUserDate(user.createdAt)}
+        </span>
       ),
     },
     {
@@ -125,24 +146,26 @@ export default function UsersTable({
       dataIndex: "status",
       key: "status",
       align: "center",
-      render: (value: UserStatus) => (
+      render: (status: TUser["status"]) => (
         <span
-          className={`inline-flex items-center gap-1.5 text-xs ${
-            value === "Blocked" ? "text-red-400" : "text-emerald-400"
+          className={`inline-flex items-center gap-1.5 text-xs capitalize ${
+            status === "blocked" ? "text-red-400" : "text-emerald-400"
           }`}
         >
           <span className="h-1 w-1 rounded-full bg-current" />
-          {value}
+          {status}
         </span>
       ),
     },
     {
-      title: "State",
-      dataIndex: "state",
-      key: "state",
+      title: "Role",
+      dataIndex: "role",
+      key: "role",
       align: "center",
-      render: (state: string) => (
-        <span className="text-xs text-zinc-300">{state}</span>
+      render: (role: TUser["role"]) => (
+        <span className="text-xs text-zinc-300 capitalize">
+          {role.replace("_", " ")}
+        </span>
       ),
     },
     {
@@ -151,7 +174,7 @@ export default function UsersTable({
       width: 90,
       align: "center",
       render: (_, user) => {
-        const blocked = user.status === "Blocked";
+        const blocked = user.status === "blocked";
 
         return (
           <Dropdown
@@ -165,12 +188,9 @@ export default function UsersTable({
                 { key: "details", label: "Details" },
               ],
               onClick: ({ key }) => {
-                if (key === "details") router.push(`/admin/users/${user.id}`);
-                else if (key === "block") setBlockingId(user.id);
-                else {
-                  setStatus(user.id, status);
-                  message.success("User unlocked.");
-                }
+                if (key === "details") router.push(`/admin/users/${user._id}`);
+                else if (key === "block") setBlockingUser(user);
+                else void unblock(user);
               },
             }}
           >
@@ -191,34 +211,35 @@ export default function UsersTable({
     <section>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <h2 className="text-lg font-medium text-white">
-          {heading} ( {rows.length} )
+          {heading} ( {total} )
         </h2>
 
         <div className="flex w-full flex-wrap items-center gap-3 sm:w-auto">
-          {showFilter && (
-            <div className="relative">
-              <select
-                value={filter}
-                onChange={(event) => setFilter(event.target.value)}
-                aria-label="Filter users"
-                className="w-40 appearance-none rounded-full bg-white py-2.5 pr-9 pl-4 text-sm text-zinc-900 outline-none"
-              >
-                {filters.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </select>
-              <FiChevronDown className="pointer-events-none absolute top-1/2 right-3.5 -translate-y-1/2 text-zinc-600" />
-            </div>
-          )}
+          <div className="relative">
+            <select
+              value={filter}
+              onChange={(event) => {
+                setFilter(event.target.value as FilterValue);
+                setPage(1);
+              }}
+              aria-label="Filter users"
+              className="w-40 appearance-none rounded-full bg-white py-2.5 pr-9 pl-4 text-sm text-zinc-900 outline-none"
+            >
+              {FILTERS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            <FiChevronDown className="pointer-events-none absolute top-1/2 right-3.5 -translate-y-1/2 text-zinc-600" />
+          </div>
 
           <div className="relative min-w-0 flex-1 sm:w-72 sm:flex-none">
             <input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search by name or ID"
-              aria-label="Search users by name or ID"
+              placeholder="Search by name or email"
+              aria-label="Search users by name or email"
               className="w-full rounded-full bg-white py-2.5 pr-13 pl-4 text-sm text-zinc-900 outline-none placeholder:text-zinc-400"
             />
             <span className="absolute top-1/2 right-1 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-violet-600 text-white">
@@ -229,13 +250,17 @@ export default function UsersTable({
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-white/8">
-        <Table<AdminUser>
+        <Table<TUser>
           columns={columns}
-          dataSource={rows}
-          rowKey="id"
+          dataSource={users}
+          rowKey="_id"
+          loading={isFetching}
           pagination={{
+            current: page,
             pageSize: PAGE_SIZE,
+            total,
             showSizeChanger: false,
+            onChange: setPage,
             // The design labels the arrows "Back" and "Next" rather than using
             // bare chevrons.
             itemRender: (_page, type, element) => {
@@ -264,9 +289,9 @@ export default function UsersTable({
       </div>
 
       <BlockUserModal
-        open={blockingId !== null}
+        open={blockingUser !== null}
         userName={blockingUser?.name ?? ""}
-        onCancel={() => setBlockingId(null)}
+        onCancel={() => setBlockingUser(null)}
         onSend={confirmBlock}
       />
     </section>

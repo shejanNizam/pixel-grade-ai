@@ -1,9 +1,9 @@
 "use client";
 
+import type { CardGame } from "@/types/card";
 import { Select } from "antd";
-import { useState } from "react";
 
-/* Placeholder options — replace with the real taxonomy when it's defined. */
+/** Only Pokémon is live at launch; the enum carries the rest as Coming Soon. */
 const cardTypes = [
   { value: "pokemon", label: "Pokémon", comingSoon: false },
   { value: "magic", label: "Magic: The Gathering", comingSoon: true },
@@ -12,13 +12,23 @@ const cardTypes = [
 ];
 
 const languages = [
-  { value: "en", label: "English" },
-  { value: "ja", label: "Japanese" },
+  { value: "English", label: "English" },
+  { value: "Japanese", label: "Japanese" },
 ];
 
-export default function ScanSettings() {
-  const [cardType, setCardType] = useState<string>();
-  const [language, setLanguage] = useState<string>();
+interface ScanSettingsProps {
+  game?: CardGame;
+  language?: string;
+  onGameChange: (game: CardGame) => void;
+  onLanguageChange: (language: string) => void;
+}
+
+export default function ScanSettings({
+  game,
+  language,
+  onGameChange,
+  onLanguageChange,
+}: ScanSettingsProps) {
 
   return (
     <section>
@@ -34,10 +44,10 @@ export default function ScanSettings() {
           </label>
           <Select
             id="card-type"
-            value={cardType}
+            value={game}
             onChange={(val) => {
               const selected = cardTypes.find((c) => c.value === val);
-              if (!selected?.comingSoon) setCardType(val);
+              if (!selected?.comingSoon) onGameChange(val as CardGame);
             }}
             placeholder="Card type"
             size="large"
@@ -73,7 +83,7 @@ export default function ScanSettings() {
           <Select
             id="language"
             value={language}
-            onChange={setLanguage}
+            onChange={onLanguageChange}
             options={languages}
             placeholder="Language"
             size="large"
