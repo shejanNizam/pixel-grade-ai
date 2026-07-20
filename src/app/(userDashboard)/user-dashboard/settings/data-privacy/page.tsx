@@ -1,7 +1,9 @@
 "use client";
 
-import { useAppDispatch } from "@/redux/hooks";
+import { ACCESS_TOKEN_KEY } from "@/redux/api/baseApi";
 import { logout } from "@/redux/features/auth/authSlice";
+import { useDeleteMyAccountMutation } from "@/redux/features/user/userApi";
+import { useAppDispatch } from "@/redux/hooks";
 import { clearAuthCookie } from "@/utils/cookieUtils";
 import { App, Checkbox, Form, Input, Modal } from "antd";
 import { useRouter } from "next/navigation";
@@ -23,36 +25,34 @@ export default function DataPrivacy() {
   const dispatch = useAppDispatch();
   const { message } = App.useApp();
   const [form] = Form.useForm<DeleteAccountFormValues>();
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [pendingPassword, setPendingPassword] = useState("");
+  const [deleteMyAccount, { isLoading: isDeleting }] =
+    useDeleteMyAccountMutation();
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
   const clearSession = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("refresh");
-    localStorage.removeItem("user_id");
+    localStorage.removeItem(ACCESS_TOKEN_KEY);
     clearAuthCookie();
     dispatch(logout());
   };
 
-  const handleSubmit = (values: DeleteAccountFormValues) => {
-    setPendingPassword(values.password);
+  const handleSubmit = () => {
+    // The password field is a confirmation gate; the backend soft-deletes the
+    // authenticated account and takes no body.
     setIsConfirmOpen(true);
   };
 
-  const handleConfirmDelete = () => {
-    // Frontend-only demo: no API call. Simulate account deletion + logout.
-    void pendingPassword;
-    setIsDeleting(true);
-    setTimeout(() => {
-      setIsDeleting(false);
-      message.success("Your account has been deleted (demo).");
+  const handleConfirmDelete = async () => {
+    try {
+      await deleteMyAccount().unwrap();
+      message.success("Your account has been deleted.");
       setIsConfirmOpen(false);
-      setPendingPassword("");
       form.resetFields();
       clearSession();
       router.replace("/login");
-    }, 500);
+    } catch (err) {
+      const data = (err as { data?: { message?: string } })?.data;
+      message.error(data?.message ?? "Couldn't delete your account. Try again.");
+    }
   };
 
   return (
@@ -160,8 +160,8 @@ export default function DataPrivacy() {
         <div className="flex items-start gap-3">
           <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-gray-500 dark:text-gray-400" />
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            Your current session is cleared after a successful deletion. Wire
-            this up to your backend to perform the real deletion.
+            Your current session is cleared after a successful deletion, and
+            you&apos;ll be returned to the login screen.
           </p>
         </div>
       </section>

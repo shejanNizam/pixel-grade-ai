@@ -160,7 +160,10 @@ export default function ScanFlowModal({
     setAddedToCollection(false);
     void runPipeline();
     return () => {
-      // Invalidate the run so a late response can't resurrect a closed dialog.
+      // Bumping the live counter is deliberate: it invalidates the in-flight
+      // run so a late response can't resurrect a closed dialog. This is not a
+      // captured DOM ref, so the exhaustive-deps warning doesn't apply.
+      // eslint-disable-next-line react-hooks/exhaustive-deps
       runId.current++;
     };
   }, [open, runPipeline]);
@@ -260,6 +263,10 @@ export default function ScanFlowModal({
                           alt=""
                           width={40}
                           height={56}
+                          // Card art comes from external CDNs (Scrydex/pokemontcg
+                          // in mock) — skip optimization so an unconfigured host
+                          // doesn't throw in render.
+                          unoptimized
                           className="h-14 w-10 shrink-0 rounded-md object-cover"
                         />
                       ) : (

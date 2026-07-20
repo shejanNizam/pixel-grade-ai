@@ -68,17 +68,26 @@ export interface TSubscription {
   createdAt?: string;
 }
 
+/** The live credit balance, matching CreditServices.getBalance. `balance`,
+ *  `scansRemaining`, and `allowance` are all null on an unlimited (Enterprise)
+ *  wallet — read `isUnlimited` rather than treating null as zero. */
+export interface TCreditStatus {
+  balance: number | null;
+  isUnlimited: boolean;
+  creditsPerScan: number;
+  scansRemaining: number | null;
+  allowance: number | null;
+  interval: "daily" | "monthly";
+  periodEnd?: string;
+}
+
 /** The caller's entitlement bundle: their subscription row (null on Free),
  *  the plan that actually applies (resolved server-side, so Free comes back
  *  as the Free plan document), and the live credit balance. */
 export interface TMySubscription {
   subscription: TSubscription | null;
   plan: TPlan;
-  credits: {
-    /** Null for unlimited (Enterprise) wallets. */
-    balance: number | null;
-    scansLeft: number | null;
-  };
+  credits: TCreditStatus;
 }
 
 export const subscriptionApi = baseApi.injectEndpoints({
@@ -89,13 +98,16 @@ export const subscriptionApi = baseApi.injectEndpoints({
       providesTags: ["subscription", "credit"],
     }),
 
-    /** Returns a Stripe Checkout URL — redirect the browser to it. */
+    /** Returns a Stripe Checkout URL — redirect the browser to it. The backend
+     *  envelope names it `checkoutUrl`; we expose it as `url` for the caller. */
     createCheckoutSession: builder.mutation<
       { url: string },
       { planId: string; interval: "monthly" | "yearly" }
     >({
       query: (body) => ({ url: "/subscription/checkout", method: "POST", body }),
-      transformResponse: (res: TResponse<{ url: string }>) => res.data,
+      transformResponse: (
+        res: TResponse<{ checkoutUrl: string; sessionId: string }>,
+      ) => ({ url: res.data.checkoutUrl }),
     }),
 
     cancelSubscription: builder.mutation<TSubscription, void>({

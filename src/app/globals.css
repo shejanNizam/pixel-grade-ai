@@ -179,39 +179,6 @@ body {
   font-size: 12px;
 }
 
-/* -------------------------------------------------------------------------- */
-/*  Add Card modal                                                            */
-/*                                                                            */
-/*  The design puts a light modal on the dark dashboard, so it opts out of    */
-/*  antd's dark algorithm rather than inheriting it.                          */
-/* -------------------------------------------------------------------------- */
-.add-card-modal .ant-modal-content {
-  border-radius: 24px;
-  background-color: #ffffff;
-  padding: 28px;
-}
-
-.add-card-modal .ant-form-item-label > label {
-  color: #3f3f46;
-  font-size: 13px;
-}
-
-.add-card-modal .ant-input {
-  background-color: #ffffff;
-  border-color: #d4d4d8;
-  color: #18181b;
-  border-radius: 8px;
-}
-
-.add-card-modal .ant-input::placeholder {
-  color: #a1a1aa;
-}
-
-.add-card-modal .ant-input:hover,
-.add-card-modal .ant-input:focus {
-  border-color: var(--color-primary);
-}
-
 /* ── Checkbox: violet fill on light, white fill on the black canvas ── */
 .auth-shell .ant-checkbox .ant-checkbox-inner {
   width: 18px;

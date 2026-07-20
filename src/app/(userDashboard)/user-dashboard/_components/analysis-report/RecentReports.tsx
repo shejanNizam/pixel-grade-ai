@@ -50,6 +50,8 @@ export default function RecentReports() {
                   alt=""
                   width={40}
                   height={56}
+                  // External CDN card art — bypass the optimizer's host allowlist.
+                  unoptimized={Boolean(card?.officialImageUrl)}
                   className="h-14 w-10 shrink-0 rounded-md object-cover"
                 />
 

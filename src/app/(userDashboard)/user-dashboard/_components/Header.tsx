@@ -1,8 +1,11 @@
 "use client";
 
+import HeaderProfile from "@/components/shared/HeaderProfile";
+import NotificationBell from "@/components/shared/NotificationBell";
 import PillButton from "@/components/shared/PillButton";
+import { useGetMySubscriptionQuery } from "@/redux/features/subscription/subscriptionApi";
 import { usePathname } from "next/navigation";
-import { FiBell, FiMenu } from "react-icons/fi";
+import { FiMenu } from "react-icons/fi";
 
 /** Page titles keyed by route — the header is shared by every dashboard screen. */
 const pageTitles: Record<string, string> = {
@@ -21,6 +24,11 @@ interface HeaderProps {
 
 export default function Header({ toggleSidebar }: HeaderProps) {
   const pathname = usePathname();
+  const { data: mySub } = useGetMySubscriptionQuery();
+
+  // Only Free plans see the upgrade CTA — a paying user has nothing to upgrade
+  // to from here (they manage their plan on the subscription page).
+  const onFreePlan = mySub?.plan.name === "Free";
 
   const title =
     pageTitles[pathname] ??
@@ -49,34 +57,25 @@ export default function Header({ toggleSidebar }: HeaderProps) {
       </div>
 
       <div className="flex shrink-0 items-center gap-2 sm:gap-3 md:gap-5">
-        {/* Label shortens rather than disappearing — upgrading is the point of
-            the header, so it stays reachable on a phone. */}
-        <PillButton
-          href="/user-dashboard/subscription"
-          variant="gradient"
-          className="px-3! py-2! text-xs! sm:px-5! sm:py-2.5! sm:text-sm!"
-        >
-          <span className="md:hidden">Upgrade</span>
-          <span className="hidden md:inline">Upgrade to premium</span>
-        </PillButton>
+        {/* Only shown on Free — a paid user has no upgrade to make here. Label
+            shortens rather than disappearing so it stays reachable on a phone. */}
+        {onFreePlan && (
+          <PillButton
+            href="/user-dashboard/subscription"
+            variant="gradient"
+            className="px-3! py-2! text-xs! sm:px-5! sm:py-2.5! sm:text-sm!"
+          >
+            <span className="md:hidden">Upgrade</span>
+            <span className="hidden md:inline">Upgrade to premium</span>
+          </PillButton>
+        )}
 
-        <button
-          aria-label="Notifications"
-          className="relative inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-zinc-900 transition-colors hover:bg-zinc-200 md:h-10 md:w-10"
-        >
-          <FiBell size={17} />
-          <span className="absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-black bg-red-500" />
-        </button>
+        <NotificationBell seeAllHref="/user-dashboard/settings/notification" />
 
-        <div className="flex items-center gap-2.5">
-          <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-violet-500 to-cyan-400 text-sm font-semibold text-white md:h-10 md:w-10">
-            AA
-          </span>
-          <div className="hidden leading-tight lg:block">
-            <p className="text-sm font-medium text-white">Alex alfred</p>
-            <p className="text-xs text-zinc-500">My Profile</p>
-          </div>
-        </div>
+        <HeaderProfile
+          href="/user-dashboard/settings/profile"
+          subtitle="My Profile"
+        />
       </div>
     </header>
   );

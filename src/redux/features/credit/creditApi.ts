@@ -27,10 +27,17 @@ export interface TCreditLedgerRow {
   createdAt?: string;
 }
 
+/** Matches CreditServices.getBalance. `balance`, `scansRemaining`, and
+ *  `allowance` are null on an unlimited (Enterprise) wallet — read
+ *  `isUnlimited` rather than treating null as zero. */
 export interface TCreditBalance {
-  /** Null for unlimited (Enterprise) wallets. */
   balance: number | null;
-  scansLeft: number | null;
+  isUnlimited: boolean;
+  creditsPerScan: number;
+  scansRemaining: number | null;
+  allowance: number | null;
+  interval: "daily" | "monthly";
+  periodEnd?: string;
 }
 
 export const creditApi = baseApi.injectEndpoints({

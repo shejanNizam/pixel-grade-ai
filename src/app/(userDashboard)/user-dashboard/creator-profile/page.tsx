@@ -1,124 +1,145 @@
+"use client";
+
+import { useGetCollectionSummaryQuery } from "@/redux/features/collection/collectionApi";
+import { useGetMyGradingReportsQuery } from "@/redux/features/grading/gradingApi";
+import { useGetMeQuery } from "@/redux/features/user/userApi";
 import Image from "next/image";
-import { FiShare2, FiShield, FiStar, FiUsers } from "react-icons/fi";
-import { MdOutlineGridView, MdVerified } from "react-icons/md";
-import { RiUserFollowLine } from "react-icons/ri";
-import { creator, initials } from "../_components/creator-profile/data";
+import Link from "next/link";
+import { MdVerified } from "react-icons/md";
 
-const tabs = [
-  { label: "Showcase", Icon: FiStar },
-  { label: "Posts", Icon: MdOutlineGridView },
-  { label: "Explore", Icon: RiUserFollowLine },
-  { label: "Badges", Icon: FiShield },
-];
+const FALLBACK_IMAGE = "/assets/user-dashboard/recent_scan_card.png";
 
-const summaryStats = [
-  {
-    emoji: "💰",
-    label: "Total value",
-    value: "$3,526",
-    valueClass: "text-violet-400",
-  },
-  {
-    emoji: "🃏",
-    label: "Total cards",
-    value: "128",
-    valueClass: "text-violet-400",
-  },
-  {
-    emoji: "🏅",
-    label: "Total graded",
-    value: "92",
-    valueClass: "text-green-400",
-  },
-  {
-    emoji: "⭐",
-    label: "Community rating",
-    value: "4.8",
-    suffix: "/5",
-    valueClass: "text-amber-400",
-  },
-];
+const money = (v: number) =>
+  v.toLocaleString("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  });
 
-const showcaseCards = Array.from({ length: 4 }, (_, i) => i);
+/** "Alex Alfred" -> "AA". */
+const initialsOf = (name: string) =>
+  name
+    .split(" ")
+    .map((part) => part[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
 
 export default function CreatorProfile() {
+  const { data: me, isLoading: loadingMe } = useGetMeQuery();
+  const { data: summary } = useGetCollectionSummaryQuery();
+  const { data: reports } = useGetMyGradingReportsQuery({
+    limit: 8,
+    sort: "-createdAt",
+  });
+
+  const certified = reports?.meta?.total ?? 0;
+  const showcase = reports?.data ?? [];
+
+  // "Pixel verified" creator badge — earned once any scan cleared the bar.
+  const hasVerified = showcase.some((report) => report.pixelVerified);
+
+  // Average confidence across the reports we have to hand.
+  const avgConfidence =
+    showcase.length > 0
+      ? Math.round(
+          showcase.reduce((sum, report) => sum + report.confidence, 0) /
+            showcase.length,
+        )
+      : null;
+
+  const summaryStats = [
+    {
+      emoji: "💰",
+      label: "Total value",
+      value: summary ? money(summary.totalValue) : "—",
+      valueClass: "text-violet-400",
+    },
+    {
+      emoji: "🃏",
+      label: "Total cards",
+      value: summary ? summary.totalCards.toLocaleString("en-US") : "—",
+      valueClass: "text-violet-400",
+    },
+    {
+      emoji: "🏅",
+      label: "Cards certified",
+      value: certified.toLocaleString("en-US"),
+      valueClass: "text-green-400",
+    },
+    {
+      emoji: "⭐",
+      label: "Avg confidence",
+      value: avgConfidence !== null ? String(avgConfidence) : "—",
+      suffix: avgConfidence !== null ? "%" : undefined,
+      valueClass: "text-amber-400",
+    },
+  ];
+
+  if (loadingMe || !me) {
+    return (
+      <div className="space-y-6">
+        <div className="h-56 animate-pulse rounded-2xl border border-white/10 bg-[#111113]" />
+        <div className="h-72 animate-pulse rounded-2xl border border-white/10 bg-[#111113]" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Profile card */}
       <div className="rounded-2xl border border-white/10 bg-[#111113] p-6 sm:p-8">
-        {/* Top row: avatar + info + share button */}
         <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
-          {/* Avatar + name block */}
           <div className="flex items-start gap-5">
-            {/* Avatar with glow */}
             <div className="relative shrink-0">
               <div
                 aria-hidden
                 className="pointer-events-none absolute inset-0 rounded-full bg-violet-500/50 blur-xl"
               />
-              <span className="relative inline-flex h-20 w-20 items-center justify-center rounded-full bg-linear-to-br from-violet-500 to-cyan-400 text-2xl font-bold text-white ring-2 ring-violet-500/40">
-                {initials}
-              </span>
+              {me.avatar?.url ? (
+                <Image
+                  src={me.avatar.url}
+                  alt=""
+                  width={80}
+                  height={80}
+                  unoptimized
+                  className="relative h-20 w-20 rounded-full object-cover ring-2 ring-violet-500/40"
+                />
+              ) : (
+                <span className="relative inline-flex h-20 w-20 items-center justify-center rounded-full bg-linear-to-br from-violet-500 to-cyan-400 text-2xl font-bold text-white ring-2 ring-violet-500/40">
+                  {initialsOf(me.name)}
+                </span>
+              )}
             </div>
 
-            {/* Name, badge, followers */}
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <h2 className="text-xl font-bold text-white sm:text-2xl">
-                  {creator.name}
+                  {me.name}
                 </h2>
-                <MdVerified className="text-blue-400" size={20} />
+                {hasVerified && (
+                  <MdVerified
+                    className="text-blue-400"
+                    size={20}
+                    aria-label="Pixel verified"
+                  />
+                )}
               </div>
 
-              <span className="inline-block rounded-md bg-violet-500/20 px-3 py-0.5 text-xs font-medium text-violet-300">
-                {creator.badge}
-              </span>
+              {hasVerified && (
+                <span className="inline-block rounded-md bg-violet-500/20 px-3 py-0.5 text-xs font-medium text-violet-300">
+                  Pixel verified
+                </span>
+              )}
 
-              <div className="flex items-center gap-5 pt-1">
-                <div className="flex items-center gap-1.5 text-sm">
-                  <FiUsers size={14} className="text-violet-400" />
-                  <span className="font-semibold text-white">12k</span>
-                  <span className="text-zinc-500">Followers</span>
-                </div>
-                <div className="flex items-center gap-1.5 text-sm">
-                  <FiUsers size={14} className="text-violet-400" />
-                  <span className="font-semibold text-white">12k</span>
-                  <span className="text-zinc-500">Following</span>
-                </div>
-              </div>
+              <p className="pt-1 text-sm text-zinc-500">{me.email}</p>
             </div>
           </div>
-
-          {/* Share profile button */}
-          <button
-            disabled
-            className="flex cursor-default items-center gap-2 self-start rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-zinc-300 transition hover:bg-white/10"
-          >
-            <FiShare2 size={14} />
-            Share profile
-          </button>
-        </div>
-
-        {/* Tabs */}
-        <div className="mt-6 flex gap-0 border-b border-white/10">
-          {tabs.map(({ label, Icon }, idx) => (
-            <button
-              key={label}
-              disabled
-              className={`flex cursor-default items-center gap-1.5 px-4 pb-3 text-sm font-medium transition-colors ${
-                idx === 0
-                  ? "border-b-2 border-violet-500 text-white"
-                  : "text-zinc-500"
-              }`}
-            >
-              <Icon size={14} />
-              {label}
-            </button>
-          ))}
         </div>
 
         {/* Summary stat cards */}
-        <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
           {summaryStats.map((s) => (
             <div
               key={s.label}
@@ -141,34 +162,56 @@ export default function CreatorProfile() {
         </div>
       </div>
 
-      {/* My showcase */}
+      {/* My showcase — the user's most recent graded cards. */}
       <div>
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-base font-semibold text-white">My showcase</h2>
-          <button
-            disabled
-            className="cursor-default text-sm font-medium text-violet-400"
+          <Link
+            href="/user-dashboard/analysis-report"
+            className="text-sm font-medium text-violet-400 transition-opacity hover:opacity-80"
           >
             View all
-          </button>
+          </Link>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-          {showcaseCards.map((i) => (
-            <div
-              key={i}
-              className="overflow-hidden rounded-2xl border border-violet-500/30 bg-[#111113]"
-            >
-              <Image
-                src="/assets/user-dashboard/recent_scan_card.png"
-                alt="Pokemon card"
-                width={280}
-                height={390}
-                className="h-auto w-full object-cover"
-              />
-            </div>
-          ))}
-        </div>
+        {showcase.length === 0 ? (
+          <p className="rounded-2xl border border-dashed border-white/10 py-16 text-center text-sm text-zinc-500">
+            Grade your first card to start your showcase.
+          </p>
+        ) : (
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+            {showcase.map((report) => {
+              const card =
+                typeof report.card === "object" ? report.card : null;
+              return (
+                <div
+                  key={report._id}
+                  className="overflow-hidden rounded-2xl border border-violet-500/30 bg-[#111113]"
+                >
+                  <Image
+                    src={
+                      (card?.officialImageUrl as string | undefined) ??
+                      FALLBACK_IMAGE
+                    }
+                    alt={card?.name ?? "Graded card"}
+                    width={280}
+                    height={390}
+                    unoptimized={Boolean(card?.officialImageUrl)}
+                    className="h-auto w-full object-cover"
+                  />
+                  <div className="flex items-center justify-between px-3 py-2">
+                    <span className="truncate text-xs text-zinc-300">
+                      {card?.name ?? "Card"}
+                    </span>
+                    <span className="shrink-0 text-xs font-semibold text-violet-300 tabular-nums">
+                      {report.grade.toFixed(1)}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );

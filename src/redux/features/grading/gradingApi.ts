@@ -1,5 +1,6 @@
 import baseApi from "@/redux/api/baseApi";
 import type { TMeta, TResponse } from "@/types/auth";
+import type { TCard } from "@/types/card";
 
 // ---------------------------------------------------------------------------
 // Grading reports. The admin list (`/grading/all`) goes through QueryBuilder,
@@ -23,8 +24,8 @@ export interface TGradingReport {
   analysis: string;
   /** Populated with name/email on the admin list; a bare id elsewhere. */
   user: string | { _id: string; name: string; email: string };
-  /** Populated catalogue card on the admin list. */
-  card: string | { _id: string; name: string; [key: string]: unknown };
+  /** Populated catalogue card on reads; a bare id otherwise. */
+  card: TCard | string;
   /** 0-10, decimals allowed. */
   grade: number;
   gradeLabel: TGradeLabel;

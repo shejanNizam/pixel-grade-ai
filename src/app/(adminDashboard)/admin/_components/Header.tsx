@@ -1,7 +1,9 @@
 "use client";
 
+import HeaderProfile from "@/components/shared/HeaderProfile";
+import NotificationBell from "@/components/shared/NotificationBell";
 import { usePathname } from "next/navigation";
-import { FiBell, FiMenu } from "react-icons/fi";
+import { FiMenu } from "react-icons/fi";
 
 /** Page titles keyed by route — the header is shared by every admin screen. */
 const pageTitles: Record<string, string> = {
@@ -47,23 +49,9 @@ export default function AdminHeader({ toggleSidebar }: HeaderProps) {
       </div>
 
       <div className="flex shrink-0 items-center gap-2 sm:gap-3 md:gap-5">
-        <button
-          aria-label="Notifications"
-          className="relative inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-zinc-900 transition-colors hover:bg-zinc-200 md:h-10 md:w-10"
-        >
-          <FiBell size={17} />
-          <span className="absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-black bg-red-500" />
-        </button>
+        <NotificationBell />
 
-        <div className="flex items-center gap-2.5">
-          <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-violet-500 to-cyan-400 text-sm font-semibold text-white md:h-10 md:w-10">
-            AA
-          </span>
-          <div className="hidden leading-tight lg:block">
-            <p className="text-sm font-medium text-white">Alex alfred</p>
-            <p className="text-xs text-zinc-500">Admin</p>
-          </div>
-        </div>
+        <HeaderProfile href="/admin/settings/profile" />
       </div>
     </header>
   );

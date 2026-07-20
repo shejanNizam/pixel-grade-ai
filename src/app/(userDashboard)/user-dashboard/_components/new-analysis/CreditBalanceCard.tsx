@@ -21,7 +21,7 @@ export default function CreditBalanceCard() {
 
   const { plan, credits } = data;
   const allowance = plan.creditAmount; // null = unlimited (Enterprise)
-  const unlimited = allowance === null || credits.balance === null;
+  const unlimited = credits.isUnlimited;
   const remaining = unlimited ? null : Math.max(credits.balance ?? 0, 0);
   const used =
     unlimited || allowance === null
@@ -33,7 +33,7 @@ export default function CreditBalanceCard() {
       : Math.min((used / allowance) * 100, 100);
   // "Low" once there aren't enough credits left for a full scan.
   const low = remaining !== null && remaining < CREDITS_PER_SCAN;
-  const scansLeft = credits.scansLeft;
+  const scansLeft = credits.scansRemaining;
   const resetLabel =
     plan.creditInterval === "daily" ? "Resets daily" : "Resets monthly";
 

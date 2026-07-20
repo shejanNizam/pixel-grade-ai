@@ -78,6 +78,8 @@ export default function RecentInspection() {
             alt={`${name} — front`}
             width={280}
             height={392}
+            // External CDN card art — bypass the optimizer's host allowlist.
+            unoptimized={image !== CARD_IMAGE}
             className="max-h-72 w-full flex-1 rounded-xl object-contain"
           />
 

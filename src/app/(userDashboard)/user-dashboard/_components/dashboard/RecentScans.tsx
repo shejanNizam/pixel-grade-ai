@@ -73,6 +73,8 @@ export default function RecentScans() {
                   alt=""
                   width={40}
                   height={56}
+                  // External CDN card art — bypass the optimizer's host allowlist.
+                  unoptimized={image !== FALLBACK_IMAGE}
                   className="h-14 w-10 shrink-0 rounded-md object-cover"
                 />
 
