@@ -52,8 +52,10 @@ export default function SlabPreview({
     (1 - (2 * contentInsetX) / 100);
 
   return (
+    // `isolate` scopes the z-10/z-20 layers below to this element's own stacking
+    // context, so they can't paint over the page's sticky header on scroll.
     <div
-      className="relative mx-auto w-full max-w-xs overflow-hidden rounded-2xl ring-1 ring-white/15"
+      className="relative isolate mx-auto w-full max-w-xs overflow-hidden rounded-2xl ring-1 ring-white/15"
       style={{ aspectRatio: `${spec.widthMm} / ${spec.heightMm}` }}
     >
       {/* ---- AI background layer (the only part regeneration touches) ---- */}
