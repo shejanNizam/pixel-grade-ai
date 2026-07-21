@@ -86,6 +86,9 @@ export default function UserDetailsPage() {
                 alt=""
                 width={56}
                 height={56}
+                // Avatars are stored on Cloudinary (external host) — skip the
+                // optimizer's allowlist so they don't 404 to a broken image.
+                unoptimized
                 className="h-12 w-12 shrink-0 rounded-full object-cover"
               />
             ) : (

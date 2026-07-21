@@ -19,6 +19,9 @@ export interface TUser {
   isEmailVerified: boolean;
   status: "active" | "blocked";
   isDeleted: boolean;
+  /** Current plan name, joined in by the admin user list (active subscription
+   *  → plan name, else "Free"). Absent on endpoints that don't compute it. */
+  currentPlan?: string;
   createdAt?: string;
   updatedAt?: string;
 }

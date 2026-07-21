@@ -158,6 +158,26 @@ export default function UsersTable({ heading }: { heading: string }) {
       ),
     },
     {
+      title: "Plan",
+      key: "plan",
+      align: "center",
+      render: (_, user) => {
+        const plan = user.currentPlan ?? "Free";
+        const paid = plan !== "Free";
+        return (
+          <span
+            className={`inline-flex rounded-full px-2.5 py-0.5 text-[11px] font-medium ${
+              paid
+                ? "bg-violet-500/15 text-violet-300"
+                : "bg-white/10 text-zinc-400"
+            }`}
+          >
+            {plan}
+          </span>
+        );
+      },
+    },
+    {
       title: "Role",
       dataIndex: "role",
       key: "role",
