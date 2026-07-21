@@ -1,10 +1,11 @@
 "use client";
 
 import PillButton from "@/components/shared/PillButton";
+import { useGetMeQuery } from "@/redux/features/user/userApi";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { FiArrowRight, FiMenu, FiX } from "react-icons/fi";
+import { FiArrowRight, FiGrid, FiMenu, FiX } from "react-icons/fi";
 
 const navLinks = [
   { href: "/", label: "Home" },
@@ -32,6 +33,14 @@ export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const closeMenu = () => setIsOpen(false);
+
+  // Signed-in visitors get a route into the app instead of a sign-in prompt.
+  // Auth comes from getMe (the Redux auth slice is empty after a fresh load).
+  const { data: me } = useGetMeQuery();
+  const isStaff = me?.role === "admin" || me?.role === "super_admin";
+  const cta = me
+    ? { href: isStaff ? "/admin" : "/user-dashboard", label: "Dashboard", icon: <FiGrid /> }
+    : { href: "/login", label: "Sign in", icon: <FiArrowRight /> };
 
   // The bar is transparent over the hero, but needs a solid backing once content
   // scrolls beneath it — otherwise the links sit on top of the page copy.
@@ -70,11 +79,11 @@ export default function Navbar() {
         </div>
 
         <PillButton
-          href="/login"
-          icon={<FiArrowRight />}
+          href={cta.href}
+          icon={cta.icon}
           className="hidden md:inline-flex"
         >
-          Sign in
+          {cta.label}
         </PillButton>
 
         <button
@@ -101,13 +110,13 @@ export default function Navbar() {
               </Link>
             ))}
             <PillButton
-              href="/login"
+              href={cta.href}
               onClick={closeMenu}
-              icon={<FiArrowRight />}
+              icon={cta.icon}
               block
               className="mt-3"
             >
-              Sign in
+              {cta.label}
             </PillButton>
           </div>
         </div>
