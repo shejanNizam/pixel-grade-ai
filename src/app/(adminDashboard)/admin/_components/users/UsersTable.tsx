@@ -31,7 +31,7 @@ type FilterValue = (typeof FILTERS)[number]["value"];
 
 export default function UsersTable({ heading }: { heading: string }) {
   const router = useRouter();
-  const { message } = App.useApp();
+  const { message, modal } = App.useApp();
 
   const [page, setPage] = useState(1);
   const [filter, setFilter] = useState<FilterValue>("all");
@@ -95,6 +95,19 @@ export default function UsersTable({ heading }: { heading: string }) {
     } catch {
       message.error("Couldn't unblock the user. Try again.");
     }
+  };
+
+  const confirmUnblock = (user: TUser) => {
+    modal.confirm({
+      title: `Unblock ${user.name}?`,
+      content: "They'll regain full access to their account right away.",
+      okText: "Unblock",
+      cancelText: "Cancel",
+      centered: true,
+      // Returning the promise keeps the OK button in its loading state until
+      // the request settles.
+      onOk: () => unblock(user),
+    });
   };
 
   const columns: TableColumnsType<TUser> = [
@@ -202,15 +215,15 @@ export default function UsersTable({ heading }: { heading: string }) {
             placement="bottomRight"
             menu={{
               items: [
-                blocked
-                  ? { key: "unblock", label: "Unlock user" }
-                  : { key: "block", label: "Block user", danger: true },
                 { key: "details", label: "Details" },
+                blocked
+                  ? { key: "unblock", label: "Unblock user" }
+                  : { key: "block", label: "Block user", danger: true },
               ],
               onClick: ({ key }) => {
                 if (key === "details") router.push(`/admin/users/${user._id}`);
                 else if (key === "block") setBlockingUser(user);
-                else void unblock(user);
+                else confirmUnblock(user);
               },
             }}
           >

@@ -14,7 +14,7 @@ import { formatUserDate, userRef } from "../users/format";
 
 export default function RecentUsers() {
   const router = useRouter();
-  const { message } = App.useApp();
+  const { message, modal } = App.useApp();
 
   const [query, setQuery] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
@@ -59,6 +59,30 @@ export default function RecentUsers() {
     } catch {
       message.error("Couldn't block the user. Try again.");
     }
+  };
+
+  const unblock = async (user: TUser) => {
+    try {
+      await updateUser({
+        userId: user._id,
+        body: { status: "active" },
+      }).unwrap();
+      message.success(`${user.name} unblocked.`);
+    } catch {
+      message.error("Couldn't unblock the user. Try again.");
+    }
+  };
+
+  const confirmUnblock = (user: TUser) => {
+    modal.confirm({
+      title: `Unblock ${user.name}?`,
+      content: "They'll regain full access to their account right away.",
+      okText: "Unblock",
+      cancelText: "Cancel",
+      centered: true,
+      // Returning the promise keeps the OK button loading until it settles.
+      onOk: () => unblock(user),
+    });
   };
 
   const columns: TableColumnsType<TUser> = [
@@ -157,30 +181,37 @@ export default function RecentUsers() {
       key: "action",
       width: 90,
       align: "center",
-      render: (_, user) => (
-        <Dropdown
-          trigger={["click"]}
-          placement="bottomRight"
-          menu={{
-            items: [
-              { key: "details", label: "Details" },
-              { key: "block", label: "Block user", danger: true },
-            ],
-            onClick: ({ key }) => {
-              if (key === "details") router.push(`/admin/users/${user._id}`);
-              else setBlockingUser(user);
-            },
-          }}
-        >
-          <button
-            type="button"
-            aria-label={`Actions for ${user.name}`}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-zinc-400 transition-colors hover:bg-white/5 hover:text-white"
+      render: (_, user) => {
+        const blocked = user.status === "blocked";
+
+        return (
+          <Dropdown
+            trigger={["click"]}
+            placement="bottomRight"
+            menu={{
+              items: [
+                { key: "details", label: "Details" },
+                blocked
+                  ? { key: "unblock", label: "Unblock user" }
+                  : { key: "block", label: "Block user", danger: true },
+              ],
+              onClick: ({ key }) => {
+                if (key === "details") router.push(`/admin/users/${user._id}`);
+                else if (key === "block") setBlockingUser(user);
+                else confirmUnblock(user);
+              },
+            }}
           >
-            <FiMoreVertical />
-          </button>
-        </Dropdown>
-      ),
+            <button
+              type="button"
+              aria-label={`Actions for ${user.name}`}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-md text-zinc-400 transition-colors hover:bg-white/5 hover:text-white"
+            >
+              <FiMoreVertical />
+            </button>
+          </Dropdown>
+        );
+      },
     },
   ];
 
