@@ -4,22 +4,42 @@ import {
   BILLING_PERIODS,
   creditsToScans,
   formatCredits,
+  getPlan,
   monthlyPrice,
   planCatalog,
+  PLAN_NAMES,
   yearlySavings,
   yearlyTotal,
   type Billing,
   type PlanDefinition,
 } from "@/config/plans";
 import PillButton from "@/components/shared/PillButton";
+import { useGetPlansQuery, type TPlan } from "@/redux/features/plan/planApi";
 import { Tooltip } from "antd";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { FiArrowUpRight, FiCheckCircle } from "react-icons/fi";
 
-/** Plans come from the shared catalogue so the admin editor, the dashboard,
- *  and this table can never drift apart. */
 export type Plan = PlanDefinition;
-export const plans = planCatalog;
+
+/** Maps a backend plan document onto the marketing card's view model. The
+ *  backend is the source of truth for price, credits, and features; the static
+ *  catalogue supplies the presentation-only bits it doesn't store — the "Most
+ *  popular" ribbon and the display expiry — matched by plan name. */
+function toDefinition(plan: TPlan): PlanDefinition {
+  const preset = getPlan(plan.name);
+  return {
+    name: plan.name,
+    tagline: plan.tagline || preset.tagline,
+    price: plan.priceMonthly,
+    priceYearly: plan.priceYearly,
+    expiry: preset.expiry,
+    features: plan.features?.length ? plan.features : preset.features,
+    popular: preset.popular,
+    credits: plan.creditAmount,
+    creditInterval: plan.creditInterval,
+    pixelscope: plan.pixelscope,
+  };
+}
 
 /** One line of the feature list. Long copy is clipped to a single line and only
  *  then gets a tooltip — short features would otherwise hover to repeat themselves. */
@@ -101,6 +121,19 @@ interface PricingPlansProps {
 /** Shared by the marketing landing page and the dashboard subscription screen. */
 export default function PricingPlans({ ctaHref, onSelect }: PricingPlansProps) {
   const [billing, setBilling] = useState<Billing>("monthly");
+
+  // Live plans from the admin-managed catalogue. Until they load — or if the
+  // request fails — fall back to the static mirror so the page always has
+  // content: no skeleton, no layout shift, and it stays SEO-friendly.
+  const { data: livePlans } = useGetPlansQuery();
+
+  const plans = useMemo<PlanDefinition[]>(() => {
+    if (!livePlans || livePlans.length === 0) return planCatalog;
+    const order = new Map(PLAN_NAMES.map((name, i) => [name, i] as const));
+    return [...livePlans]
+      .map(toDefinition)
+      .sort((a, b) => (order.get(a.name) ?? 99) - (order.get(b.name) ?? 99));
+  }, [livePlans]);
 
   return (
     <>
