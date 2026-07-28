@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  useCancelAnalysisMutation,
   useConfirmCardMutation,
   useCreateAnalysisMutation,
   type TAnalysis,
@@ -28,7 +29,11 @@ import { FiCheck } from "react-icons/fi";
 //   match (hard gate — grading refuses to run without it) → POST /grading →
 //   report.
 //
-// Identification failures are refunded server-side; the dialog just reports.
+// The 10 credits buy a finished report. Everything that ends the scan without
+// one gives them back: identification and grading failures refund server-side,
+// and closing the dialog at the confirmation step cancels the scan (which also
+// refunds). The server sweeps anything still unconfirmed after its timeout, so
+// a closed tab is covered too — the cancel call here is the fast path.
 // ---------------------------------------------------------------------------
 
 type Step =
@@ -58,6 +63,22 @@ const errorMessage = (err: unknown, fallback: string): string => {
   return fallback;
 };
 
+/**
+ * Idempotency key for one scan attempt.
+ *
+ * `crypto.randomUUID` is restricted to secure contexts, and a staging box on
+ * plain HTTP does not qualify — falling back beats throwing on the one call
+ * that protects the user from being charged twice.
+ */
+const newRequestId = (): string =>
+  typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+    ? crypto.randomUUID()
+    : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`;
+
+/** The card behind a report — populated by the server on the grade response. */
+const reportCard = (report: TGradingReport) =>
+  typeof report.card === "object" ? report.card : null;
+
 export default function ScanFlowModal({
   open,
   source,
@@ -77,13 +98,33 @@ export default function ScanFlowModal({
   const [createAnalysis] = useCreateAnalysisMutation();
   const [confirmCard, { isLoading: isConfirming }] = useConfirmCardMutation();
   const [gradeAnalysis] = useGradeAnalysisMutation();
+  const [cancelAnalysis] = useCancelAnalysisMutation();
   const [addToCollection, { isLoading: isAddingToCollection }] =
     useAddCollectionItemMutation();
 
   const [addedToCollection, setAddedToCollection] = useState(false);
 
-  // One pipeline run per open. The ref guards against StrictMode double-fire.
+  // Invalidates an in-flight run so a late response cannot resurrect a dialog
+  // the user already closed.
   const runId = useRef(0);
+
+  /**
+   * Whether this opening of the dialog has already started a scan.
+   *
+   * This is a spending guard, not a cosmetic one. Starting the pipeline debits
+   * 10 credits, so it must happen once per opening rather than once per effect
+   * invocation — and React StrictMode invokes mount effects twice in
+   * development, which previously ran the scan, and charged for it, twice.
+   */
+  const started = useRef(false);
+
+  /**
+   * The scan that would be abandoned if the dialog closed right now.
+   *
+   * Set once identification succeeds, cleared the moment a report exists —
+   * after that the credits were earned and there is nothing to give back.
+   */
+  const abandonable = useRef<string | null>(null);
 
   const runPipeline = useCallback(async () => {
     const id = ++runId.current;
@@ -111,6 +152,10 @@ export default function ScanFlowModal({
       setStep({ name: "identifying" });
 
       const analysis = await createAnalysis({
+        // Belt to the `started` ref's braces: if this request is retried below
+        // the app — a proxy, a flaky connection — the server resolves the key
+        // to the scan it already ran instead of charging for another.
+        clientRequestId: newRequestId(),
         source,
         game,
         language,
@@ -128,6 +173,10 @@ export default function ScanFlowModal({
         ],
       }).unwrap();
       if (!stillCurrent()) return;
+
+      // From here the scan is paid for but has produced nothing, so closing the
+      // dialog has to hand the credits back.
+      abandonable.current = analysis._id;
 
       // Candidates live on GET /analysis/:id (cards populated).
       const detail = await dispatch(
@@ -156,17 +205,38 @@ export default function ScanFlowModal({
   }, [back, createAnalysis, dispatch, front, game, language, source, uploadFiles]);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      // Closing invalidates whatever is in flight and re-arms the guard, so the
+      // next opening is free to start its own scan.
+      runId.current += 1;
+      started.current = false;
+      return;
+    }
+    if (started.current) return;
+    started.current = true;
     setAddedToCollection(false);
     void runPipeline();
-    return () => {
-      // Bumping the live counter is deliberate: it invalidates the in-flight
-      // run so a late response can't resurrect a closed dialog. This is not a
-      // captured DOM ref, so the exhaustive-deps warning doesn't apply.
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-      runId.current++;
-    };
   }, [open, runPipeline]);
+
+  /**
+   * Close, refunding the scan if it never became a report.
+   *
+   * Fire-and-forget on purpose: the server sweeps unconfirmed scans on a timer
+   * regardless, so a cancel that fails to send costs the user a wait, never the
+   * credits — and blocking the dialog on it would be worse.
+   */
+  const closeDialog = useCallback(() => {
+    const abandoned = abandonable.current;
+    abandonable.current = null;
+    if (abandoned) {
+      void cancelAnalysis(abandoned)
+        .unwrap()
+        .catch(() => {
+          // Swept server-side. Nothing useful to say to a user who is leaving.
+        });
+    }
+    onClose();
+  }, [cancelAnalysis, onClose]);
 
   const confirmAndGrade = async () => {
     if (step.name !== "confirm" || !selectedCardId || isConfirming) return;
@@ -176,8 +246,15 @@ export default function ScanFlowModal({
       await confirmCard({ analysisId, cardId: selectedCardId }).unwrap();
       setStep({ name: "grading" });
       const report = await gradeAnalysis(analysisId).unwrap();
+      // The report exists, so the credits were earned — closing must not now
+      // try to cancel a scan that succeeded.
+      abandonable.current = null;
       setStep({ name: "result", report });
     } catch (err) {
+      // Grading failures refund server-side, and a confirmed scan is past the
+      // point the cancel endpoint will refund, so drop the handle rather than
+      // firing a cancel that could only double-count.
+      abandonable.current = null;
       setStep({
         name: "error",
         message: errorMessage(err, "Grading failed. Try again."),
@@ -212,7 +289,7 @@ export default function ScanFlowModal({
     <ConfigProvider theme={{ components: { Modal: { contentBg: "#18181b" } } }}>
       <Modal
         open={open}
-        onCancel={busy ? undefined : onClose}
+        onCancel={busy ? undefined : closeDialog}
         footer={null}
         centered
         width={560}
@@ -234,7 +311,7 @@ export default function ScanFlowModal({
             </h2>
             <p className="mt-1 text-xs text-zinc-400">
               Pick the card these images actually show — grading can&apos;t
-              start until you confirm.
+              start until you confirm. Cancel and your 10 credits come back.
             </p>
             {step.analysis.detectedExternalGrade && (
               <p className="mt-2 rounded-lg bg-amber-500/10 px-3 py-2 text-[11px] text-amber-400">
@@ -306,7 +383,7 @@ export default function ScanFlowModal({
 
             <div className="mt-6 flex justify-end gap-3">
               <button
-                onClick={onClose}
+                onClick={closeDialog}
                 className="rounded-full border border-white/20 px-5 py-2.5 text-sm text-white transition-colors hover:border-white/50"
               >
                 Cancel
@@ -324,7 +401,28 @@ export default function ScanFlowModal({
 
         {step.name === "result" && (
           <div className="py-2 text-center">
-            <p className="text-xs tracking-wide text-zinc-400 uppercase">
+            {/* The card this grade belongs to. Without it the panel showed only
+                a grade band ("EX"), which reads as if it were the card's own
+                name — the same identity the slab label and the report PDF
+                carry, so the three now agree. */}
+            {(() => {
+              const card = reportCard(step.report);
+              const meta = [card?.cardNumber, card?.setExpansion, card?.language]
+                .filter(Boolean)
+                .join(" · ");
+              return (
+                <>
+                  <h2 className="text-lg font-semibold text-white">
+                    {card?.name ?? "Your card"}
+                  </h2>
+                  {meta && (
+                    <p className="mt-1 text-xs text-zinc-400">{meta}</p>
+                  )}
+                </>
+              );
+            })()}
+
+            <p className="mt-6 text-xs tracking-wide text-zinc-400 uppercase">
               AI grade
             </p>
             <p className="mt-2 text-5xl font-semibold text-violet-400 tabular-nums">
@@ -373,7 +471,7 @@ export default function ScanFlowModal({
                 {addedToCollection ? "In your collection ✓" : "Add to collection"}
               </button>
               <button
-                onClick={onClose}
+                onClick={closeDialog}
                 className="rounded-full bg-violet-600 px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-violet-700"
               >
                 Done
@@ -386,7 +484,7 @@ export default function ScanFlowModal({
           <div className="py-6 text-center">
             <p className="text-sm text-red-400">{step.message}</p>
             <button
-              onClick={onClose}
+              onClick={closeDialog}
               className="mt-6 rounded-full border border-white/20 px-6 py-2.5 text-sm text-white transition-colors hover:border-white/50"
             >
               Close

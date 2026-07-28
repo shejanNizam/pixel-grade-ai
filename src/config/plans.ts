@@ -8,7 +8,9 @@
 //
 // BUSINESS MODEL — CREDITS (confirmed by client, Jul 2026)
 // The product meters usage in *credits*, not a raw scan count.
-//   • 10 credits = 1 scan (see CREDITS_PER_SCAN).
+//   • 10 credits = 1 finished grading report (see CREDITS_PER_SCAN). They are
+//     debited when the scan starts and refunded whenever no report results —
+//     a failure, a cancel, or a scan left unconfirmed.
 //   • Free is topped up DAILY; paid plans get a MONTHLY allowance.
 //   • Credits are also spent by future premium AI features.
 // Pricing/tiers come from the client's "Pricing Plans (Developer
@@ -24,7 +26,7 @@ export const MAX_PLANS = PLAN_NAMES.length;
 export const BILLING_PERIODS = ["monthly", "yearly"] as const;
 export type Billing = (typeof BILLING_PERIODS)[number];
 
-/** Credits burned per AI grading scan. 10 credits = 1 scan. */
+/** Credits burned per AI grading report. Mirrors the server constant. */
 export const CREDITS_PER_SCAN = 10;
 
 /** How long a plan runs before it renews. `1 Year` backs the yearly billing

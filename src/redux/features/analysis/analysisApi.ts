@@ -4,8 +4,12 @@ import type { CardGame, TCard } from "@/types/card";
 
 // ---------------------------------------------------------------------------
 // The scan flow. POST /analysis uploads image URLs and identifies the card
-// (10 credits, refunded if identification fails); the user must then CONFIRM
-// the match — a hard gate, grading refuses to run without it.
+// (10 credits); the user must then CONFIRM the match — a hard gate, grading
+// refuses to run without it.
+//
+// The 10 credits buy a finished report, so they come back whenever one never
+// arrives: identification failed, the user cancelled at the confirmation step,
+// or the server's sweeper found the scan still unconfirmed after the timeout.
 // ---------------------------------------------------------------------------
 
 export type TUploadSource = "standard" | "pixelscope";
@@ -16,7 +20,9 @@ export type TAnalysisStatus =
   | "awaiting_confirmation"
   | "confirmed"
   | "graded"
-  | "failed";
+  | "failed"
+  /** The user abandoned it. Distinct from `failed`, and always refunded. */
+  | "canceled";
 
 export interface TAnalysis {
   _id: string;
@@ -55,6 +61,13 @@ export interface TCardCandidate {
 }
 
 export interface CreateAnalysisBody {
+  /**
+   * Idempotency key, one per scan attempt. This is the only endpoint that
+   * spends credits, so a retried or double-fired POST carrying the same key
+   * resolves to the scan already in flight instead of starting — and charging
+   * for — a second one.
+   */
+  clientRequestId?: string;
   source?: TUploadSource;
   game?: CardGame;
   language?: string;
@@ -118,6 +131,17 @@ export const analysisApi = baseApi.injectEndpoints({
       transformResponse: (res: TResponse<TAnalysis>) => res.data,
       invalidatesTags: ["analysis"],
     }),
+
+    /** Abandon an unconfirmed scan and get its 10 credits back. Idempotent —
+     *  safe to fire on dialog close without tracking whether it already ran. */
+    cancelAnalysis: builder.mutation<TAnalysis, string>({
+      query: (analysisId) => ({
+        url: `/analysis/${analysisId}/cancel`,
+        method: "PATCH",
+      }),
+      transformResponse: (res: TResponse<TAnalysis>) => res.data,
+      invalidatesTags: ["analysis", "credit"],
+    }),
   }),
 });
 
@@ -126,4 +150,5 @@ export const {
   useGetMyAnalysesQuery,
   useGetAnalysisQuery,
   useConfirmCardMutation,
+  useCancelAnalysisMutation,
 } = analysisApi;
