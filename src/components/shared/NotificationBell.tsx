@@ -5,12 +5,15 @@ import {
   useListNotificationsQuery,
   useMarkAllAsReadMutation,
   useMarkAsReadMutation,
+  type NotifAudience,
   type NotifType,
 } from "@/redux/features/notification/notificationApi";
 import { Popover } from "antd";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import {
+  FiAlertTriangle,
   FiAward,
   FiBell,
   FiCreditCard,
@@ -21,11 +24,17 @@ import {
 
 /** One icon per notification type — a quick visual cue in the dropdown. */
 const TYPE_ICON: Record<NotifType, React.ReactNode> = {
+  // user-facing
   grade_ready: <FiAward className="text-violet-400" />,
   price_alert: <FiTrendingUp className="text-emerald-400" />,
   subscription: <FiCreditCard className="text-blue-400" />,
   support: <FiLifeBuoy className="text-amber-400" />,
   system: <FiInfo className="text-zinc-400" />,
+  // staff-facing
+  support_ticket_new: <FiLifeBuoy className="text-amber-400" />,
+  support_ticket_reply: <FiLifeBuoy className="text-amber-300" />,
+  subscription_started: <FiCreditCard className="text-emerald-400" />,
+  subscription_payment_failed: <FiAlertTriangle className="text-red-400" />,
 };
 
 /** Compact "3m ago" style timestamp; falls back to a date past a week. */
@@ -43,29 +52,43 @@ const relativeTime = (iso?: string): string => {
 };
 
 interface NotificationBellProps {
+  /**
+   * Which queue this bell shows. REQUIRED — the server defaults to "user", so
+   * an admin bell that omits it would quietly render the admin's own personal
+   * notifications instead of the staff queue.
+   */
+  audience: NotifAudience;
   /** Optional "See all" target — omit where there's no full notifications page. */
   seeAllHref?: string;
 }
 
-export default function NotificationBell({ seeAllHref }: NotificationBellProps) {
+export default function NotificationBell({
+  audience,
+  seeAllHref,
+}: NotificationBellProps) {
   const [open, setOpen] = useState(false);
+  const router = useRouter();
 
-  const { data: unread } = useGetUnreadCountQuery();
-  const { data } = useListNotificationsQuery({ limit: 8 });
+  const { data: unread } = useGetUnreadCountQuery({ audience });
+  const { data } = useListNotificationsQuery({ limit: 8, audience });
   const [markAsRead] = useMarkAsReadMutation();
   const [markAllAsRead] = useMarkAllAsReadMutation();
 
   const count = unread?.unreadCount ?? 0;
   const items = data?.data ?? [];
 
+  const isStaffQueue = audience === "admin";
+
   const panel = (
     <div className="w-80 max-w-[calc(100vw-2rem)]">
       <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
-        <p className="text-sm font-medium text-white">Notifications</p>
+        <p className="text-sm font-medium text-white">
+          {isStaffQueue ? "Platform alerts" : "Notifications"}
+        </p>
         {count > 0 && (
           <button
             type="button"
-            onClick={() => markAllAsRead()}
+            onClick={() => markAllAsRead({ audience })}
             className="text-xs text-violet-400 transition-opacity hover:opacity-80"
           >
             Mark all read
@@ -75,7 +98,9 @@ export default function NotificationBell({ seeAllHref }: NotificationBellProps) 
 
       {items.length === 0 ? (
         <p className="px-4 py-8 text-center text-xs text-zinc-500">
-          You&apos;re all caught up.
+          {isStaffQueue
+            ? "No new tickets or billing events."
+            : "You're all caught up."}
         </p>
       ) : (
         <ul className="max-h-96 divide-y divide-white/8 overflow-y-auto">
@@ -85,6 +110,12 @@ export default function NotificationBell({ seeAllHref }: NotificationBellProps) 
                 type="button"
                 onClick={() => {
                   if (!n.isRead) markAsRead(n._id);
+                  // A staff alert about a ticket is only useful if it opens
+                  // the ticket.
+                  if (n.link) {
+                    setOpen(false);
+                    router.push(n.link);
+                  }
                 }}
                 className={`flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-white/5 ${
                   n.isRead ? "" : "bg-violet-500/5"

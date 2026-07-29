@@ -70,7 +70,7 @@ export default function Header({ toggleSidebar }: HeaderProps) {
           </PillButton>
         )}
 
-        <NotificationBell seeAllHref="/user-dashboard/settings/notification" />
+        <NotificationBell audience="user" seeAllHref="/user-dashboard/settings/notification" />
 
         <HeaderProfile
           href="/user-dashboard/settings/profile"

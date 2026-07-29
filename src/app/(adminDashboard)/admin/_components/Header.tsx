@@ -49,7 +49,7 @@ export default function AdminHeader({ toggleSidebar }: HeaderProps) {
       </div>
 
       <div className="flex shrink-0 items-center gap-2 sm:gap-3 md:gap-5">
-        <NotificationBell />
+        <NotificationBell audience="admin" seeAllHref="/admin/support" />
 
         <HeaderProfile href="/admin/settings/profile" />
       </div>

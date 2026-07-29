@@ -56,6 +56,30 @@ const TYPE_META: Record<
     icon: <FiInfo className="h-5 w-5 text-zinc-400" />,
     badge: "bg-white/10 text-zinc-300",
   },
+
+  // Staff-audience types. This page only ever lists `audience=user` rows, so
+  // these are unreachable here — they exist so the map stays exhaustive and a
+  // future type cannot be added without the compiler pointing at this file.
+  support_ticket_new: {
+    label: "New ticket",
+    icon: <FiLifeBuoy className="h-5 w-5 text-amber-400" />,
+    badge: "bg-amber-500/15 text-amber-400",
+  },
+  support_ticket_reply: {
+    label: "Ticket reply",
+    icon: <FiLifeBuoy className="h-5 w-5 text-amber-300" />,
+    badge: "bg-amber-500/15 text-amber-300",
+  },
+  subscription_started: {
+    label: "New subscription",
+    icon: <FiCreditCard className="h-5 w-5 text-emerald-400" />,
+    badge: "bg-emerald-500/15 text-emerald-400",
+  },
+  subscription_payment_failed: {
+    label: "Payment failed",
+    icon: <FiCreditCard className="h-5 w-5 text-red-400" />,
+    badge: "bg-red-500/15 text-red-400",
+  },
 };
 
 /** Email preference toggles — exactly the five booleans the backend stores. */
@@ -94,8 +118,14 @@ const PREFERENCES: {
 export default function Notification() {
   const { message } = App.useApp();
 
-  const { data, isLoading } = useListNotificationsQuery({ limit: 50 });
-  const { data: unread } = useGetUnreadCountQuery();
+  // `audience` is explicit even though "user" is the server default — this is
+  // the customer-facing page and must never render the staff queue, and an
+  // implicit default is one refactor away from doing exactly that.
+  const { data, isLoading } = useListNotificationsQuery({
+    limit: 50,
+    audience: "user",
+  });
+  const { data: unread } = useGetUnreadCountQuery({ audience: "user" });
   const { data: settings } = useGetNotificationSettingsQuery();
 
   const [markAsRead] = useMarkAsReadMutation();
@@ -164,7 +194,7 @@ export default function Notification() {
           </label>
           {unreadCount > 0 && (
             <button
-              onClick={() => markAllAsRead()}
+              onClick={() => markAllAsRead({ audience: "user" })}
               className="flex items-center gap-2 rounded-lg bg-violet-600 px-4 py-2 text-sm text-white transition hover:bg-violet-500"
             >
               <FiCheckCircle className="h-4 w-4" />
