@@ -38,7 +38,7 @@ export const userApi = baseApi.injectEndpoints({
       {
         userId: string;
         body: Partial<
-          Pick<TUser, "name" | "phone"> & {
+          Pick<TUser, "name" | "username" | "phone"> & {
             avatar: { url: string; publicId: string };
           }
         >;

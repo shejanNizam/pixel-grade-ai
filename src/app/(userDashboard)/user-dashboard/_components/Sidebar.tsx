@@ -27,8 +27,18 @@ import {
 
 const SETTINGS_ROOT = "/user-dashboard/settings";
 
+// "Dashboard" is gone from the nav and Creator Profile leads in its place
+// (client, 2026-07-29). The overview page it pointed at was NOT deleted — it
+// holds the stat cards, collection charts, and recent scans, and dropping the
+// only link to it would strand all of that. It stays one slot down as
+// "Overview", which is also what login still lands on.
 const navItems = [
-  { href: "/user-dashboard", label: "Dashboard", Icon: MdOutlinePieChart },
+  {
+    href: "/user-dashboard/creator-profile",
+    label: "Creator Profile",
+    Icon: MdOutlineVerifiedUser,
+  },
+  { href: "/user-dashboard", label: "Overview", Icon: MdOutlinePieChart },
   {
     href: "/user-dashboard/new-analysis",
     label: "New analysis",
@@ -53,11 +63,6 @@ const navItems = [
     href: "/user-dashboard/price-tracker",
     label: "Price Tracker",
     Icon: MdOutlineInsertChart,
-  },
-  {
-    href: "/user-dashboard/creator-profile",
-    label: "Creator profile",
-    Icon: MdOutlineVerifiedUser,
   },
   {
     href: "/user-dashboard/subscription",

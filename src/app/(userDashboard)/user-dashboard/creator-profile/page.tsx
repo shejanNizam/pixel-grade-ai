@@ -34,11 +34,24 @@ export default function CreatorProfile() {
     sort: "-createdAt",
   });
 
-  const certified = reports?.meta?.total ?? 0;
+  // Counted server-side, NOT from `reports` above.
+  //
+  // Pixel Verified is a specific award — PixelScope upload AND confidence at or
+  // above the threshold — so it can never be the total report count. Labelling
+  // every report "Pixel Verified" would empty the badge of meaning, which is
+  // the whole reason the server is the only thing allowed to grant it. A page
+  // of eight reports also cannot be counted client-side without under-reporting
+  // anyone who has graded more than eight cards.
+  const { data: verified } = useGetMyGradingReportsQuery({
+    limit: 1,
+    pixelVerified: true,
+  });
+
+  const pixelVerifiedCount = verified?.meta?.total ?? 0;
   const showcase = reports?.data ?? [];
 
-  // "Pixel verified" creator badge — earned once any scan cleared the bar.
-  const hasVerified = showcase.some((report) => report.pixelVerified);
+  // The creator badge is earned once any scan has cleared the bar.
+  const hasVerified = pixelVerifiedCount > 0;
 
   // Average confidence across the reports we have to hand.
   const avgConfidence =
@@ -64,8 +77,8 @@ export default function CreatorProfile() {
     },
     {
       emoji: "🏅",
-      label: "Cards certified",
-      value: certified.toLocaleString("en-US"),
+      label: "Pixel Verified",
+      value: pixelVerifiedCount.toLocaleString("en-US"),
       valueClass: "text-green-400",
     },
     {
@@ -133,7 +146,13 @@ export default function CreatorProfile() {
                 </span>
               )}
 
-              <p className="pt-1 text-sm text-zinc-500">{me.email}</p>
+              {/* Public handle, not the email address — the Creator Profile is
+                  a shareable page and an email address on it is an invitation
+                  to scrape it. Falls back to the email only until a username
+                  is set, since accounts predate the field. */}
+              <p className="pt-1 text-sm text-zinc-500">
+                {me.username ? `@${me.username}` : me.email}
+              </p>
             </div>
           </div>
         </div>

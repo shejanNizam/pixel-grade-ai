@@ -3,14 +3,34 @@
 import type { TCollectionItem } from "@/redux/features/collection/collectionApi";
 import Image from "next/image";
 import Link from "next/link";
-import { FiHeart } from "react-icons/fi";
+import { FiHeart, FiTrash2 } from "react-icons/fi";
 import { CARD_IMAGE } from "./data";
 
 interface CardGridProps {
   items: TCollectionItem[];
   onToggleFavorite: (item: TCollectionItem) => void;
   onBuySlab: (item: TCollectionItem) => void;
+  onRemove: (item: TCollectionItem) => void;
+  /** Id of the item currently being deleted, so only its button spins. */
+  removingId?: string | null;
 }
+
+/**
+ * The grade shown beside the card name, e.g. "7 NM".
+ *
+ * Prefers the AI report, falling back to a third-party grade the card already
+ * carries. Manual entries with neither show nothing rather than a placeholder —
+ * a blank is honest, "—" reads like a grade of zero.
+ */
+const gradeBadge = (item: TCollectionItem): string | null => {
+  const report = typeof item.report === "object" ? item.report : null;
+
+  if (report) {
+    return `${report.grade.toFixed(1).replace(/\.0$/, "")} ${report.gradeLabel}`;
+  }
+
+  return item.externalGrade ?? null;
+};
 
 const addedOn = (iso?: string) =>
   iso
@@ -25,6 +45,8 @@ export default function CardGrid({
   items,
   onToggleFavorite,
   onBuySlab,
+  onRemove,
+  removingId,
 }: CardGridProps) {
   if (items.length === 0) {
     return (
@@ -42,6 +64,8 @@ export default function CardGrid({
         const image =
           card?.officialImageUrl ?? item.manualImageUrl ?? CARD_IMAGE;
         const hasReport = Boolean(item.report);
+        const grade = gradeBadge(item);
+        const isRemoving = removingId === item._id;
 
         return (
           <li key={item._id}>
@@ -84,7 +108,17 @@ export default function CardGrid({
             </div>
 
             <div className="mt-3">
-              <p className="truncate text-sm text-white">{name}</p>
+              {/* Grade sits at the far right of the title row, per client
+                  feedback 2026-07-29 ("Blastoise 7 NM"). The name truncates;
+                  the grade never does — it is the column people scan down. */}
+              <div className="flex items-baseline justify-between gap-2">
+                <p className="truncate text-sm text-white">{name}</p>
+                {grade && (
+                  <span className="shrink-0 text-xs font-semibold text-violet-300 tabular-nums">
+                    {grade}
+                  </span>
+                )}
+              </div>
               <p className="mt-0.5 truncate text-xs text-zinc-400">
                 {card?.setExpansion ?? ""}
               </p>
@@ -111,14 +145,26 @@ export default function CardGrid({
                 </p>
               )}
 
-              <button
-                type="button"
-                onClick={() => onBuySlab(item)}
-                aria-label={`Buy a slab for ${name}`}
-                className="block w-full rounded-lg border border-white/15 bg-white/5 py-2 text-center text-xs font-medium text-zinc-300 transition-colors hover:bg-white/10"
-              >
-                Buy Slab
-              </button>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => onBuySlab(item)}
+                  aria-label={`Buy a slab for ${name}`}
+                  className="flex-1 rounded-lg border border-white/15 bg-white/5 py-2 text-center text-xs font-medium text-zinc-300 transition-colors hover:bg-white/10"
+                >
+                  Buy Slab
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => onRemove(item)}
+                  disabled={isRemoving}
+                  aria-label={`Remove ${name} from your collection`}
+                  className="inline-flex w-9 shrink-0 items-center justify-center rounded-lg border border-white/15 bg-white/5 text-zinc-400 transition-colors hover:border-red-500/40 hover:bg-red-500/10 hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <FiTrash2 size={14} />
+                </button>
+              </div>
             </div>
           </li>
         );

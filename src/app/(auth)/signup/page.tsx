@@ -5,16 +5,13 @@ import AuthHeader, {
   authFootnote,
   authPrimaryBtn,
 } from "@/components/auth/AuthHeader";
-import {
-  useSendOtpMutation,
-  useSignupMutation,
-} from "@/redux/features/auth/authApi";
+import { useSignupMutation } from "@/redux/features/auth/authApi";
 import { SignupFormValues } from "@/types/auth";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { App, Button, Form, Input } from "antd";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FiKey, FiMail, FiPhone, FiUser } from "react-icons/fi";
+import { FiAtSign, FiKey, FiMail, FiPhone, FiUser } from "react-icons/fi";
 
 const Signup: React.FC = () => {
   const router = useRouter();
@@ -22,29 +19,33 @@ const Signup: React.FC = () => {
   const { message } = App.useApp();
 
   const [signup, { isLoading: isSigningUp }] = useSignupMutation();
-  const [sendOtp, { isLoading: isSendingOtp }] = useSendOtpMutation();
 
   const onFinish = async (values: SignupFormValues): Promise<void> => {
     try {
-      await signup({
+      // ONE call. Registration now sends the verification OTP server-side, so
+      // there is no second request that can fail silently and leave an account
+      // nobody was ever asked to verify — the prototype V1 bug.
+      const created = await signup({
         name: values.name,
+        username: values.username?.trim().toLowerCase() || undefined,
         email: values.email,
         password: values.password,
-        phone: values.phone || undefined,
+        phone: values.phone?.trim() || undefined,
       }).unwrap();
 
-      // Registration alone cannot log in — the email must be verified first.
-      // Send the OTP now and hand over to the verify screen.
-      try {
-        await sendOtp({ email: values.email }).unwrap();
-        message.success("Account created. We emailed you a 6-digit code.");
-      } catch {
+      if (created?.verificationEmailSent === false) {
         message.warning(
           "Account created, but the code could not be sent. Use Resend on the next screen.",
         );
+      } else {
+        message.success("Account created. We emailed you a 6-digit code.");
       }
+
       router.push(`/verify-code?email=${encodeURIComponent(values.email)}`);
     } catch (error) {
+      // Surfaces the server's own message ("An account with this email already
+      // exists", "That username is already taken") rather than a generic
+      // string that tells neither the user nor us what went wrong.
       message.error(
         getApiErrorMessage(error, "Signup failed. Please try again."),
       );
@@ -78,6 +79,26 @@ const Signup: React.FC = () => {
         </Form.Item>
 
         <Form.Item<SignupFormValues>
+          name="username"
+          className="mb-4!"
+          rules={[
+            { min: 3, message: "At least 3 characters" },
+            { max: 24, message: "At most 24 characters" },
+            {
+              pattern: /^[a-zA-Z0-9_]+$/,
+              message: "Letters, numbers, and underscores only",
+            },
+          ]}
+        >
+          <Input
+            size="large"
+            prefix={<FiAtSign />}
+            placeholder="Username (optional)"
+            autoComplete="username"
+          />
+        </Form.Item>
+
+        <Form.Item<SignupFormValues>
           name="email"
           className="mb-4!"
           rules={[
@@ -93,11 +114,16 @@ const Signup: React.FC = () => {
           />
         </Form.Item>
 
+        {/* Phone is OPTIONAL (client asked us to decide, 2026-07-29).
+            Nothing in the product uses it — verification, password reset, and
+            every notification go by email — so requiring it only adds a field
+            people abandon signup over. Server-side it was already optional;
+            this makes the two agree. Flip both together if the client later
+            wants SMS. */}
         <Form.Item<SignupFormValues>
           name="phone"
           className="mb-4!"
           rules={[
-            { required: true, message: "Phone number is required" },
             {
               pattern: /^\+[1-9]\d{6,14}$/,
               message: "Use international format, e.g. +8801712345678",
@@ -107,7 +133,7 @@ const Signup: React.FC = () => {
           <Input
             size="large"
             prefix={<FiPhone />}
-            placeholder="e.g. +8801712345678"
+            placeholder="Phone (optional) e.g. +8801712345678"
             autoComplete="tel"
           />
         </Form.Item>
@@ -161,7 +187,7 @@ const Signup: React.FC = () => {
           htmlType="submit"
           size="large"
           block
-          loading={isSigningUp || isSendingOtp}
+          loading={isSigningUp}
           className={authPrimaryBtn}
         >
           Create account

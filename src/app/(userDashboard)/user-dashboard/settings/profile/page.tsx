@@ -6,6 +6,7 @@ import {
   useUpdateProfileMutation,
   useUploadFilesMutation,
 } from "@/redux/features/user/userApi";
+import { getApiErrorMessage } from "@/utils/apiError";
 import { ACCEPT_ATTR, validateImage } from "@/utils/imageUpload";
 import { App, Form, Input } from "antd";
 import Image from "next/image";
@@ -15,6 +16,9 @@ import BackLink from "../../_components/settings/BackLink";
 
 interface ProfileValues {
   name: string;
+  /** Public handle shown on the Creator Profile. Unique across accounts, so a
+   *  clash comes back from the server as a 409. */
+  username: string;
   email: string;
   /** Full E.164 number, e.g. +8801712345678 — what the backend validates. */
   phone: string;
@@ -52,6 +56,17 @@ export default function ProfileSettings() {
       return;
     }
 
+    // Lower-cased to match the server, which stores usernames lower-case so
+    // "Ash" and "ash" cannot both be claimed. Sending the raw casing would let
+    // the client think it saved something the server then normalised.
+    const username = values.username?.trim().toLowerCase() ?? "";
+    if (username && !/^[a-z0-9_]{3,24}$/.test(username)) {
+      message.error(
+        "Username must be 3-24 characters: letters, numbers, and underscores only.",
+      );
+      return;
+    }
+
     try {
       // Two steps by design: the file goes to POST /upload (Cloudinary),
       // then the user is PATCHed with the resulting object.
@@ -67,6 +82,7 @@ export default function ProfileSettings() {
         userId: me._id,
         body: {
           name: values.name.trim(),
+          ...(username ? { username } : {}),
           ...(phone ? { phone } : {}),
           ...(uploadedAvatar ? { avatar: uploadedAvatar } : {}),
         },
@@ -76,8 +92,11 @@ export default function ProfileSettings() {
       setIsEditing(false);
       message.success("Profile updated.");
     } catch (err) {
-      const data = (err as { data?: { message?: string } })?.data;
-      message.error(data?.message ?? "Couldn't save your profile. Try again.");
+      // Surfaces the server's message, which for a username clash is the
+      // actionable "That username is already taken."
+      message.error(
+        getApiErrorMessage(err, "Couldn't save your profile. Try again."),
+      );
     }
   };
 
@@ -85,6 +104,7 @@ export default function ProfileSettings() {
     if (!me) return;
     form.setFieldsValue({
       name: me.name,
+      username: me.username ?? "",
       email: me.email,
       phone: me.phone ?? "",
     });
@@ -196,6 +216,7 @@ export default function ProfileSettings() {
             layout="vertical"
             initialValues={{
               name: me.name,
+              username: me.username ?? "",
               email: me.email,
               phone: me.phone ?? "",
             }}
@@ -209,6 +230,27 @@ export default function ProfileSettings() {
               rules={[{ required: true, message: "Name is required" }]}
             >
               <Input readOnly={!isEditing} />
+            </Form.Item>
+
+            {/* Public handle. Shown on the Creator Profile in place of the
+                email address, so this is what other people see. */}
+            <Form.Item<ProfileValues>
+              label={<span className="text-sm text-white">Username</span>}
+              name="username"
+              extra={
+                <span className="text-xs text-zinc-500">
+                  Shown on your public Creator Profile instead of your email.
+                </span>
+              }
+              rules={[
+                {
+                  pattern: /^[a-zA-Z0-9_]{3,24}$/,
+                  message:
+                    "3-24 characters: letters, numbers, and underscores only",
+                },
+              ]}
+            >
+              <Input readOnly={!isEditing} placeholder="Not set" />
             </Form.Item>
 
             {/* Email is identity — shown, but not editable here. */}

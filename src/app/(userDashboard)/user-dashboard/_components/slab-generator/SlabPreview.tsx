@@ -18,6 +18,11 @@ function rand(seed: number, salt: number) {
   return x - Math.floor(x);
 }
 
+/** Matches the server's `formatGrade` — "10", not "10.0"; "8.5" keeps its half.
+ *  The preview claims to show the print, so the two must agree. */
+const formatGrade = (grade: number): string =>
+  Number.isInteger(grade) ? String(grade) : grade.toFixed(1);
+
 /**
  * The slab template.
  *
@@ -43,13 +48,24 @@ export default function SlabPreview({
   const bleedX = (spec.bleedMm / spec.widthMm) * 100;
   const bleedY = (spec.bleedMm / spec.heightMm) * 100;
 
-  // The card window is a FIXED opening (65 × 90 mm on a 94 × 138 mm slab).
+  // The card window is a FIXED opening (65 × 90 mm on an 80 × 135 mm slab).
   // Content sits inside a padded safe area, so size the window relative to that
   // inner box rather than the full slab, keeping the real opening proportions.
   const contentInsetX = bleedX * 1.6;
   const openingWidthPct =
     ((spec.openingWidthMm / spec.widthMm) * 100) /
     (1 - (2 * contentInsetX) / 100);
+
+  // The label band is also a real measured rectangle (70 × 20 mm), not a
+  // "whatever the text needs" box — 20 mm is the tightest constraint in the
+  // design, and a preview that lets it grow would hide an overflow that only
+  // shows up on the printed slab.
+  const labelWidthPct =
+    ((spec.labelWidthMm / spec.widthMm) * 100) /
+    (1 - (2 * contentInsetX) / 100);
+  const labelAspect = `${spec.labelWidthMm} / ${spec.labelHeightMm}`;
+
+  const cardImage = card.imageUrl ?? CARD_IMAGE;
 
   return (
     // `isolate` scopes the z-10/z-20 layers below to this element's own stacking
@@ -93,43 +109,65 @@ export default function SlabPreview({
         className="absolute inset-0 z-10 flex flex-col"
         style={{ padding: `${bleedY * 1.6}% ${bleedX * 1.6}%` }}
       >
-        {/* Label band — FIXED placeholder */}
-        <div className="rounded-md bg-white px-2 py-1.5 shadow-lg">
-          <div className="flex items-center justify-between gap-2">
-            <div className="min-w-0">
-              <p className="truncate text-[10px] leading-tight font-bold text-black uppercase">
-                {card.name}
-              </p>
-              <p className="truncate text-[7px] leading-tight text-neutral-600">
-                {card.set} · {card.number} · {card.language}
-              </p>
-            </div>
+        {/* ---- Grading label band — FIXED, at the TOP of the slab ----
+            Mirrors the four-column strip the server composites in
+            slab.composite.ts: wordmark │ card info │ grade │ Pixel ID. */}
+        <div
+          className="mx-auto flex items-stretch gap-1.5 overflow-hidden rounded-md bg-[#0B0B0C] px-1.5 py-1 shadow-lg ring-1 ring-white/15"
+          style={{ width: `${labelWidthPct}%`, aspectRatio: labelAspect }}
+        >
+          <div className="flex shrink-0 flex-col justify-center leading-none">
+            <span className="text-[6px] font-bold tracking-wider text-white">
+              PIXEL
+            </span>
+            <span className="text-[6px] font-bold tracking-wider text-white">
+              GRADE
+            </span>
+          </div>
 
-            <div className="flex shrink-0 items-center gap-1">
-              {card.pixelVerified && (
-                <span
-                  title="Pixel Verified — inspected with PixelScope"
-                  className="inline-flex items-center gap-0.5 rounded bg-blue-600 px-1 py-0.5 text-[6px] font-bold text-white"
-                >
-                  <MdVerified size={7} />
-                  PIXEL VERIFIED
-                </span>
-              )}
-              <span className="rounded bg-black px-1.5 py-0.5 text-center leading-none text-white">
-                <span className="block text-[6px] font-medium">
-                  {card.gradeLabel}
-                </span>
-                <span className="block text-[11px] font-bold tabular-nums">
-                  {card.grade.toFixed(1)}
-                </span>
+          <div className="w-px shrink-0 self-stretch bg-white/20" />
+
+          <div className="flex min-w-0 flex-1 flex-col justify-center">
+            <p className="truncate text-[9px] leading-tight font-bold text-white">
+              {card.name}
+            </p>
+            <p className="truncate text-[6px] leading-tight text-neutral-400">
+              {[card.year, card.set].filter(Boolean).join(" ")}
+            </p>
+            <p className="truncate text-[6px] leading-tight text-neutral-500">
+              {[card.number, card.language].filter(Boolean).join(" · ")}
+            </p>
+            {card.pixelVerified && (
+              <span className="inline-flex items-center gap-0.5 text-[5px] leading-tight font-bold text-emerald-400">
+                <MdVerified size={5} />
+                PIXEL VERIFIED
               </span>
-            </div>
+            )}
+          </div>
+
+          <div className="w-px shrink-0 self-stretch bg-white/20" />
+
+          <div className="flex shrink-0 flex-col items-center justify-center leading-none">
+            <span className="text-[15px] font-bold text-white tabular-nums">
+              {formatGrade(card.grade)}
+            </span>
+            <span className="text-[5px] font-bold tracking-wider text-amber-300">
+              {card.gradeLabel.toUpperCase()}
+            </span>
+          </div>
+
+          <div className="flex shrink-0 flex-col justify-center text-right leading-none">
+            <span className="text-[5px] tracking-wider text-neutral-500">
+              PIXEL ID
+            </span>
+            <span className="text-[5px] text-neutral-300">{card.pixelId}</span>
           </div>
         </div>
 
-        {/* Card window — FIXED placeholder, sized to the real 65 × 90 mm
-            opening so the preview matches the print. */}
-        <div className="flex flex-1 items-center justify-center py-[5%]">
+        {/* ---- Card window — FIXED, sized to the real 65 × 90 mm opening.
+            Shows the user's own scanned card, which is what the server
+            composites; CARD_IMAGE is only a fallback. ---- */}
+        <div className="flex flex-1 items-center justify-center py-[4%]">
           <div
             className="relative overflow-hidden rounded-[3px] shadow-[0_4px_20px_rgba(0,0,0,0.6)] ring-1 ring-black/30"
             style={{
@@ -138,19 +176,19 @@ export default function SlabPreview({
             }}
           >
             <Image
-              src={CARD_IMAGE}
-              alt={`${card.name} — graded ${card.grade.toFixed(1)}`}
+              src={cardImage}
+              alt={`${card.name} — graded ${formatGrade(card.grade)}`}
               fill
               sizes="200px"
-              className="object-cover"
+              // Cloudinary-hosted scans are outside the optimizer's allowlist.
+              unoptimized={cardImage !== CARD_IMAGE}
+              // `contain`, not `cover`: a card whose aspect ratio differs
+              // slightly from the window must be letterboxed, never cropped —
+              // cropping cuts the edges the grade is about.
+              className="object-contain"
             />
           </div>
         </div>
-
-        {/* Cert footer — part of the fixed label system */}
-        <p className="text-center text-[6px] font-medium tracking-widest text-white/80 uppercase drop-shadow">
-          PixelGrade AI · {card.certNumber}
-        </p>
       </div>
     </div>
   );

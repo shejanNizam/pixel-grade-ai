@@ -1,7 +1,10 @@
 "use client";
 
 import { useAddCollectionItemMutation } from "@/redux/features/collection/collectionApi";
-import { useGetMyGradingReportsQuery } from "@/redux/features/grading/gradingApi";
+import {
+  useGetMyGradingReportsQuery,
+  type TDefectSeverity,
+} from "@/redux/features/grading/gradingApi";
 import { App } from "antd";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -10,6 +13,66 @@ import { MdAutoAwesome, MdVerified } from "react-icons/md";
 import { CARD_IMAGE } from "./data";
 
 const MAX_GRADE = 10;
+
+const SEVERITY_DOT: Record<TDefectSeverity, string> = {
+  minor: "bg-zinc-500",
+  moderate: "bg-amber-400",
+  severe: "bg-red-500",
+};
+
+/** Colour tracks the number so a low confidence reads as low at a glance
+ *  instead of relying on the reader parsing two digits. */
+const confidenceBarClass = (confidence: number): string => {
+  if (confidence >= 80) return "bg-emerald-500";
+  if (confidence >= 50) return "bg-amber-400";
+  return "bg-red-500";
+};
+
+/**
+ * A labelled meter whose fill always matches the value printed beside it.
+ *
+ * `value`/`max` are kept separate from `display` so the geometry cannot drift
+ * from the text: the bar is filled from the same number that is rendered.
+ */
+function Meter({
+  label,
+  value,
+  max,
+  display,
+  barClass,
+}: {
+  label: string;
+  value: number;
+  max: number;
+  display: string;
+  barClass: string;
+}) {
+  const pct = Math.max(0, Math.min(100, (value / max) * 100));
+
+  return (
+    <div>
+      <div className="flex items-baseline justify-between text-[11px]">
+        <span className="text-zinc-500">{label}</span>
+        <span className="font-medium text-zinc-300 tabular-nums">
+          {display}
+        </span>
+      </div>
+      <div
+        role="meter"
+        aria-label={label}
+        aria-valuenow={Math.round(value)}
+        aria-valuemin={0}
+        aria-valuemax={max}
+        className="mt-1 h-2 w-full overflow-hidden rounded-full bg-white/8"
+      >
+        <div
+          className={`h-full rounded-full transition-[width] ${barClass}`}
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+    </div>
+  );
+}
 
 export default function RecentInspection() {
   const router = useRouter();
@@ -62,12 +125,31 @@ export default function RecentInspection() {
     }
   };
 
+  // All three are absent on reports graded before `pixelgrade-v2`. Old reports
+  // are never re-graded, so every branch below has to survive them being empty.
+  const defects = report.detectedDefects ?? [];
+  const imageIssues = report.imageQuality?.issues ?? [];
+  const centering = report.centering;
+
   const subScores = [
-    { label: "Surfaces", value: report.scoreSurface },
-    { label: "Corners", value: report.scoreCorners },
-    { label: "Edges", value: report.scoreEdges },
-    { label: "Centering", value: report.scoreCentering },
+    { label: "Surfaces", value: report.scoreSurface, detail: null },
+    { label: "Corners", value: report.scoreCorners, detail: null },
+    { label: "Edges", value: report.scoreEdges, detail: null },
+    {
+      label: "Centering",
+      value: report.scoreCentering,
+      // Rounded to whole percent: "55/45" is how collectors write it, and the
+      // model's precision does not justify a decimal place.
+      detail: centering
+        ? `${Math.round(centering.leftPct)}/${Math.round(100 - centering.leftPct)}`
+        : null,
+    },
   ];
+
+  const marketBasisLabel =
+    card?.priceBasis === "graded"
+      ? `Graded${card.priceGradeRef ? ` (${card.priceGradeRef})` : ""}`
+      : "Raw / ungraded";
 
   return (
     <article className="rounded-2xl border border-violet-500/40 bg-[#111113] p-5">
@@ -152,21 +234,42 @@ export default function RecentInspection() {
                 {report.gradeLabel}
               </span>
               <span className="block text-[11px] text-zinc-500">
-                AI Grade Estimate · {report.confidence} % confidence
+                AI Grade Estimate · not an official certification
               </span>
             </span>
           </p>
 
-          {/* The bar restates the grade above it, so it's decorative. */}
-          <div
-            aria-hidden
-            className="mt-4 h-2 w-full overflow-hidden rounded-full bg-white/8"
-          >
-            <div
-              className="h-full rounded-full bg-linear-to-r from-violet-600 to-fuchsia-400"
-              style={{ width: `${(report.grade / MAX_GRADE) * 100}%` }}
+          {/* Two SEPARATE, LABELLED meters.
+              Prototype V1 drew one bar from the grade and printed the
+              confidence percentage beside it, so a 9.5 grade at 38% confidence
+              showed a nearly full bar next to the number 38 — read, reasonably,
+              as the AI contradicting itself. A meter must measure the number
+              standing next to it. */}
+          <div className="mt-4 space-y-2.5">
+            <Meter
+              label="Grade"
+              value={report.grade}
+              max={MAX_GRADE}
+              display={`${report.grade.toFixed(1)} / 10`}
+              barClass="bg-linear-to-r from-violet-600 to-fuchsia-400"
+            />
+            <Meter
+              label="Confidence"
+              value={report.confidence}
+              max={100}
+              display={`${Math.round(report.confidence)} %`}
+              barClass={confidenceBarClass(report.confidence)}
             />
           </div>
+
+          {/* Why confidence landed where it did. Without this a low number
+              reads as the AI being unsure of itself rather than the photos
+              being hard to grade from. */}
+          {imageIssues.length > 0 && (
+            <p className="mt-2 text-[11px] leading-relaxed text-amber-400/80">
+              Limited by image quality: {imageIssues.join("; ")}.
+            </p>
+          )}
 
           <dl className="mt-5 grid grid-cols-4 gap-2 border-t border-white/8 pt-4 text-center">
             {subScores.map((score) => (
@@ -175,13 +278,59 @@ export default function RecentInspection() {
                 <dd className="mt-1 text-sm font-medium text-white tabular-nums">
                   {score.value.toFixed(1)}
                 </dd>
+                {/* Measured border ratio, shown under the centering score so
+                    the number can be checked rather than taken on trust. */}
+                {score.detail && (
+                  <dd className="text-[10px] text-zinc-600 tabular-nums">
+                    {score.detail}
+                  </dd>
+                )}
               </div>
             ))}
           </dl>
 
+          {defects.length > 0 && (
+            <div className="mt-4 border-t border-white/8 pt-4">
+              <p className="text-[11px] font-medium text-zinc-400">
+                Detected issues
+              </p>
+              <ul className="mt-2 space-y-1.5">
+                {defects.map((defect, index) => (
+                  <li
+                    key={`${defect.category}-${index}`}
+                    className="flex items-start gap-2 text-[11px] leading-relaxed text-zinc-400"
+                  >
+                    <span
+                      className={`mt-1 h-1.5 w-1.5 shrink-0 rounded-full ${SEVERITY_DOT[defect.severity]}`}
+                      aria-hidden
+                    />
+                    <span>
+                      <span className="capitalize text-zinc-300">
+                        {defect.category}
+                      </span>
+                      {" — "}
+                      {defect.description}
+                      {defect.location && (
+                        <span className="text-zinc-600">
+                          {" "}
+                          ({defect.location})
+                        </span>
+                      )}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           <div className="mt-auto flex items-end justify-between gap-4 pt-5">
             <div>
-              <p className="text-[11px] text-zinc-500">Est Market Value</p>
+              {/* The basis is part of the number, not a footnote: a raw comp
+                  and a graded comp for the same card differ by multiples, and
+                  an unlabelled figure will be read as whichever is convenient. */}
+              <p className="text-[11px] text-zinc-500">
+                Est Market Value · {marketBasisLabel}
+              </p>
               <p className="mt-1 text-lg font-semibold text-white tabular-nums">
                 {marketValue !== undefined
                   ? `$ ${marketValue.toLocaleString("en-US")}`

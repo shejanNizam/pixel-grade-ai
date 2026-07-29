@@ -9,9 +9,11 @@ import type {
 // ---------------------------------------------------------------------------
 // Auth + onboarding endpoints, mapped 1:1 onto the Express backend.
 //
-// The signup flow is three calls: register → otp/send → otp/verify. Login is
-// refused (403) until the email is verified. Password reset arrives as an
-// emailed link to /reset-password?id=…&token=… — the token goes back as a
+// The signup flow is two calls: register → otp/verify. Register sends the
+// verification email itself (server-side, since 2026-07-29) and reports whether
+// it went out via `verificationEmailSent`; /otp/send remains for Resend only.
+// Login is refused (403) until the email is verified. Password reset arrives as
+// an emailed link to /reset-password?id=…&token=… — the token goes back as a
 // Bearer header, not in the body.
 // ---------------------------------------------------------------------------
 
@@ -19,7 +21,13 @@ export const authApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     signup: builder.mutation<
       SignupData,
-      { name: string; email: string; password: string; phone?: string }
+      {
+        name: string;
+        email: string;
+        password: string;
+        username?: string;
+        phone?: string;
+      }
     >({
       query: (body) => ({
         url: "/user/register",

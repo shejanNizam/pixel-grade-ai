@@ -41,11 +41,19 @@ export default function SlabGenerator() {
           set: card?.setExpansion ?? "",
           number: card?.cardNumber ?? "",
           language: card?.language ?? "English",
+          year: card?.releaseYear ? String(card.releaseYear) : undefined,
           grade: report.grade,
           gradeLabel: report.gradeLabel,
           confidence: report.confidence,
           pixelVerified: report.pixelVerified,
-          certNumber: `PG-${report._id.slice(-8).toUpperCase()}`,
+          // MUST match `pixelIdFor` in the server's slab.service.ts — same
+          // slice length (10, not 8) and the same case. The preview showing a
+          // different id than the printed band is worse than showing none.
+          pixelId: `PG-${report._id.slice(-10).toUpperCase()}`,
+          // The confirmed card's artwork rather than a stock placeholder. The
+          // printed slab goes further and composites the user's OWN front
+          // photo, which only the server has access to.
+          imageUrl: card?.officialImageUrl,
         };
       }),
     [reports],

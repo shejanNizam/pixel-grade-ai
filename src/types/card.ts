@@ -6,6 +6,10 @@
 
 export type CardGame = "pokemon" | "magic" | "yugioh" | "sports";
 
+/** What a price refers to. Never render `latestPrice` without it — a raw comp
+ *  and a graded comp for the same card differ by multiples. */
+export type PriceBasis = "raw" | "graded";
+
 export interface TCard {
   _id: string;
   /** Stable id from the identification service — the natural key. */
@@ -20,6 +24,11 @@ export interface TCard {
   rarity?: string;
   officialImageUrl?: string;
   latestPrice?: number;
+  /** Defaults to "raw" server-side; everything the pricing provider returns
+   *  today is an ungraded comp. */
+  priceBasis?: PriceBasis;
+  /** The grade a "graded" price refers to, e.g. "PSA 9". Absent for raw. */
+  priceGradeRef?: string;
   currency: string;
   lastPricedAt?: string;
 }

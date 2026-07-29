@@ -12,6 +12,9 @@ export type UserRole = "user" | "admin" | "super_admin";
 export interface TUser {
   _id: string;
   name: string;
+  /** Public handle shown on the Creator Profile in place of the email. Absent
+   *  until the user picks one — accounts predate the field. */
+  username?: string;
   email: string;
   phone?: string;
   role: UserRole;
@@ -58,6 +61,7 @@ export interface LoginData {
 
 export interface SignupFormValues {
   name: string;
+  username?: string;
   email: string;
   phone: string;
   password: string;
@@ -66,5 +70,9 @@ export interface SignupFormValues {
 }
 
 /** POST /user/register returns the created user (no tokens — the account
- *  must verify its email via OTP before it can log in). */
-export type SignupData = TUser;
+ *  must verify its email via OTP before it can log in).
+ *
+ *  `verificationEmailSent` reports whether the OTP mail actually went out. The
+ *  account exists either way, so a false here means "tell them to hit resend",
+ *  not "the signup failed". */
+export type SignupData = TUser & { verificationEmailSent?: boolean };

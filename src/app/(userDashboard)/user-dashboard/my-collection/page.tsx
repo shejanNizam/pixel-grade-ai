@@ -3,9 +3,11 @@
 import PillButton from "@/components/shared/PillButton";
 import {
   useGetMyCollectionQuery,
+  useRemoveCollectionItemMutation,
   useUpdateCollectionItemMutation,
   type TCollectionItem,
 } from "@/redux/features/collection/collectionApi";
+import { getApiErrorMessage } from "@/utils/apiError";
 import { App } from "antd";
 import { useState } from "react";
 import { FiPlus } from "react-icons/fi";
@@ -16,9 +18,10 @@ import CollectionStats from "../_components/my-collection/CollectionStats";
 const PAGE_SIZE = 24;
 
 export default function MyCollection() {
-  const { message } = App.useApp();
+  const { message, modal } = App.useApp();
   const [isAdding, setIsAdding] = useState(false);
   const [page, setPage] = useState(1);
+  const [removingId, setRemovingId] = useState<string | null>(null);
 
   const { data, isLoading } = useGetMyCollectionQuery({
     page,
@@ -27,6 +30,7 @@ export default function MyCollection() {
     sortOrder: "desc",
   });
   const [updateItem] = useUpdateCollectionItemMutation();
+  const [removeCollectionItem] = useRemoveCollectionItemMutation();
 
   const items = data?.data ?? [];
   const total = data?.meta?.total ?? 0;
@@ -41,6 +45,42 @@ export default function MyCollection() {
     } catch {
       message.error("Couldn't update the favorite. Try again.");
     }
+  };
+
+  /**
+   * Removes a card from the collection.
+   *
+   * Confirmed first because it is not undoable from the UI. What it removes is
+   * the COLLECTION ENTRY — the grading report, its images, and the price
+   * history are retained permanently as training data and are unaffected. The
+   * copy says so, because "delete" on a card the user paid credits to grade
+   * otherwise reads as destroying the grade.
+   */
+  const removeItem = async (item: TCollectionItem) => {
+    const card = typeof item.card === "object" ? item.card : null;
+    const name = card?.name ?? "this card";
+
+    modal.confirm({
+      title: `Remove ${name}?`,
+      content:
+        "This takes the card out of your collection. Its grading report stays in your reports and can be viewed at any time.",
+      okText: "Remove",
+      okButtonProps: { danger: true },
+      cancelText: "Keep",
+      onOk: async () => {
+        setRemovingId(item._id);
+        try {
+          await removeCollectionItem(item._id).unwrap();
+          message.success(`${name} removed from your collection.`);
+        } catch (error) {
+          message.error(
+            getApiErrorMessage(error, "Couldn't remove the card. Try again."),
+          );
+        } finally {
+          setRemovingId(null);
+        }
+      },
+    });
   };
 
   return (
@@ -81,6 +121,8 @@ export default function MyCollection() {
             onBuySlab={() =>
               message.info("Custom slab ordering is coming soon.")
             }
+            onRemove={removeItem}
+            removingId={removingId}
           />
         )}
 

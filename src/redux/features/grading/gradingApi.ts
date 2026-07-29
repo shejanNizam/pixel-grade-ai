@@ -19,6 +19,30 @@ export type TGradeLabel =
   | "MINT"
   | "GEM-MT";
 
+export type TDefectCategory = "surface" | "corners" | "edges" | "centering";
+export type TDefectSeverity = "minor" | "moderate" | "severe";
+
+/** One itemised defect. Present from model version `pixelgrade-v2`. */
+export interface TDetectedDefect {
+  category: TDefectCategory;
+  severity: TDefectSeverity;
+  location: string;
+  description: string;
+}
+
+/** How usable the photographs were — the input that justifies `confidence`. */
+export interface TImageQuality {
+  /** 0-100. */
+  score: number;
+  issues: string[];
+}
+
+/** Measured front border ratios; 50/50 is perfectly centred. */
+export interface TCentering {
+  leftPct: number;
+  topPct: number;
+}
+
 export interface TGradingReport {
   _id: string;
   analysis: string;
@@ -36,6 +60,12 @@ export interface TGradingReport {
   /** 0-100%. */
   confidence: number;
   reasoning?: string;
+  /** All three are absent on reports graded before `pixelgrade-v2`. Old reports
+   *  are never back-filled — they keep the grade they were issued with — so
+   *  every consumer must render without them. */
+  imageQuality?: TImageQuality;
+  centering?: TCentering;
+  detectedDefects?: TDetectedDefect[];
   pixelVerified: boolean;
   modelVersion: string;
   reportPdfUrl?: string;
@@ -48,6 +78,9 @@ export interface GradingReportListParams {
   sort?: string;
   /** Filter to one user's reports (admin list only). */
   user?: string;
+  /** Server-side filter, passed straight through QueryBuilder. Counting these
+   *  client-side would only ever count the current page. */
+  pixelVerified?: boolean;
 }
 
 export const gradingApi = baseApi.injectEndpoints({
