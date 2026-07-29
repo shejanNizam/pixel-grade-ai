@@ -1,11 +1,20 @@
 import Image from "next/image";
 import { MdVerified } from "react-icons/md";
-import { CARD_IMAGE, type BackgroundStyle, type GradedCard, type SlabSpec } from "./data";
+import { CARD_IMAGE, type GradedCard, type SlabSpec } from "./data";
 
 interface SlabPreviewProps {
   card: GradedCard;
-  style: BackgroundStyle;
   spec: SlabSpec;
+  /**
+   * The server's composite of the selected EXT. ART option — card, artwork,
+   * label, and all. When present this IS the preview: the client requires
+   * "the preview should always match the final exported design", and the only
+   * way to guarantee that is to show the exported file rather than a
+   * client-side approximation of it.
+   *
+   * Absent before the first generation, when the mock below stands in.
+   */
+  compositeUrl?: string;
   /** Changes on every regenerate — re-rolls the placeholder artwork. */
   seed: number;
   showBleed: boolean;
@@ -32,18 +41,11 @@ const formatGrade = (grade: number): string =>
  */
 export default function SlabPreview({
   card,
-  style,
   spec,
+  compositeUrl,
   seed,
   showBleed,
 }: SlabPreviewProps) {
-  const [from, via, to] = style.stops;
-
-  // Seeded variation of the placeholder art: angle + two glow positions.
-  const angle = Math.round(rand(seed, 1) * 360);
-  const glowX = 20 + rand(seed, 2) * 60;
-  const glowY = 20 + rand(seed, 3) * 60;
-
   // Bleed as a % of the slab, so the guide scales with the preview.
   const bleedX = (spec.bleedMm / spec.widthMm) * 100;
   const bleedY = (spec.bleedMm / spec.heightMm) * 100;
@@ -67,6 +69,52 @@ export default function SlabPreview({
 
   const cardImage = card.imageUrl ?? CARD_IMAGE;
 
+  // ---- The real thing ----
+  //
+  // Once the server has composited the selected artwork, show THAT file. Every
+  // pixel below this branch is an approximation drawn in CSS, and an
+  // approximation is exactly what the client rejected: a preview that differs
+  // from the export is a preview that lies. The mock only survives for the gap
+  // before the first generation finishes.
+  if (compositeUrl) {
+    return (
+      <div
+        className="relative isolate mx-auto w-full max-w-xs overflow-hidden rounded-2xl ring-1 ring-white/15"
+        style={{ aspectRatio: `${spec.widthMm} / ${spec.heightMm}` }}
+      >
+        <Image
+          src={compositeUrl}
+          alt={`${card.name} slab — graded ${formatGrade(card.grade)}`}
+          fill
+          sizes="320px"
+          unoptimized
+          priority
+          className="object-cover"
+        />
+
+        {showBleed && (
+          <div
+            aria-hidden
+            className="absolute z-20 rounded-lg border border-dashed border-white/70"
+            style={{
+              top: `${bleedY}%`,
+              bottom: `${bleedY}%`,
+              left: `${bleedX}%`,
+              right: `${bleedX}%`,
+            }}
+          />
+        )}
+      </div>
+    );
+  }
+
+  // ---- Pre-generation stand-in ----
+  //
+  // Seeded so the same seed always renders the same placeholder art.
+  const angle = Math.round(rand(seed, 1) * 360);
+  const glowX = 20 + rand(seed, 2) * 60;
+  const glowY = 20 + rand(seed, 3) * 60;
+
   return (
     // `isolate` scopes the z-10/z-20 layers below to this element's own stacking
     // context, so they can't paint over the page's sticky header on scroll.
@@ -74,19 +122,18 @@ export default function SlabPreview({
       className="relative isolate mx-auto w-full max-w-xs overflow-hidden rounded-2xl ring-1 ring-white/15"
       style={{ aspectRatio: `${spec.widthMm} / ${spec.heightMm}` }}
     >
-      {/* ---- AI background layer (the only part regeneration touches) ---- */}
       <div
         aria-hidden
         className="absolute inset-0"
         style={{
-          backgroundImage: `linear-gradient(${angle}deg, ${from}, ${via}, ${to})`,
+          backgroundImage: `linear-gradient(${angle}deg, #2e1065, #4c1d95, #0e7490)`,
         }}
       />
       <div
         aria-hidden
         className="absolute inset-0 opacity-70"
         style={{
-          backgroundImage: `radial-gradient(circle at ${glowX}% ${glowY}%, ${to}99, transparent 55%)`,
+          backgroundImage: `radial-gradient(circle at ${glowX}% ${glowY}%, #0e749099, transparent 55%)`,
         }}
       />
 
@@ -103,6 +150,20 @@ export default function SlabPreview({
           }}
         />
       )}
+
+      {/* ---- Transparent slab case ----
+          Mirrors buildCaseLayer in the server's slab.composite.ts: rim, inner
+          lip, and the moulded tabs top and bottom. Sits above the artwork and
+          below the guides, exactly as the composite layers it, so the stand-in
+          and the finished export read as the same object. */}
+      <div aria-hidden className="pointer-events-none absolute inset-0 z-15">
+        <div className="absolute inset-0 rounded-2xl bg-linear-to-br from-white/12 via-transparent to-transparent" />
+        <div className="absolute inset-0 rounded-2xl ring-3 ring-white/20 ring-inset" />
+        <div className="absolute inset-[3%] rounded-xl ring-1 ring-black/30 ring-inset" />
+        <div className="absolute inset-[3.6%] rounded-xl ring-1 ring-white/20 ring-inset" />
+        <div className="absolute top-0 left-1/2 h-[1.1%] w-[13%] -translate-x-1/2 rounded-full bg-white/50" />
+        <div className="absolute bottom-0 left-1/2 h-[1.1%] w-[13%] -translate-x-1/2 rounded-full bg-white/50" />
+      </div>
 
       {/* ---- Content sits inside the safe area ---- */}
       <div

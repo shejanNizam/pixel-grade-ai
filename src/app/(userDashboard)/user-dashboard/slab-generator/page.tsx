@@ -4,21 +4,17 @@ import { useGetMyGradingReportsQuery } from "@/redux/features/grading/gradingApi
 import {
   useCreateSlabLabelMutation,
   useRegenerateSlabMutation,
+  useSelectSlabVariantMutation,
   type TSlabLabel,
-  type TSlabStyle,
 } from "@/redux/features/slab/slabApi";
+import { getApiErrorMessage } from "@/utils/apiError";
 import { App } from "antd";
-import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import ExportBar from "../_components/slab-generator/ExportBar";
 import SlabControls from "../_components/slab-generator/SlabControls";
 import SlabPreview from "../_components/slab-generator/SlabPreview";
-import {
-  backgroundStyles,
-  slabSpecs,
-  type GradedCard,
-} from "../_components/slab-generator/data";
+import { slabSpecs, type GradedCard } from "../_components/slab-generator/data";
 
 export default function SlabGenerator() {
   const { message } = App.useApp();
@@ -29,6 +25,7 @@ export default function SlabGenerator() {
   });
   const [createLabel] = useCreateSlabLabelMutation();
   const [regenerateLabel] = useRegenerateSlabMutation();
+  const [selectVariantMutation] = useSelectSlabVariantMutation();
 
   // Only graded cards can be slabbed — the picker is the user's reports.
   const cards: GradedCard[] = useMemo(
@@ -60,43 +57,74 @@ export default function SlabGenerator() {
   );
 
   const [cardId, setCardId] = useState<string | null>(null);
-  const [style, setStyle] = useState(backgroundStyles[0]);
   const [spec, setSpec] = useState(slabSpecs[0]);
   const [showBleed, setShowBleed] = useState(true);
   const [generating, setGenerating] = useState(false);
+  const [selecting, setSelecting] = useState(false);
   /** The rendered label for the current card, keyed by report id. */
   const [labels, setLabels] = useState<Record<string, TSlabLabel>>({});
 
   const card = cards.find((c) => c.id === cardId) ?? cards[0];
   const label = card ? labels[card.id] : undefined;
 
+  const variants = label?.variants ?? [];
+  const selectedVariant = label?.selectedVariant;
+  const composite = label?.compositeUrl;
+
+  /**
+   * Produces the four EXT. ART options.
+   *
+   * ⚠️ FOUR billed image generations per press, both on first generate and on
+   * every regenerate. It is triggered by an explicit user action on this
+   * screen — deliberately NOT on scan — so a scan that never becomes a slab
+   * order costs nothing in artwork.
+   */
   const generate = async () => {
     if (!card || generating) return;
     setGenerating(true);
     try {
-      // First run creates + renders; after that, regenerate swaps only the
-      // AI background layer (version increments, labels are kept).
+      // First press creates the label and its four options; after that,
+      // regenerate throws them away and produces four completely new ones.
       const next = label
-        ? await regenerateLabel({
-            labelId: label._id,
-            styleId: style.id as TSlabStyle,
-          }).unwrap()
-        : await createLabel({
-            reportId: card.id,
-            styleId: style.id as TSlabStyle,
-          }).unwrap();
+        ? await regenerateLabel({ labelId: label._id }).unwrap()
+        : await createLabel({ reportId: card.id }).unwrap();
 
       setLabels((current) => ({ ...current, [card.id]: next }));
       message.success(
-        label ? "New background generated." : "Slab label generated.",
+        label
+          ? "Four new artwork options generated."
+          : "Slab label generated — pick your artwork.",
       );
     } catch (err) {
-      const data = (err as { data?: { message?: string } })?.data;
       message.error(
-        data?.message ?? "Couldn't generate the slab. Try again.",
+        getApiErrorMessage(err, "Couldn't generate the slab. Try again."),
       );
     } finally {
       setGenerating(false);
+    }
+  };
+
+  /**
+   * Switches which EXT. ART option the slab uses.
+   *
+   * Free at the image provider — all four were composited when the batch was
+   * generated, so the server only re-points the export and rebuilds the PDF.
+   */
+  const selectVariant = async (index: number) => {
+    if (!card || !label || selecting || index === selectedVariant) return;
+    setSelecting(true);
+    try {
+      const next = await selectVariantMutation({
+        labelId: label._id,
+        variantIndex: index,
+      }).unwrap();
+      setLabels((current) => ({ ...current, [card.id]: next }));
+    } catch (err) {
+      message.error(
+        getApiErrorMessage(err, "Couldn't select that artwork. Try again."),
+      );
+    } finally {
+      setSelecting(false);
     }
   };
 
@@ -146,39 +174,43 @@ export default function SlabGenerator() {
               <div className="mb-5 flex items-center justify-between gap-4">
                 <h3 className="text-sm font-medium text-white">Preview</h3>
                 <span className="text-[11px] text-zinc-500">
-                  {style.label} · {spec.label}
+                  {selectedVariant ? `EXT. ART ${selectedVariant} · ` : ""}
+                  {spec.label}
                   {label && ` · v${label.version}`}
                 </span>
               </div>
 
-              <div className={generating ? "animate-pulse" : undefined}>
-                {label?.compositeUrl ? (
-                  // The server-composited render — the real thing, not the
-                  // CSS mock-up.
-                  <Image
-                    src={label.compositeUrl}
-                    alt={`${card.name} slab label`}
-                    width={591}
-                    height={851}
-                    unoptimized
-                    className="mx-auto w-full max-w-sm rounded-xl"
-                  />
-                ) : (
-                  <SlabPreview
-                    card={card}
-                    style={style}
-                    spec={spec}
-                    seed={1}
-                    showBleed={showBleed}
-                  />
-                )}
+              {/* One component for both states — it swaps to the server
+                  composite the moment there is one, so the bleed guide and
+                  the frame stay identical across the transition. */}
+              <div className={generating || selecting ? "opacity-60" : undefined}>
+                <SlabPreview
+                  card={card}
+                  spec={spec}
+                  compositeUrl={composite}
+                  seed={1}
+                  showBleed={showBleed}
+                />
               </div>
 
               <p className="mt-5 text-center text-[11px] text-zinc-500">
-                {label?.compositeUrl
+                {composite
                   ? "Server-rendered composite — exactly what the export contains."
-                  : "Layout preview. Generate the slab to render the real artwork."}
+                  : "Layout preview. Generate the artwork to render the real slab."}
               </p>
+
+              {/* Disclosure, not decoration.
+                  When the card in the window is an AI rendering rather than a
+                  photograph, the slab still carries a real grade and a
+                  scannable Pixel ID beside it — so it has to say plainly that
+                  the picture is not the graded card. Without this the slab
+                  reads as evidence of a condition nobody photographed. */}
+              {label?.cardImageSource === "generated" && (
+                <p className="mt-2 text-center text-[11px] text-amber-400/80">
+                  Card image is AI-generated artwork, not a photograph of the
+                  graded card.
+                </p>
+              )}
             </section>
 
             <ExportBar
@@ -194,12 +226,14 @@ export default function SlabGenerator() {
           <SlabControls
             cards={cards}
             card={card}
-            style={style}
+            variants={variants}
+            selectedVariant={selectedVariant}
             spec={spec}
             showBleed={showBleed}
             generating={generating}
+            selecting={selecting}
             onCardChange={(next) => setCardId(next.id)}
-            onStyleChange={setStyle}
+            onVariantSelect={selectVariant}
             onSpecChange={setSpec}
             onBleedChange={setShowBleed}
             onRegenerate={generate}

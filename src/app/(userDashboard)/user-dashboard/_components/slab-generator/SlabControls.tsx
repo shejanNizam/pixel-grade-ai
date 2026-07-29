@@ -1,25 +1,27 @@
 "use client";
 
+import type { TSlabVariant } from "@/redux/features/slab/slabApi";
 import { Select, Switch } from "antd";
+import Image from "next/image";
 import { FiRefreshCw } from "react-icons/fi";
-import {
-  backgroundStyles,
-  slabSpecs,
-  type BackgroundStyle,
-  type GradedCard,
-  type SlabSpec,
-} from "./data";
+import { EXT_ART_COUNT, slabSpecs, type GradedCard, type SlabSpec } from "./data";
 
 interface SlabControlsProps {
   /** The user's graded reports — the only cards that can be slabbed. */
   cards: GradedCard[];
   card: GradedCard;
-  style: BackgroundStyle;
+  /** The four EXT. ART options. Empty until a batch has been generated. */
+  variants: TSlabVariant[];
+  /** 1-based index of the chosen option. */
+  selectedVariant?: number;
   spec: SlabSpec;
   showBleed: boolean;
+  /** A generation batch is in flight — four billed images. */
   generating: boolean;
+  /** A selection is being saved. Cheap, but it still round-trips. */
+  selecting: boolean;
   onCardChange: (card: GradedCard) => void;
-  onStyleChange: (style: BackgroundStyle) => void;
+  onVariantSelect: (index: number) => void;
   onSpecChange: (spec: SlabSpec) => void;
   onBleedChange: (show: boolean) => void;
   onRegenerate: () => void;
@@ -28,12 +30,14 @@ interface SlabControlsProps {
 export default function SlabControls({
   cards,
   card,
-  style,
+  variants,
+  selectedVariant,
   spec,
   showBleed,
   generating,
+  selecting,
   onCardChange,
-  onStyleChange,
+  onVariantSelect,
   onSpecChange,
   onBleedChange,
   onRegenerate,
@@ -88,55 +92,80 @@ export default function SlabControls({
         )}
       </section>
 
-      {/* ---- Background ---- */}
+      {/* ---- Background artwork: the four EXT. ART options ---- */}
       <section>
         <h3 className="text-sm font-medium text-white">Background artwork</h3>
         <p className="mt-1 text-[11px] text-zinc-500">
-          AI fills the area around the card and label. Both stay fixed.
+          Choose the extended artwork that best matches your card.
         </p>
 
         <div className="mt-3 grid grid-cols-2 gap-2">
-          {backgroundStyles.map((s) => {
-            const active = s.id === style.id;
-            return (
-              <button
-                key={s.id}
-                type="button"
-                onClick={() => onStyleChange(s)}
-                aria-pressed={active}
-                className={`overflow-hidden rounded-xl border p-2 text-left transition-colors ${
-                  active
-                    ? "border-violet-500 bg-violet-500/10"
-                    : "border-white/10 bg-[#0d0d0f] hover:border-white/25"
-                }`}
-              >
-                <span
-                  aria-hidden
-                  className="block h-8 w-full rounded-md"
-                  style={{
-                    backgroundImage: `linear-gradient(120deg, ${s.stops[0]}, ${s.stops[1]}, ${s.stops[2]})`,
-                  }}
-                />
-                <span
-                  className={`mt-1.5 block text-[11px] ${
-                    active ? "text-white" : "text-zinc-400"
-                  }`}
+          {variants.length === 0
+            ? // Nothing generated yet (or a batch in flight). Four skeletons
+              // rather than an empty gap, so the grid does not reflow when the
+              // artwork lands.
+              Array.from({ length: EXT_ART_COUNT }, (_, i) => (
+                <div
+                  key={i}
+                  className="overflow-hidden rounded-xl border border-white/10 bg-[#0d0d0f] p-1.5"
                 >
-                  {s.label}
-                </span>
-              </button>
-            );
-          })}
+                  <div
+                    className={`aspect-4/5 w-full rounded-md bg-white/5 ${
+                      generating ? "animate-pulse" : ""
+                    }`}
+                  />
+                  <span className="mt-1.5 block text-[10px] tracking-wider text-zinc-600">
+                    EXT. ART {i + 1}
+                  </span>
+                </div>
+              ))
+            : variants.map((variant) => {
+                const active = variant.index === selectedVariant;
+                return (
+                  <button
+                    key={variant.index}
+                    type="button"
+                    onClick={() => onVariantSelect(variant.index)}
+                    disabled={generating || selecting}
+                    aria-pressed={active}
+                    aria-label={`Use EXT. ART ${variant.index}`}
+                    className={`overflow-hidden rounded-xl border p-1.5 text-left transition-colors disabled:cursor-not-allowed ${
+                      active
+                        ? "border-violet-500 bg-violet-500/10"
+                        : "border-white/10 bg-[#0d0d0f] hover:border-white/25"
+                    }`}
+                  >
+                    {/* The ARTWORK only. The client was explicit that
+                        thumbnails must not contain the Pokémon or the card —
+                        so this is `artworkUrl`, never `compositeUrl`. */}
+                    <Image
+                      src={variant.artworkUrl}
+                      alt=""
+                      width={160}
+                      height={200}
+                      unoptimized
+                      className="aspect-4/5 w-full rounded-md object-cover"
+                    />
+                    <span
+                      className={`mt-1.5 block text-[10px] tracking-wider ${
+                        active ? "text-white" : "text-zinc-400"
+                      }`}
+                    >
+                      EXT. ART {variant.index}
+                    </span>
+                  </button>
+                );
+              })}
         </div>
 
         <button
           type="button"
           onClick={onRegenerate}
-          disabled={generating}
+          disabled={generating || selecting}
           className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-white/15 bg-white/5 py-2.5 text-xs font-medium text-zinc-200 transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
         >
           <FiRefreshCw size={13} className={generating ? "animate-spin" : ""} />
-          {generating ? "Generating…" : "Regenerate background"}
+          {generating ? "Generating…" : "Regenerate artwork"}
         </button>
       </section>
 

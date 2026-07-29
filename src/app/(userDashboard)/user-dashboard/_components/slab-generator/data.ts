@@ -52,47 +52,17 @@ export const slabSpecs: SlabSpec[] = [
 ];
 
 // ---------------------------------------------------------------------------
-// Background styles
+// Background artwork
 //
-// The real backgrounds come from the AI image-generation service. These CSS
-// gradients stand in for that artwork so the layout, placeholders and export
-// framing can be reviewed before the API is wired up.
+// The fixed themes (Cosmic / Inferno / Aurora / Vintage) were removed on
+// 2026-07-30. Artwork is now generated from the confirmed card as four EXT. ART
+// options the user picks between; there is no client-side list to choose from,
+// and the thumbnails are real generated images served from Cloudinary.
+//
+// Must match EXT_ART_TREATMENTS.length in the server's imagegen.provider.ts —
+// it is only used here to size the loading skeletons.
 // ---------------------------------------------------------------------------
-export interface BackgroundStyle {
-  id: string;
-  label: string;
-  /** Prompt sent to the image model once the backend exists. */
-  prompt: string;
-  /** Placeholder art: [from, via, to] gradient stops. */
-  stops: [string, string, string];
-}
-
-export const backgroundStyles: BackgroundStyle[] = [
-  {
-    id: "cosmic",
-    label: "Cosmic",
-    prompt: "deep space nebula, stars, violet and cyan, high detail",
-    stops: ["#2e1065", "#4c1d95", "#0e7490"],
-  },
-  {
-    id: "inferno",
-    label: "Inferno",
-    prompt: "molten fire and embers, orange and crimson, dramatic",
-    stops: ["#450a0a", "#9a3412", "#f59e0b"],
-  },
-  {
-    id: "aurora",
-    label: "Aurora",
-    prompt: "northern lights over mountains, emerald and teal, ethereal",
-    stops: ["#064e3b", "#0d9488", "#22d3ee"],
-  },
-  {
-    id: "vintage",
-    label: "Vintage",
-    prompt: "aged parchment with gold filigree, warm sepia, classic",
-    stops: ["#292524", "#78350f", "#d6d3d1"],
-  },
-];
+export const EXT_ART_COUNT = 4;
 
 // ---------------------------------------------------------------------------
 // Graded cards available to slab — the view model the preview renders. Built
