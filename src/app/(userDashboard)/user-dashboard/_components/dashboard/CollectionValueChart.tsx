@@ -14,11 +14,37 @@ const plotH = H - PAD.top - PAD.bottom;
 
 const TICK_COUNT = 5;
 
-/** "2026-07" → "Jul"; the year lives in the range button and tooltip. */
-const monthLabel = (key: string) => {
+/**
+ * Selectable windows. The server clamps `months` to 1–36 and always returns one
+ * bucket per month in range, so every option here is a whole series — there is
+ * no client-side slicing and nothing to keep in sync with the response length.
+ */
+const RANGES = [
+  { label: "3M", months: 3 },
+  { label: "6M", months: 6 },
+  { label: "1Y", months: 12 },
+  { label: "2Y", months: 24 },
+] as const;
+
+const DEFAULT_MONTHS = 12;
+
+/**
+ * Ceiling on x-axis labels. A 24-month window has ~31px per point and "Jul 25"
+ * needs more than that, so past this count the labels are thinned rather than
+ * left to overlap into a smear.
+ */
+const MAX_X_LABELS = 12;
+
+/**
+ * "2026-07" → "Jul", or "Jul 26" once a window is long enough to contain the
+ * same month twice — a bare "Jul ... Jul" axis names two different points
+ * identically.
+ */
+const monthLabel = (key: string, withYear = false) => {
   const [year, month] = key.split("-").map(Number);
   return new Date(Date.UTC(year, month - 1, 1)).toLocaleDateString("en-US", {
     month: "short",
+    ...(withYear && { year: "2-digit" as const }),
     timeZone: "UTC",
   });
 };
@@ -54,23 +80,46 @@ function smoothPath(pts: { x: number; y: number }[]): string {
 export default function CollectionValueChart() {
   const svgRef = useRef<SVGSVGElement>(null);
   const [hover, setHover] = useState<number | null>(null);
+  const [months, setMonths] = useState<number>(DEFAULT_MONTHS);
 
-  const { data, isLoading } = useGetCollectionValueOverTimeQuery({
-    months: 12,
+  // Keyed by `months`, so a window already viewed comes back from cache and
+  // switching between two ranges does not re-hit the server each time.
+  const { data, isLoading, isFetching } = useGetCollectionValueOverTimeQuery({
+    months,
   });
 
   const series = useMemo(() => data ?? [], [data]);
 
-  const { points, ticks, yAt, rangeLabel, latest, deltaPct } = useMemo(() => {
+  const {
+    points,
+    xLabels,
+    showYear,
+    ticks,
+    yAt,
+    rangeLabel,
+    latest,
+    deltaPct,
+  } = useMemo(() => {
     const max = niceMax(Math.max(...series.map((d) => d.value), 0));
     const tickStep = max / TICK_COUNT;
-    const ticks = Array.from({ length: TICK_COUNT + 1 }, (_, i) => i * tickStep);
+    const ticks = Array.from(
+      { length: TICK_COUNT + 1 },
+      (_, i) => i * tickStep,
+    );
 
     const yAt = (v: number) => PAD.top + plotH - (v / max) * plotH;
     const xAt = (i: number) =>
       PAD.left + (series.length > 1 ? (i / (series.length - 1)) * plotW : 0);
 
     const points = series.map((d, i) => ({ ...d, x: xAt(i), y: yAt(d.value) }));
+
+    // Thinned from the right so the newest month always keeps its label — it is
+    // the one the headline figure above the chart refers to.
+    const stride = Math.ceil(series.length / MAX_X_LABELS) || 1;
+    const xLabels = points.filter(
+      (_, i) => (series.length - 1 - i) % stride === 0,
+    );
+    const showYear = series.length > 12;
 
     const first = series[0];
     const last = series[series.length - 1];
@@ -86,7 +135,16 @@ export default function CollectionValueChart() {
         ? ((last.value - prev.value) / prev.value) * 100
         : null;
 
-    return { points, ticks, yAt, rangeLabel, latest: last, deltaPct };
+    return {
+      points,
+      xLabels,
+      showYear,
+      ticks,
+      yAt,
+      rangeLabel,
+      latest: last,
+      deltaPct,
+    };
   }, [series]);
 
   const handleMove = (e: React.PointerEvent<SVGSVGElement>) => {
@@ -136,20 +194,65 @@ export default function CollectionValueChart() {
           </p>
         </div>
 
-        {/* Fixed 12-month window; becomes a picker when more ranges exist. */}
-        <span className="inline-flex items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-xs text-zinc-300">
-          <FiCalendar />
-          {rangeLabel}
-        </span>
+        <div className="flex flex-col items-end gap-1.5">
+          <div
+            role="group"
+            aria-label="Chart range"
+            className="inline-flex rounded-lg border border-white/10 p-0.5"
+          >
+            {RANGES.map((range) => {
+              const selected = range.months === months;
+              return (
+                <button
+                  key={range.months}
+                  type="button"
+                  aria-pressed={selected}
+                  onClick={() => {
+                    setMonths(range.months);
+                    // The hovered index belongs to the old series; a shorter
+                    // window would otherwise open with a crosshair parked on a
+                    // point that no longer exists.
+                    setHover(null);
+                  }}
+                  className={`rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors ${
+                    selected
+                      ? "bg-violet-600 text-white"
+                      : "text-zinc-400 hover:text-zinc-200"
+                  }`}
+                >
+                  {range.label}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* The buttons say how far back; this says which months that landed
+              on, so the axis can stay abbreviated. */}
+          {rangeLabel && (
+            <span className="inline-flex items-center gap-1.5 text-[11px] text-zinc-500">
+              <FiCalendar />
+              {rangeLabel}
+            </span>
+          )}
+        </div>
       </div>
 
-      <div className="relative">
+      {/* isFetching, not isLoading: a range switch keeps the previous series on
+          screen, so without this the chart would sit there looking unchanged
+          until the new data lands. The full skeleton is for the first load
+          only — flashing it on every switch would throw the layout away. */}
+      <div
+        className={`relative transition-opacity duration-200 ${
+          isFetching ? "opacity-40" : "opacity-100"
+        }`}
+      >
         <svg
           ref={svgRef}
           viewBox={`0 0 ${W} ${H}`}
           className="w-full touch-none"
           role="img"
-          aria-label="Collection value per month over the last 12 months"
+          aria-label={`Collection value per month over the last ${months} months`}
+          aria-busy={isFetching}
           onPointerMove={handleMove}
           onPointerLeave={() => setHover(null)}
         >
@@ -195,7 +298,7 @@ export default function CollectionValueChart() {
             />
           )}
 
-          {points.map((p) => (
+          {xLabels.map((p) => (
             <text
               key={p.month}
               x={p.x}
@@ -204,7 +307,7 @@ export default function CollectionValueChart() {
               fontSize="11"
               fill={chartInk.axis}
             >
-              {monthLabel(p.month)}
+              {monthLabel(p.month, showYear)}
             </text>
           ))}
 
