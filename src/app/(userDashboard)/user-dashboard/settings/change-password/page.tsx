@@ -27,7 +27,9 @@ export default function ChangePassword() {
       message.success("Password changed.");
     } catch (err) {
       const data = (err as { data?: { message?: string } })?.data;
-      message.error(data?.message ?? "Couldn't change the password. Try again.");
+      message.error(
+        data?.message ?? "Couldn't change the password. Try again.",
+      );
     }
   };
 

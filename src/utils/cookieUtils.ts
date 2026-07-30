@@ -18,8 +18,7 @@
 import type { UserRole } from "@/types/auth";
 
 const COOKIE_BASE = "path=/; max-age=" + 60 * 60 * 24 * 7 + "; SameSite=Lax";
-const secureSuffix =
-  process.env.NODE_ENV === "production" ? "; Secure" : "";
+const secureSuffix = process.env.NODE_ENV === "production" ? "; Secure" : "";
 
 export const setAuthCookie = (token: string, role: UserRole) => {
   document.cookie = `auth-token=${token}; ${COOKIE_BASE}${secureSuffix}`;

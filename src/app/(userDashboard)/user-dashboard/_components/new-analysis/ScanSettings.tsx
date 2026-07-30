@@ -29,7 +29,6 @@ export default function ScanSettings({
   onGameChange,
   onLanguageChange,
 }: ScanSettingsProps) {
-
   return (
     <section>
       <h2 className="text-lg font-medium text-white">Scan settings</h2>

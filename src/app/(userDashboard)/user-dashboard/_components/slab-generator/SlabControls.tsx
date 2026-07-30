@@ -4,7 +4,12 @@ import type { TSlabVariant } from "@/redux/features/slab/slabApi";
 import { Select, Switch } from "antd";
 import Image from "next/image";
 import { FiRefreshCw } from "react-icons/fi";
-import { EXT_ART_COUNT, slabSpecs, type GradedCard, type SlabSpec } from "./data";
+import {
+  EXT_ART_COUNT,
+  slabSpecs,
+  type GradedCard,
+  type SlabSpec,
+} from "./data";
 
 interface SlabControlsProps {
   /** The user's graded reports — the only cards that can be slabbed. */

@@ -39,7 +39,11 @@ export default function Navbar() {
   const { data: me } = useGetMeQuery();
   const isStaff = me?.role === "admin" || me?.role === "super_admin";
   const cta = me
-    ? { href: isStaff ? "/admin" : "/user-dashboard", label: "Dashboard", icon: <FiGrid /> }
+    ? {
+        href: isStaff ? "/admin" : "/user-dashboard",
+        label: "Dashboard",
+        icon: <FiGrid />,
+      }
     : { href: "/login", label: "Sign in", icon: <FiArrowRight /> };
 
   // The bar is transparent over the hero, but needs a solid backing once content

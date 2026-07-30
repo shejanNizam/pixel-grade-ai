@@ -58,8 +58,8 @@ const ResetPasswordInner: React.FC = () => {
       <>
         <AuthHeader title="Reset password" />
         <p className="text-center text-sm text-zinc-600 dark:text-zinc-300">
-          This page only works from the link in your reset email, and this
-          link looks incomplete or expired.
+          This page only works from the link in your reset email, and this link
+          looks incomplete or expired.
         </p>
         <p className="mt-4 text-center">
           <Link href="/forgot-password" className={authAccentLink}>

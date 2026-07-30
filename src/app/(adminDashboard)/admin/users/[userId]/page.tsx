@@ -21,9 +21,7 @@ export default function UserDetailsPage() {
     user ? { searchTerm: user.email, limit: 5 } : undefined,
     { skip: !user },
   );
-  const subscription = subscribers?.data.find(
-    (row) => row.user._id === userId,
-  );
+  const subscription = subscribers?.data.find((row) => row.user._id === userId);
 
   // The latest ledger row's balanceAfter IS the current balance.
   const { data: ledger } = useGetUserLedgerQuery({ userId, limit: 1 });
@@ -105,7 +103,9 @@ export default function UserDetailsPage() {
               </p>
               <p
                 className={`capitalize ${
-                  user.status === "blocked" ? "text-red-400" : "text-emerald-400"
+                  user.status === "blocked"
+                    ? "text-red-400"
+                    : "text-emerald-400"
                 }`}
               >
                 {user.status}

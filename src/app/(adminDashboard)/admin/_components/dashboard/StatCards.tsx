@@ -49,11 +49,29 @@ export default function StatCards() {
     );
   }
 
-  const cards: { label: string; stat: TStatCard; money?: boolean; Icon: IconType }[] = [
+  const cards: {
+    label: string;
+    stat: TStatCard;
+    money?: boolean;
+    Icon: IconType;
+  }[] = [
     { label: "Total users", stat: data.totalUsers, Icon: MdOutlineGroups },
-    { label: "Subscribed users", stat: data.subscribedUsers, Icon: MdOutlineHowToReg },
-    { label: "New subscribers", stat: data.newSubscribers, Icon: FiExternalLink },
-    { label: "Total earnings", stat: data.totalEarnings, money: true, Icon: FiDollarSign },
+    {
+      label: "Subscribed users",
+      stat: data.subscribedUsers,
+      Icon: MdOutlineHowToReg,
+    },
+    {
+      label: "New subscribers",
+      stat: data.newSubscribers,
+      Icon: FiExternalLink,
+    },
+    {
+      label: "Total earnings",
+      stat: data.totalEarnings,
+      money: true,
+      Icon: FiDollarSign,
+    },
   ];
 
   return (

@@ -85,7 +85,12 @@ export const analysisApi = baseApi.injectEndpoints({
 
     getMyAnalyses: builder.query<
       { data: TAnalysis[]; meta?: TMeta },
-      { page?: number; limit?: number; sort?: string; status?: TAnalysisStatus } | void
+      {
+        page?: number;
+        limit?: number;
+        sort?: string;
+        status?: TAnalysisStatus;
+      } | void
     >({
       query: (params) => ({
         url: "/analysis",
@@ -107,7 +112,10 @@ export const analysisApi = baseApi.injectEndpoints({
       },
       string
     >({
-      query: (analysisId) => ({ url: `/analysis/${analysisId}`, method: "GET" }),
+      query: (analysisId) => ({
+        url: `/analysis/${analysisId}`,
+        method: "GET",
+      }),
       transformResponse: (
         res: TResponse<{
           analysis: TAnalysis;

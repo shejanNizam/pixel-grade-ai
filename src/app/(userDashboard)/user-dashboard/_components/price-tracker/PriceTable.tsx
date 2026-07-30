@@ -106,7 +106,9 @@ export default function PriceTable() {
               alt=""
               width={36}
               height={50}
-              unoptimized={Boolean(card?.officialImageUrl ?? item.manualImageUrl)}
+              unoptimized={Boolean(
+                card?.officialImageUrl ?? item.manualImageUrl,
+              )}
               className="h-12 w-9 shrink-0 rounded object-cover"
             />
             <div className="min-w-0">

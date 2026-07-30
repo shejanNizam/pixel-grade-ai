@@ -1,10 +1,5 @@
 import baseApi from "@/redux/api/baseApi";
-import type {
-  LoginData,
-  SignupData,
-  TResponse,
-  TUser,
-} from "@/types/auth";
+import type { LoginData, SignupData, TResponse, TUser } from "@/types/auth";
 
 // ---------------------------------------------------------------------------
 // Auth + onboarding endpoints, mapped 1:1 onto the Express backend.
@@ -25,7 +20,8 @@ export const authApi = baseApi.injectEndpoints({
         name: string;
         email: string;
         password: string;
-        username?: string;
+        /** Required by the server — the public Creator Profile handle. */
+        username: string;
         phone?: string;
       }
     >({

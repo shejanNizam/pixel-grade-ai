@@ -172,9 +172,17 @@ export default function SlabPreview({
       >
         {/* ---- Grading label band — FIXED, at the TOP of the slab ----
             Mirrors the four-column strip the server composites in
-            slab.composite.ts: wordmark │ card info │ grade │ Pixel ID. */}
+            slab.composite.ts: wordmark │ card info │ grade │ Pixel ID.
+
+            Frosted, not solid, to match buildFrostedBand: the server dims the
+            artwork behind the band by BAND_FROST_BRIGHTNESS and lays a scrim of
+            BAND_SCRIM_OPACITY over it. The two numbers below are those
+            constants — a solid bar here would show the client a black plate
+            while the export renders glass, on the exact detail he is judging.
+            (CSS gets backdrop-filter; the server has to blur pixels by hand
+            because SVG overlays cannot sample what is beneath them.) */}
         <div
-          className="mx-auto flex items-stretch gap-1.5 overflow-hidden rounded-md bg-[#0B0B0C] px-1.5 py-1 shadow-lg ring-1 ring-white/15"
+          className="mx-auto flex items-stretch gap-1.5 overflow-hidden rounded-md bg-[#0B0B0C]/45 px-1.5 py-1 shadow-lg ring-1 ring-white/25 backdrop-blur-md backdrop-brightness-[0.55]"
           style={{ width: `${labelWidthPct}%`, aspectRatio: labelAspect }}
         >
           <div className="flex shrink-0 flex-col justify-center leading-none">

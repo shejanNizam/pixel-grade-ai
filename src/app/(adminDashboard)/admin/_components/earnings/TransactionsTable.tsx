@@ -7,11 +7,7 @@ import {
 } from "@/redux/features/transaction/transactionApi";
 import { Table, type TableColumnsType } from "antd";
 import { useState } from "react";
-import {
-  FiChevronDown,
-  FiChevronLeft,
-  FiChevronRight,
-} from "react-icons/fi";
+import { FiChevronDown, FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import { formatUserDate } from "../users/format";
 
 const PAGE_SIZE = 6;

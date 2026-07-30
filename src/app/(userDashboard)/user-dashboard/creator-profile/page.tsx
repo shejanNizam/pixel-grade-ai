@@ -1,7 +1,9 @@
 "use client";
 
-import { useGetCollectionSummaryQuery } from "@/redux/features/collection/collectionApi";
-import { useGetMyGradingReportsQuery } from "@/redux/features/grading/gradingApi";
+import {
+  useGetCollectionSummaryQuery,
+  useGetMyCollectionQuery,
+} from "@/redux/features/collection/collectionApi";
 import { useGetMeQuery } from "@/redux/features/user/userApi";
 import Image from "next/image";
 import Link from "next/link";
@@ -29,38 +31,29 @@ const initialsOf = (name: string) =>
 export default function CreatorProfile() {
   const { data: me, isLoading: loadingMe } = useGetMeQuery();
   const { data: summary } = useGetCollectionSummaryQuery();
-  const { data: reports } = useGetMyGradingReportsQuery({
+
+  // The showcase is the COLLECTION, not the grading history (client, UI
+  // Feedback v1 edit #3). Grading a card does not put it in your collection —
+  // adding it does. Sourcing this from reports meant a card the user scanned
+  // and never kept still appeared on their public profile, and the tile count
+  // disagreed with the "Total cards" stat right above it.
+  const { data: collection } = useGetMyCollectionQuery({
     limit: 8,
-    sort: "-createdAt",
+    sortBy: "addedAt",
+    sortOrder: "desc",
   });
 
-  // Counted server-side, NOT from `reports` above.
-  //
-  // Pixel Verified is a specific award — PixelScope upload AND confidence at or
-  // above the threshold — so it can never be the total report count. Labelling
-  // every report "Pixel Verified" would empty the badge of meaning, which is
-  // the whole reason the server is the only thing allowed to grant it. A page
-  // of eight reports also cannot be counted client-side without under-reporting
-  // anyone who has graded more than eight cards.
-  const { data: verified } = useGetMyGradingReportsQuery({
-    limit: 1,
-    pixelVerified: true,
-  });
+  const showcase = collection?.data ?? [];
 
-  const pixelVerifiedCount = verified?.meta?.total ?? 0;
-  const showcase = reports?.data ?? [];
+  // Every stat comes from the server's collection-scoped summary. Counting
+  // client-side over one page silently under-reports anyone holding more than
+  // the page size, and Pixel Verified in particular must be counted on the
+  // server-awarded flag rather than inferred from "has a report".
+  const pixelVerifiedCount = summary?.pixelVerifiedCount ?? 0;
+  const avgConfidence = summary?.averageConfidence ?? null;
 
-  // The creator badge is earned once any scan has cleared the bar.
+  // The creator badge is earned once a held card has cleared the bar.
   const hasVerified = pixelVerifiedCount > 0;
-
-  // Average confidence across the reports we have to hand.
-  const avgConfidence =
-    showcase.length > 0
-      ? Math.round(
-          showcase.reduce((sum, report) => sum + report.confidence, 0) /
-            showcase.length,
-        )
-      : null;
 
   const summaryStats = [
     {
@@ -181,12 +174,14 @@ export default function CreatorProfile() {
         </div>
       </div>
 
-      {/* My showcase — the user's most recent graded cards. */}
+      {/* My showcase — the user's most recently ADDED collection entries.
+          "View all" goes to the collection, not the analysis reports, so the
+          link lands where the tiles actually come from. */}
       <div>
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-base font-semibold text-white">My showcase</h2>
           <Link
-            href="/user-dashboard/analysis-report"
+            href="/user-dashboard/my-collection"
             className="text-sm font-medium text-violet-400 transition-opacity hover:opacity-80"
           >
             View all
@@ -195,27 +190,35 @@ export default function CreatorProfile() {
 
         {showcase.length === 0 ? (
           <p className="rounded-2xl border border-dashed border-white/10 py-16 text-center text-sm text-zinc-500">
-            Grade your first card to start your showcase.
+            Add a card to your collection to start your showcase.
           </p>
         ) : (
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-            {showcase.map((report) => {
-              const card =
-                typeof report.card === "object" ? report.card : null;
+            {showcase.map((item) => {
+              const card = typeof item.card === "object" ? item.card : null;
+              const report =
+                typeof item.report === "object" && item.report !== null
+                  ? item.report
+                  : null;
+
+              // Manually-added entries have no report and therefore no grade —
+              // showing "0.0" would invent one. The image can come from the
+              // manual upload instead of the catalogue for the same reason.
+              const image =
+                item.manualImageUrl ??
+                (card?.officialImageUrl as string | undefined);
+
               return (
                 <div
-                  key={report._id}
+                  key={item._id}
                   className="overflow-hidden rounded-2xl border border-violet-500/30 bg-[#111113]"
                 >
                   <Image
-                    src={
-                      (card?.officialImageUrl as string | undefined) ??
-                      FALLBACK_IMAGE
-                    }
-                    alt={card?.name ?? "Graded card"}
+                    src={image ?? FALLBACK_IMAGE}
+                    alt={card?.name ?? "Collected card"}
                     width={280}
                     height={390}
-                    unoptimized={Boolean(card?.officialImageUrl)}
+                    unoptimized={Boolean(image)}
                     className="h-auto w-full object-cover"
                   />
                   <div className="flex items-center justify-between px-3 py-2">
@@ -223,7 +226,9 @@ export default function CreatorProfile() {
                       {card?.name ?? "Card"}
                     </span>
                     <span className="shrink-0 text-xs font-semibold text-violet-300 tabular-nums">
-                      {report.grade.toFixed(1)}
+                      {report
+                        ? report.grade.toFixed(1)
+                        : (item.externalGrade ?? "—")}
                     </span>
                   </div>
                 </div>

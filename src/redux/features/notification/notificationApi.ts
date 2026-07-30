@@ -135,7 +135,11 @@ export const notificationApi = baseApi.injectEndpoints({
         body,
       }),
       transformResponse: (
-        res: TResponse<{ recipients: number; delivered: number; failed: number }>,
+        res: TResponse<{
+          recipients: number;
+          delivered: number;
+          failed: number;
+        }>,
       ) => res.data,
       invalidatesTags: ["notification", "unreadCount"],
     }),

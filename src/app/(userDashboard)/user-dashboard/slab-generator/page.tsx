@@ -159,8 +159,8 @@ export default function SlabGenerator() {
       <div>
         <h2 className="text-2xl font-medium text-white">Slab Generator</h2>
         <p className="mt-1.5 text-xs text-zinc-500">
-          Create a custom, print-ready slab label. The card and label stay
-          fixed — AI generates the artwork around them.
+          Create a custom, print-ready slab label. The card and label stay fixed
+          — AI generates the artwork around them.
         </p>
       </div>
 
@@ -183,7 +183,9 @@ export default function SlabGenerator() {
               {/* One component for both states — it swaps to the server
                   composite the moment there is one, so the bleed guide and
                   the frame stay identical across the transition. */}
-              <div className={generating || selecting ? "opacity-60" : undefined}>
+              <div
+                className={generating || selecting ? "opacity-60" : undefined}
+              >
                 <SlabPreview
                   card={card}
                   spec={spec}

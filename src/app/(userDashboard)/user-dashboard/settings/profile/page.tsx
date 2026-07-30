@@ -267,8 +267,7 @@ export default function ProfileSettings() {
               rules={[
                 {
                   pattern: /^\+[1-9]\d{6,14}$/,
-                  message:
-                    "Use international format, e.g. +14155551234",
+                  message: "Use international format, e.g. +14155551234",
                 },
               ]}
             >

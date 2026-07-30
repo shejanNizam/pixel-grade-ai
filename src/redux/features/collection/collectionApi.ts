@@ -51,6 +51,11 @@ export interface TCollectionSummary {
   entryCount: number;
   /** Null when nothing is graded — not the same as an average of zero. */
   averageGrade: number | null;
+  /** Entries in the collection carrying the server-awarded badge. Counted on
+   *  the flag, never on "has a report". */
+  pixelVerifiedCount: number;
+  /** Mean confidence across graded entries. Null when nothing is graded. */
+  averageConfidence: number | null;
 }
 
 export interface TValuePoint {
@@ -120,11 +125,13 @@ export const collectionApi = baseApi.injectEndpoints({
       providesTags: ["collection"],
     }),
 
-    addCollectionItem: builder.mutation<TCollectionItem, AddCollectionItemBody>({
-      query: (body) => ({ url: "/collection", method: "POST", body }),
-      transformResponse: (res: TResponse<TCollectionItem>) => res.data,
-      invalidatesTags: ["collection", "dashboard"],
-    }),
+    addCollectionItem: builder.mutation<TCollectionItem, AddCollectionItemBody>(
+      {
+        query: (body) => ({ url: "/collection", method: "POST", body }),
+        transformResponse: (res: TResponse<TCollectionItem>) => res.data,
+        invalidatesTags: ["collection", "dashboard"],
+      },
+    ),
 
     updateCollectionItem: builder.mutation<
       TCollectionItem,

@@ -76,5 +76,8 @@ export const planApi = baseApi.injectEndpoints({
   }),
 });
 
-export const { useGetPlansQuery, useGetAdminPlansQuery, useUpdatePlanMutation } =
-  planApi;
+export const {
+  useGetPlansQuery,
+  useGetAdminPlansQuery,
+  useUpdatePlanMutation,
+} = planApi;

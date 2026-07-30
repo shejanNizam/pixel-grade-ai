@@ -7,14 +7,20 @@ import { useGetMySubscriptionQuery } from "@/redux/features/subscription/subscri
 import { usePathname } from "next/navigation";
 import { FiMenu } from "react-icons/fi";
 
-/** Page titles keyed by route — the header is shared by every dashboard screen. */
+/** Page titles keyed by route — the header is shared by every dashboard screen.
+ *  Every route needs an entry: the fallback is "Dashboard", so a missing one
+ *  does not look broken, it just silently mislabels the page (which is why the
+ *  Creator Profile screen was captioned "Dashboard" in the client's v1 feedback). */
 const pageTitles: Record<string, string> = {
   "/user-dashboard": "Dashboard",
+  "/user-dashboard/creator-profile": "Creator Profile",
   "/user-dashboard/new-analysis": "New analysis",
   "/user-dashboard/analysis-report": "Analysis report",
+  "/user-dashboard/slab-generator": "Slab Generator",
   "/user-dashboard/my-collection": "My Collection",
   "/user-dashboard/price-tracker": "Price Tracker",
   "/user-dashboard/subscription": "Subscription",
+  "/user-dashboard/support": "Support",
   "/user-dashboard/settings": "Settings",
 };
 
@@ -70,11 +76,24 @@ export default function Header({ toggleSidebar }: HeaderProps) {
           </PillButton>
         )}
 
-        <NotificationBell audience="user" seeAllHref="/user-dashboard/settings/notification" />
+        <NotificationBell
+          audience="user"
+          seeAllHref="/user-dashboard/settings/notification"
+        />
 
+        {/* Creator Profile lives here rather than in the sidebar (UI Feedback
+            v1, edit #2) — it is your own public page, which belongs with the
+            account, not with the app's sections. */}
         <HeaderProfile
           href="/user-dashboard/settings/profile"
           subtitle="My Profile"
+          links={[
+            {
+              href: "/user-dashboard/creator-profile",
+              label: "Creator Profile",
+            },
+            { href: "/user-dashboard/settings/profile", label: "My Profile" },
+          ]}
         />
       </div>
     </header>

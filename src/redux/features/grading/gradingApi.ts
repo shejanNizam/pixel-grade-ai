@@ -9,15 +9,7 @@ import type { TCard } from "@/types/card";
 // ---------------------------------------------------------------------------
 
 export type TGradeLabel =
-  | "PR"
-  | "FR"
-  | "GOOD"
-  | "VG"
-  | "EX"
-  | "NM"
-  | "NM-MT"
-  | "MINT"
-  | "GEM-MT";
+  "PR" | "FR" | "GOOD" | "VG" | "EX" | "NM" | "NM-MT" | "MINT" | "GEM-MT";
 
 export type TDefectCategory = "surface" | "corners" | "edges" | "centering";
 export type TDefectSeverity = "minor" | "moderate" | "severe";
@@ -89,7 +81,10 @@ export const gradingApi = baseApi.injectEndpoints({
      *  call) unless the image-set hash is already in the grading cache;
      *  idempotent — re-grading a graded analysis returns the existing report. */
     gradeAnalysis: builder.mutation<TGradingReport, string>({
-      query: (analysisId) => ({ url: `/grading/${analysisId}`, method: "POST" }),
+      query: (analysisId) => ({
+        url: `/grading/${analysisId}`,
+        method: "POST",
+      }),
       transformResponse: (res: TResponse<TGradingReport>) => res.data,
       invalidatesTags: ["grading", "analysis", "dashboard"],
     }),

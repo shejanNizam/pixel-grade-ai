@@ -65,8 +65,16 @@ export default function StatCards() {
       stat: data.cardsInCollection,
       Icon: MdOutlineStyle,
     },
-    { label: "Slabs ordered", stat: data.slabsOrdered, Icon: MdOutlineVerified },
-    { label: "Total scans", stat: data.totalScans, Icon: MdOutlineQrCodeScanner },
+    {
+      label: "Slabs ordered",
+      stat: data.slabsOrdered,
+      Icon: MdOutlineVerified,
+    },
+    {
+      label: "Total scans",
+      stat: data.totalScans,
+      Icon: MdOutlineQrCodeScanner,
+    },
     // Null when nothing is graded yet — an ungraded collection has no average.
     { label: "Average grade", stat: data.averageGrade, Icon: FiAward },
   ];

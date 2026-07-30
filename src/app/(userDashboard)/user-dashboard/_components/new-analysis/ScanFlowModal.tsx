@@ -202,7 +202,16 @@ export default function ScanFlowModal({
         ),
       });
     }
-  }, [back, createAnalysis, dispatch, front, game, language, source, uploadFiles]);
+  }, [
+    back,
+    createAnalysis,
+    dispatch,
+    front,
+    game,
+    language,
+    source,
+    uploadFiles,
+  ]);
 
   useEffect(() => {
     if (!open) {
@@ -407,7 +416,11 @@ export default function ScanFlowModal({
                 carry, so the three now agree. */}
             {(() => {
               const card = reportCard(step.report);
-              const meta = [card?.cardNumber, card?.setExpansion, card?.language]
+              const meta = [
+                card?.cardNumber,
+                card?.setExpansion,
+                card?.language,
+              ]
                 .filter(Boolean)
                 .join(" · ");
               return (
@@ -415,9 +428,7 @@ export default function ScanFlowModal({
                   <h2 className="text-lg font-semibold text-white">
                     {card?.name ?? "Your card"}
                   </h2>
-                  {meta && (
-                    <p className="mt-1 text-xs text-zinc-400">{meta}</p>
-                  )}
+                  {meta && <p className="mt-1 text-xs text-zinc-400">{meta}</p>}
                 </>
               );
             })()}
@@ -468,7 +479,9 @@ export default function ScanFlowModal({
                 disabled={isAddingToCollection || addedToCollection}
                 className="rounded-full border border-violet-500/60 px-5 py-2.5 text-sm text-violet-300 transition-colors hover:bg-violet-500/10 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {addedToCollection ? "In your collection ✓" : "Add to collection"}
+                {addedToCollection
+                  ? "In your collection ✓"
+                  : "Add to collection"}
               </button>
               <button
                 onClick={closeDialog}

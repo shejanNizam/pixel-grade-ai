@@ -191,11 +191,15 @@ export default function PlanFormModal({
           </div>
 
           <div className="mt-6">
-            <span className="text-lg font-semibold text-white">Plan Expiry</span>
+            <span className="text-lg font-semibold text-white">
+              Plan Expiry
+            </span>
             <div className="relative mt-3 sm:max-w-64">
               <select
                 value={expiry}
-                onChange={(event) => setExpiry(event.target.value as PlanExpiry)}
+                onChange={(event) =>
+                  setExpiry(event.target.value as PlanExpiry)
+                }
                 className={`${fieldClass} appearance-none pr-10`}
               >
                 {EXPIRY_OPTIONS.map((option) => (

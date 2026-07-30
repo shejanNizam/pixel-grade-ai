@@ -85,29 +85,31 @@ export const transactionApi = baseApi.injectEndpoints({
       providesTags: ["transaction"],
     }),
 
-    getEarnings: builder.query<TEarnings, { from?: string; to?: string } | void>(
-      {
-        query: (params) => ({
-          url: "/transaction/earnings",
-          method: "GET",
-          params: params ?? undefined,
-        }),
-        transformResponse: (res: TResponse<TEarnings>) => res.data,
-        providesTags: ["transaction"],
-      },
-    ),
+    getEarnings: builder.query<
+      TEarnings,
+      { from?: string; to?: string } | void
+    >({
+      query: (params) => ({
+        url: "/transaction/earnings",
+        method: "GET",
+        params: params ?? undefined,
+      }),
+      transformResponse: (res: TResponse<TEarnings>) => res.data,
+      providesTags: ["transaction"],
+    }),
 
-    getRevenueByMonth: builder.query<TMonthlyRevenue[], { months?: number } | void>(
-      {
-        query: (params) => ({
-          url: "/transaction/revenue-by-month",
-          method: "GET",
-          params: params ?? undefined,
-        }),
-        transformResponse: (res: TResponse<TMonthlyRevenue[]>) => res.data,
-        providesTags: ["transaction"],
-      },
-    ),
+    getRevenueByMonth: builder.query<
+      TMonthlyRevenue[],
+      { months?: number } | void
+    >({
+      query: (params) => ({
+        url: "/transaction/revenue-by-month",
+        method: "GET",
+        params: params ?? undefined,
+      }),
+      transformResponse: (res: TResponse<TMonthlyRevenue[]>) => res.data,
+      providesTags: ["transaction"],
+    }),
   }),
 });
 

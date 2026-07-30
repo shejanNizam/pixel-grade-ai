@@ -99,10 +99,7 @@ export default function AddCardModal({ open, onClose }: AddCardModalProps) {
         aria-labelledby="add-card-title"
       >
         <div className="py-1">
-          <h2
-            id="add-card-title"
-            className="text-lg font-semibold text-white"
-          >
+          <h2 id="add-card-title" className="text-lg font-semibold text-white">
             Add a card
           </h2>
           <p className="mt-1 text-xs text-zinc-400">
@@ -242,7 +239,9 @@ export default function AddCardModal({ open, onClose }: AddCardModalProps) {
                 <input
                   value={quantity}
                   onChange={(e) =>
-                    setQuantity(clampQuantity(Number(e.target.value.replace(/\D/g, ""))))
+                    setQuantity(
+                      clampQuantity(Number(e.target.value.replace(/\D/g, ""))),
+                    )
                   }
                   inputMode="numeric"
                   aria-label="Quantity"

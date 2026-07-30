@@ -52,7 +52,10 @@ function TicketRow({ ticket }: { ticket: TSupportTicket }) {
   const sendReply = async () => {
     if (!reply.trim() || isSending) return;
     try {
-      await addMessage({ ticketId: ticket._id, message: reply.trim() }).unwrap();
+      await addMessage({
+        ticketId: ticket._id,
+        message: reply.trim(),
+      }).unwrap();
       setReply("");
       message.success("Reply sent.");
     } catch {
@@ -164,7 +167,9 @@ export default function SupportPage() {
   return (
     <div className="mx-auto w-full space-y-6">
       <div>
-        <h1 className="text-xl font-semibold text-white sm:text-2xl">Support</h1>
+        <h1 className="text-xl font-semibold text-white sm:text-2xl">
+          Support
+        </h1>
         <p className="mt-1 text-sm text-zinc-400">
           Open a ticket and our team will get back to you. Pro and Enterprise
           plans get priority response.

@@ -38,28 +38,32 @@ export default function EarningsStats() {
     );
   }
 
-  const cards: { label: string; value: string; delta?: string; Icon: IconType }[] =
-    [
-      {
-        label: "Total earnings",
-        value: money(earnings?.grossRevenue ?? 0),
-        Icon: MdOutlineMonetizationOn,
-      },
-      {
-        label: "Monthly recurring revenue",
-        value: money(stats?.mrr ?? 0),
-        Icon: MdOutlineAccountBalanceWallet,
-      },
-      {
-        label: "Active subscriptions",
-        value: (stats?.activeSubscriptions ?? 0).toLocaleString("en-US"),
-        delta:
-          stats && stats.newThisMonth > 0
-            ? `+${stats.newThisMonth} this month`
-            : undefined,
-        Icon: FiStar,
-      },
-    ];
+  const cards: {
+    label: string;
+    value: string;
+    delta?: string;
+    Icon: IconType;
+  }[] = [
+    {
+      label: "Total earnings",
+      value: money(earnings?.grossRevenue ?? 0),
+      Icon: MdOutlineMonetizationOn,
+    },
+    {
+      label: "Monthly recurring revenue",
+      value: money(stats?.mrr ?? 0),
+      Icon: MdOutlineAccountBalanceWallet,
+    },
+    {
+      label: "Active subscriptions",
+      value: (stats?.activeSubscriptions ?? 0).toLocaleString("en-US"),
+      delta:
+        stats && stats.newThisMonth > 0
+          ? `+${stats.newThisMonth} this month`
+          : undefined,
+      Icon: FiStar,
+    },
+  ];
 
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

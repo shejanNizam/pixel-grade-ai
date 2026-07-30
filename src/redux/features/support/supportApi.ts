@@ -30,9 +30,7 @@ export interface TSupportTicket {
 export interface TTicketMessage {
   _id: string;
   ticket: string;
-  sender:
-    | string
-    | { _id: string; name: string; email: string; role?: string };
+  sender: string | { _id: string; name: string; email: string; role?: string };
   /** Denormalised at send time — a later promotion never rewrites history. */
   isAdmin: boolean;
   message: string;

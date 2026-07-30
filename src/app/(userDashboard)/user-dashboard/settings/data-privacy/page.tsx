@@ -51,7 +51,9 @@ export default function DataPrivacy() {
       router.replace("/login");
     } catch (err) {
       const data = (err as { data?: { message?: string } })?.data;
-      message.error(data?.message ?? "Couldn't delete your account. Try again.");
+      message.error(
+        data?.message ?? "Couldn't delete your account. Try again.",
+      );
     }
   };
 

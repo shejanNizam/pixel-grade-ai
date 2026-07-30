@@ -251,9 +251,7 @@ export default function Notification() {
                       <div>
                         <h3
                           className={`text-sm font-semibold ${
-                            notification.isRead
-                              ? "text-zinc-300"
-                              : "text-white"
+                            notification.isRead ? "text-zinc-300" : "text-white"
                           }`}
                         >
                           {notification.title}

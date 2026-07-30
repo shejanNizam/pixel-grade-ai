@@ -1,14 +1,26 @@
 "use client";
 
 import { useGetMeQuery } from "@/redux/features/user/userApi";
+import { Dropdown, type MenuProps } from "antd";
 import Image from "next/image";
 import Link from "next/link";
 
+export interface HeaderProfileLink {
+  href: string;
+  label: string;
+}
+
 interface HeaderProfileProps {
-  /** Where clicking the profile block goes (the profile settings page). */
+  /** Where the block goes when there is no menu — the profile settings page. */
   href: string;
   /** Line under the name. Defaults to the user's formatted role. */
   subtitle?: string;
+  /**
+   * Turns the block into an account menu. Omit it and the block stays a plain
+   * link, which is what the admin header wants — admins have no Creator
+   * Profile, so a one-item dropdown there would be a worse click than a link.
+   */
+  links?: HeaderProfileLink[];
 }
 
 /** "David Joseph" -> "DJ"; "super_admin" style names still get two letters. */
@@ -28,7 +40,11 @@ const formatRole = (role: string): string =>
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(" ");
 
-export default function HeaderProfile({ href, subtitle }: HeaderProfileProps) {
+export default function HeaderProfile({
+  href,
+  subtitle,
+  links,
+}: HeaderProfileProps) {
   const { data: me, isLoading } = useGetMeQuery();
 
   if (isLoading || !me) {
@@ -43,12 +59,8 @@ export default function HeaderProfile({ href, subtitle }: HeaderProfileProps) {
     );
   }
 
-  return (
-    <Link
-      href={href}
-      className="flex items-center gap-2.5"
-      aria-label="Go to your profile"
-    >
+  const identity = (
+    <>
       {me.avatar?.url ? (
         <Image
           src={me.avatar.url}
@@ -67,10 +79,41 @@ export default function HeaderProfile({ href, subtitle }: HeaderProfileProps) {
         <p className="max-w-40 truncate text-sm font-medium text-white">
           {me.name}
         </p>
-        <p className="text-xs text-zinc-500">
-          {subtitle ?? formatRole(me.role)}
+        {/* The handle, once there is one — this block is the entry point to the
+            public profile, so it should show what that profile is called. */}
+        <p className="max-w-40 truncate text-xs text-zinc-500">
+          {me.username ? `@${me.username}` : (subtitle ?? formatRole(me.role))}
         </p>
       </div>
-    </Link>
+    </>
+  );
+
+  if (!links?.length) {
+    return (
+      <Link
+        href={href}
+        className="flex items-center gap-2.5"
+        aria-label="Go to your profile"
+      >
+        {identity}
+      </Link>
+    );
+  }
+
+  const items: MenuProps["items"] = links.map((link) => ({
+    key: link.href,
+    label: <Link href={link.href}>{link.label}</Link>,
+  }));
+
+  return (
+    <Dropdown menu={{ items }} trigger={["click"]} placement="bottomRight">
+      <button
+        type="button"
+        className="flex cursor-pointer items-center gap-2.5"
+        aria-label="Account menu"
+      >
+        {identity}
+      </button>
+    </Dropdown>
   );
 }

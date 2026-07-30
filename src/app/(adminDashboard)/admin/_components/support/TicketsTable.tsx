@@ -63,7 +63,10 @@ export default function TicketsTable() {
   });
 
   // A one-row query whose meta.total is the live open count for the badge.
-  const { data: openData } = useGetAllTicketsQuery({ status: "open", limit: 1 });
+  const { data: openData } = useGetAllTicketsQuery({
+    status: "open",
+    limit: 1,
+  });
 
   const rows = data?.data ?? [];
   const total = data?.meta?.total ?? 0;
@@ -114,8 +117,7 @@ export default function TicketsTable() {
       title: "Created",
       key: "created",
       align: "center",
-      sorter: (a, b) =>
-        (a.createdAt ?? "").localeCompare(b.createdAt ?? ""),
+      sorter: (a, b) => (a.createdAt ?? "").localeCompare(b.createdAt ?? ""),
       render: (_, ticket) => (
         <span className="text-xs text-zinc-300">
           {formatUserDate(ticket.createdAt)}

@@ -8,11 +8,7 @@ import type { TMeta, TResponse } from "@/types/auth";
 // ---------------------------------------------------------------------------
 
 export type TCreditReason =
-  | "grant_daily"
-  | "grant_monthly"
-  | "scan"
-  | "refund"
-  | "admin_adjust";
+  "grant_daily" | "grant_monthly" | "scan" | "refund" | "admin_adjust";
 
 export interface TCreditLedgerRow {
   _id: string;

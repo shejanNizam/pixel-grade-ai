@@ -27,7 +27,7 @@ const Signup: React.FC = () => {
       // nobody was ever asked to verify — the prototype V1 bug.
       const created = await signup({
         name: values.name,
-        username: values.username?.trim().toLowerCase() || undefined,
+        username: values.username.trim().toLowerCase(),
         email: values.email,
         password: values.password,
         phone: values.phone?.trim() || undefined,
@@ -78,10 +78,16 @@ const Signup: React.FC = () => {
           />
         </Form.Item>
 
+        {/* Required as of UI Feedback v1 (edit #2): the username IS the public
+            Creator Profile handle, so an account without one has a profile that
+            cannot be addressed. Mirrors `usernameSchema` on the server — keep
+            the two rule sets identical or the form accepts what the API then
+            rejects. */}
         <Form.Item<SignupFormValues>
           name="username"
           className="mb-4!"
           rules={[
+            { required: true, message: "Username is required" },
             { min: 3, message: "At least 3 characters" },
             { max: 24, message: "At most 24 characters" },
             {
@@ -89,11 +95,16 @@ const Signup: React.FC = () => {
               message: "Letters, numbers, and underscores only",
             },
           ]}
+          extra={
+            <span className="text-xs text-zinc-500">
+              This is your public Creator Profile handle.
+            </span>
+          }
         >
           <Input
             size="large"
             prefix={<FiAtSign />}
-            placeholder="Username (optional)"
+            placeholder="Username"
             autoComplete="username"
           />
         </Form.Item>
@@ -146,7 +157,8 @@ const Signup: React.FC = () => {
             { min: 8, message: "At least 8 characters" },
             {
               pattern: /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])/,
-              message: "Needs an uppercase letter, a number, and a special character",
+              message:
+                "Needs an uppercase letter, a number, and a special character",
             },
           ]}
         >

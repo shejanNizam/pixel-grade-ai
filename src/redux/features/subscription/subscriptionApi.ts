@@ -11,10 +11,7 @@ import type { TMeta, TResponse } from "@/types/auth";
 // ---------------------------------------------------------------------------
 
 export type TSubscriptionStatus =
-  | "active"
-  | "past_due"
-  | "cancelled"
-  | "expired";
+  "active" | "past_due" | "cancelled" | "expired";
 
 export interface TSubscriberRow {
   _id: string;
@@ -104,7 +101,11 @@ export const subscriptionApi = baseApi.injectEndpoints({
       { url: string },
       { planId: string; interval: "monthly" | "yearly" }
     >({
-      query: (body) => ({ url: "/subscription/checkout", method: "POST", body }),
+      query: (body) => ({
+        url: "/subscription/checkout",
+        method: "POST",
+        body,
+      }),
       transformResponse: (
         res: TResponse<{ checkoutUrl: string; sessionId: string }>,
       ) => ({ url: res.data.checkoutUrl }),
