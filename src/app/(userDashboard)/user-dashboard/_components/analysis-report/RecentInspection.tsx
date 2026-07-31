@@ -146,10 +146,14 @@ export default function RecentInspection() {
     },
   ];
 
+  // The condition qualifies a raw comp the way the grade qualifies a graded
+  // one: Scrydex prices Near Mint separately from Damaged, and the two can
+  // differ several-fold. Almost always "NM" — anything else means no Near Mint
+  // comp existed and the figure is for a played copy, which the user must see.
   const marketBasisLabel =
     card?.priceBasis === "graded"
       ? `Graded${card.priceGradeRef ? ` (${card.priceGradeRef})` : ""}`
-      : "Raw / ungraded";
+      : `Raw / ungraded${card?.priceCondition ? ` (${card.priceCondition})` : ""}`;
 
   return (
     <article className="rounded-2xl border border-violet-500/40 bg-[#111113] p-5">

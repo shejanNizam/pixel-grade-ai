@@ -23,8 +23,30 @@ export interface TPortfolioSummary {
   change30d: number | null;
 }
 
+/**
+ * Scrydex credit consumption. Admin only — 403 for everyone else.
+ *
+ * Worth surfacing because Scrydex does not stop serving at the monthly
+ * allowance, it rolls into billed overage. Identification costs 5 credits per
+ * scan and each batched price sweep costs 1 per 100 cards, from one pool.
+ */
+export interface TVendorUsage {
+  creditsConsumed: number;
+  overageConsumed: number;
+  creditsRemaining: number;
+  periodStart?: string;
+  periodEnd?: string;
+  dailyUsage: { date: string; creditsConsumed: number }[];
+}
+
 export const priceApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
+    getVendorUsage: builder.query<TVendorUsage, void>({
+      query: () => ({ url: "/price/vendor-usage", method: "GET" }),
+      transformResponse: (res: TResponse<TVendorUsage>) => res.data,
+      providesTags: ["price"],
+    }),
+
     getPortfolioSummary: builder.query<TPortfolioSummary, void>({
       query: () => ({ url: "/price/portfolio", method: "GET" }),
       transformResponse: (res: TResponse<TPortfolioSummary>) => res.data,
@@ -78,4 +100,5 @@ export const {
   useGetPortfolioSummaryQuery,
   useGetPriceHistoryBatchQuery,
   useGetCardPriceQuery,
+  useGetVendorUsageQuery,
 } = priceApi;
