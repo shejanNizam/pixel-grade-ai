@@ -6,13 +6,16 @@ export const CARD_IMAGE = "/assets/user-dashboard/recent_scan_card.png";
 // ---------------------------------------------------------------------------
 // Slab specs
 //
-// Revised by the client 2026-07-29 (Prototype V1 bug report), to match the
-// physical holder they selected:
-//   Overall slab (trim): 80 mm × 135 mm
+// From the holder manufacturer's spec sheet, sent by the client 2026-08-06
+// (5.35 × 3.15 × 0.27 in). These are the numbers a physical holder is actually
+// made to:
+//   Overall slab (trim): 80 mm × 136 mm  (× 7 mm thick, not used in a 2D export)
 //   Grading label band:  70 mm × 20 mm — sits at the TOP, above the window
-//   Card opening (fixed): 65 mm × 90 mm — never shifts
+//   Card opening (fixed): 64 mm × 90 mm — never shifts
 //   Bleed: 3 mm all sides · Safe area: keep text/QR ≥ 3 mm inside trim
-//   Export: PNG + PDF @ 300 DPI (1016 × 1665 px full-bleed)
+//   Export: PNG + PDF @ 300 DPI (1016 × 1677 px full-bleed)
+//
+// Previous revisions: 94 × 138 (v1) → 80 × 135, window 65 × 90 (2026-07-29).
 //
 // MUST STAY IN SYNC with SLAB_DEFAULTS in the backend's app/constants.ts —
 // this preview claims to show what will print, and a drift between the two
@@ -41,8 +44,8 @@ export const slabSpecs: SlabSpec[] = [
     id: "standard",
     label: "Standard slab",
     widthMm: 80,
-    heightMm: 135,
-    openingWidthMm: 65,
+    heightMm: 136,
+    openingWidthMm: 64,
     openingHeightMm: 90,
     labelWidthMm: 70,
     labelHeightMm: 20,

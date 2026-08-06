@@ -5,6 +5,7 @@ import {
   useGetMyGradingReportsQuery,
   type TDefectSeverity,
 } from "@/redux/features/grading/gradingApi";
+import { pickGradedComp } from "@/types/card";
 import { App } from "antd";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -154,6 +155,14 @@ export default function RecentInspection() {
     card?.priceBasis === "graded"
       ? `Graded${card.priceGradeRef ? ` (${card.priceGradeRef})` : ""}`
       : `Raw / ungraded${card?.priceCondition ? ` (${card.priceCondition})` : ""}`;
+
+  // The graded comp for THIS report's predicted grade, not the top of the
+  // ladder (client, 2026-08-06: "show both the raw card value and the PSA
+  // graded market value"). Quoting a PSA 10 next to a card we called 5.5 would
+  // overstate it by a multiple — and it is the number someone would price a
+  // sale from.
+  const gradedComp = pickGradedComp(card?.gradedPrices, report.grade);
+  const gradedCompany = card?.gradedCompany ?? "PSA";
 
   return (
     <article className="rounded-2xl border border-violet-500/40 bg-[#111113] p-5">
@@ -327,7 +336,7 @@ export default function RecentInspection() {
             </div>
           )}
 
-          <div className="mt-auto flex items-end justify-between gap-4 pt-5">
+          <div className="mt-auto flex flex-wrap items-end justify-between gap-4 pt-5">
             <div>
               {/* The basis is part of the number, not a footnote: a raw comp
                   and a graded comp for the same card differ by multiples, and
@@ -341,7 +350,33 @@ export default function RecentInspection() {
                   : "—"}
               </p>
             </div>
+
+            {/* Only rendered when a comp exists for this grade. No placeholder
+                dash: an empty "if graded" slot invites the reader to fill it in
+                with a number they imagine, and cards below the bottom of the
+                ladder genuinely have no graded market. */}
+            {gradedComp && (
+              <div className="text-right">
+                <p className="text-[11px] text-zinc-500">
+                  If {gradedCompany} {gradedComp.grade} · est.
+                </p>
+                <p className="mt-1 text-lg font-semibold text-emerald-400 tabular-nums">
+                  $ {gradedComp.price.toLocaleString("en-US")}
+                </p>
+              </div>
+            )}
           </div>
+
+          {gradedComp && (
+            // The grade is this platform's prediction, not PSA's — the graded
+            // figure is what the card would fetch IF PSA agreed. Saying so is
+            // the difference between a comp and a promise.
+            <p className="mt-2 text-[10px] leading-snug text-zinc-600">
+              Graded value is the {gradedCompany} {gradedComp.grade} market
+              price for this card. Our grade is an estimate, not a{" "}
+              {gradedCompany} certification.
+            </p>
+          )}
         </div>
       </div>
     </article>
