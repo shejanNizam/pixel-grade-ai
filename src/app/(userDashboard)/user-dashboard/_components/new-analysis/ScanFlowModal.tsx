@@ -19,6 +19,7 @@ import type { CardGame } from "@/types/card";
 import { useAppDispatch } from "@/redux/hooks";
 import { App, ConfigProvider, Modal, Spin } from "antd";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { FiCheck } from "react-icons/fi";
 
@@ -88,6 +89,7 @@ export default function ScanFlowModal({
   back,
   onClose,
 }: ScanFlowModalProps) {
+  const router = useRouter();
   const { message: toast } = App.useApp();
   const dispatch = useAppDispatch();
 
@@ -255,10 +257,9 @@ export default function ScanFlowModal({
       await confirmCard({ analysisId, cardId: selectedCardId }).unwrap();
       setStep({ name: "grading" });
       const report = await gradeAnalysis(analysisId).unwrap();
-      // The report exists, so the credits were earned — closing must not now
-      // try to cancel a scan that succeeded.
       abandonable.current = null;
-      setStep({ name: "result", report });
+      onClose();
+      router.push(`/user-dashboard/analysis-report?reportId=${report._id}`);
     } catch (err) {
       // Grading failures refund server-side, and a confirmed scan is past the
       // point the cancel endpoint will refund, so drop the handle rather than

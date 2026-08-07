@@ -1,6 +1,6 @@
 "use client";
 
-import { useAddCollectionItemMutation } from "@/redux/features/collection/collectionApi";
+import { useAddCollectionItemMutation, useGetMyCollectionQuery } from "@/redux/features/collection/collectionApi";
 import {
   useGetMyGradingReportsQuery,
   type TDefectSeverity,
@@ -8,8 +8,9 @@ import {
 import { pickGradedComp } from "@/types/card";
 import { App } from "antd";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { FiPlus, FiRefreshCw } from "react-icons/fi";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useState } from "react";
+import { FiPlus, FiRefreshCw, FiRotateCw } from "react-icons/fi";
 import { MdAutoAwesome, MdVerified } from "react-icons/md";
 import { CARD_IMAGE } from "./data";
 
@@ -77,17 +78,33 @@ function Meter({
 
 export default function RecentInspection() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const targetReportId = searchParams.get("reportId");
   const { message } = App.useApp();
+  const [showBack, setShowBack] = useState(false);
 
-  const { data, isLoading } = useGetMyGradingReportsQuery({
-    limit: 1,
-    sort: "-createdAt",
-  });
+  const { data: collectionData } = useGetMyCollectionQuery();
+  const { data, isLoading } = useGetMyGradingReportsQuery(
+    targetReportId
+      ? { page: 1, limit: 50 }
+      : { limit: 1, sort: "-createdAt" },
+  );
   const [addToCollection, { isLoading: isAdding }] =
     useAddCollectionItemMutation();
 
-  const report = data?.data[0];
+  const report = targetReportId
+    ? data?.data.find((r) => r._id === targetReportId) ?? data?.data[0]
+    : data?.data[0];
   const card = report && typeof report.card === "object" ? report.card : null;
+
+  const isAlreadyInCollection = Boolean(
+    report &&
+      collectionData?.data.some((item) =>
+        typeof item.report === "object"
+          ? item.report?._id === report._id
+          : item.report === report._id,
+      ),
+  );
 
   if (isLoading) {
     return (
@@ -113,11 +130,13 @@ export default function RecentInspection() {
   }
 
   const name = card?.name ?? "Card";
-  const image = (card?.officialImageUrl as string | undefined) ?? CARD_IMAGE;
+  const frontImage = (card?.officialImageUrl as string | undefined) ?? CARD_IMAGE;
+  const backImage = "https://images.pokemontcg.io/back.png";
+  const displayedImage = showBack ? backImage : frontImage;
   const marketValue = card?.latestPrice;
 
   const addCard = async () => {
-    if (isAdding) return;
+    if (isAdding || isAlreadyInCollection) return;
     try {
       await addToCollection({ report: report._id }).unwrap();
       message.success(`${name} added to your collection.`);
@@ -168,36 +187,41 @@ export default function RecentInspection() {
     <article className="rounded-2xl border border-violet-500/40 bg-[#111113] p-5">
       <div className="grid gap-6 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
         <div className="flex flex-col gap-3">
-          <Image
-            src={image}
-            alt={`${name} — front`}
-            width={280}
-            height={392}
-            // External CDN card art — bypass the optimizer's host allowlist.
-            unoptimized={image !== CARD_IMAGE}
-            className="max-h-72 w-full flex-1 rounded-xl object-contain"
-          />
+          <div className="group relative cursor-pointer" onClick={() => setShowBack(!showBack)}>
+            <Image
+              src={displayedImage}
+              alt={`${name} — ${showBack ? "back" : "front"}`}
+              width={280}
+              height={392}
+              // External CDN card art — bypass the optimizer's host allowlist.
+              unoptimized={displayedImage !== CARD_IMAGE}
+              className="max-h-72 w-full flex-1 rounded-xl object-contain transition-transform duration-300 group-hover:scale-102"
+            />
+            <span className="absolute bottom-2 right-2 flex items-center gap-1 rounded-md bg-black/70 px-2 py-1 text-[10px] font-medium text-white shadow">
+              <FiRotateCw size={11} /> {showBack ? "Show Front" : "Flip to Back"}
+            </span>
+          </div>
 
           <div className="grid grid-cols-2 gap-2">
             <button
               type="button"
-              onClick={() => router.push("/user-dashboard/new-analysis")}
-              aria-label={`Retake the scan of ${name}`}
+              onClick={() => setShowBack(!showBack)}
+              aria-label={`Flip ${name} card`}
               className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-white/15 bg-white/5 py-2 text-xs font-medium text-zinc-300 transition-colors hover:bg-white/10"
             >
-              <FiRefreshCw size={13} />
-              Retake
+              <FiRotateCw size={13} />
+              {showBack ? "Front view" : "Flip card"}
             </button>
 
             <button
               type="button"
               onClick={addCard}
-              disabled={isAdding}
+              disabled={isAdding || isAlreadyInCollection}
               aria-label={`Add ${name} to your collection`}
               className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-violet-600 py-2 text-xs font-medium text-white transition-colors hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-60"
             >
               <FiPlus size={13} />
-              {isAdding ? "Adding…" : "Add card"}
+              {isAdding ? "Adding…" : isAlreadyInCollection ? "Added ✓" : "Add card"}
             </button>
           </div>
 

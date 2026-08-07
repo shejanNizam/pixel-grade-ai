@@ -32,9 +32,12 @@ export default function Header({ toggleSidebar }: HeaderProps) {
   const pathname = usePathname();
   const { data: mySub } = useGetMySubscriptionQuery();
 
-  // Only Free plans see the upgrade CTA — a paying user has nothing to upgrade
-  // to from here (they manage their plan on the subscription page).
-  const onFreePlan = mySub?.plan.name === "Free";
+  // Upgrade button is ONLY shown for Free users without an active paid subscription.
+  const isPaidUser = Boolean(
+    mySub?.subscription ||
+      (mySub?.plan?.name && mySub.plan.name !== "Free"),
+  );
+  const showUpgradeButton = !isPaidUser;
 
   const title =
     pageTitles[pathname] ??
@@ -65,7 +68,7 @@ export default function Header({ toggleSidebar }: HeaderProps) {
       <div className="flex shrink-0 items-center gap-2 sm:gap-3 md:gap-5">
         {/* Only shown on Free — a paid user has no upgrade to make here. Label
             shortens rather than disappearing so it stays reachable on a phone. */}
-        {onFreePlan && (
+        {showUpgradeButton && (
           <PillButton
             href="/user-dashboard/subscription"
             variant="gradient"

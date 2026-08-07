@@ -133,7 +133,7 @@ export default function CardGrid({
             <div className="mt-3 space-y-2">
               {hasReport ? (
                 <Link
-                  href="/user-dashboard/analysis-report"
+                  href={`/user-dashboard/analysis-report?reportId=${typeof item.report === "object" ? item.report?._id : item.report}`}
                   aria-label={`View the report for ${name}`}
                   className="block rounded-lg bg-violet-600 py-2 text-center text-xs font-medium text-white! transition-colors hover:bg-violet-500"
                 >
