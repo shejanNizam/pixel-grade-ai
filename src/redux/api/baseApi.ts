@@ -77,7 +77,7 @@ async function refreshAccessToken(): Promise<string | null> {
 }
 
 const isAuthFailure = (status: unknown): boolean =>
-  status === 401 || status === 403;
+  status === 401;
 
 const baseQueryWithReauth: BaseQueryFn<
   string | FetchArgs,
