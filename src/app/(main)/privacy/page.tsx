@@ -10,6 +10,7 @@ export const metadata: Metadata = {
 export default function Privacy() {
   return (
     <PolicyPage
+      slug="privacy"
       title="Privacy policy"
       intro="We value your privacy and are committed to protecting your personal information. We collect data such as your name, email, and card images only when you need it, and only to run the service you signed up for."
       sections={[

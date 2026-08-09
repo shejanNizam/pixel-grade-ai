@@ -10,6 +10,7 @@ export const metadata: Metadata = {
 export default function About() {
   return (
     <PolicyPage
+      slug="about"
       title="About Us."
       intro="PixelGrade AI gives collectors an instant, AI-powered read on the cards they own. Upload a front and a back photo and get a grade prediction, a condition breakdown, and a market valuation in seconds — no envelope, no waiting weeks for a verdict."
       sections={[

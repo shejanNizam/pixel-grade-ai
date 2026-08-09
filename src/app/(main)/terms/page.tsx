@@ -10,6 +10,7 @@ export const metadata: Metadata = {
 export default function Terms() {
   return (
     <PolicyPage
+      slug="terms"
       title="Terms and conditions"
       intro="These terms govern your use of PixelGrade AI. By creating an account or using the service, you agree to them. If you do not agree, please do not use the service."
       sections={[
