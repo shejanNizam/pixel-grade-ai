@@ -11,7 +11,9 @@ import { getApiErrorMessage } from "@/utils/apiError";
 import { App, Button, Form, Input } from "antd";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FiAtSign, FiKey, FiMail, FiPhone, FiUser } from "react-icons/fi";
+import { PhoneInput } from "react-international-phone";
+import "react-international-phone/style.css";
+import { FiAtSign, FiKey, FiMail, FiUser } from "react-icons/fi";
 
 const Signup: React.FC = () => {
   const router = useRouter();
@@ -22,15 +24,15 @@ const Signup: React.FC = () => {
 
   const onFinish = async (values: SignupFormValues): Promise<void> => {
     try {
-      // ONE call. Registration now sends the verification OTP server-side, so
-      // there is no second request that can fail silently and leave an account
-      // nobody was ever asked to verify — the prototype V1 bug.
+      const rawPhone = values.phone ? values.phone.replace(/[^\d+]/g, "") : "";
+      const formattedPhone = rawPhone.length > 4 ? rawPhone : undefined;
+
       const created = await signup({
         name: values.name,
         username: values.username.trim().toLowerCase(),
         email: values.email,
         password: values.password,
-        phone: values.phone?.trim() || undefined,
+        phone: formattedPhone,
       }).unwrap();
 
       if (created?.verificationEmailSent === false) {
@@ -125,27 +127,36 @@ const Signup: React.FC = () => {
           />
         </Form.Item>
 
-        {/* Phone is OPTIONAL (client asked us to decide, 2026-07-29).
-            Nothing in the product uses it — verification, password reset, and
-            every notification go by email — so requiring it only adds a field
-            people abandon signup over. Server-side it was already optional;
-            this makes the two agree. Flip both together if the client later
-            wants SMS. */}
         <Form.Item<SignupFormValues>
           name="phone"
-          className="mb-4!"
+          className="mb-4! [&_.react-international-phone-input-container]:!w-full [&_.react-international-phone-input-container]:!h-[48px] [&_.react-international-phone-input-container]:!flex [&_.react-international-phone-input-container]:!box-border"
           rules={[
             {
-              pattern: /^\+[1-9]\d{6,14}$/,
-              message: "Use international format, e.g. +8801712345678",
+              validator(_, value) {
+                if (!value || value.length <= 4) {
+                  return Promise.resolve();
+                }
+                const digits = value.replace(/[^\d+]/g, "");
+                if (/^\+[1-9]\d{6,14}$/.test(digits)) {
+                  return Promise.resolve();
+                }
+                return Promise.reject(
+                  new Error("Enter a valid international phone number"),
+                );
+              },
             },
           ]}
         >
-          <Input
-            size="large"
-            prefix={<FiPhone />}
-            placeholder="Phone (optional) e.g. +8801712345678"
-            autoComplete="tel"
+          <PhoneInput
+            defaultCountry="us"
+            placeholder="Phone number (optional)"
+            inputClassName="!w-full !bg-[#09090b] !border-zinc-800 !text-white !h-[48px] !rounded-r-full !text-sm !pl-3.5 focus:!border-violet-500 transition-colors !box-border"
+            countrySelectorStyleProps={{
+              buttonClassName: "!bg-[#09090b] !border-zinc-800 !h-[48px] !rounded-l-full !px-4 hover:!bg-zinc-900 transition-colors !box-border",
+              dropdownStyleProps: {
+                className: "!bg-zinc-950 !text-white !border-zinc-800 !rounded-2xl !p-2 !shadow-2xl [&_.react-international-phone-country-selector-dropdown__item]:!rounded-xl [&_.react-international-phone-country-selector-dropdown__item]:!px-3 [&_.react-international-phone-country-selector-dropdown__item]:!py-2 [&_.react-international-phone-country-selector-dropdown__item]:hover:!bg-zinc-800/80",
+              },
+            }}
           />
         </Form.Item>
 
