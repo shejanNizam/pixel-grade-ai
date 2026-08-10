@@ -25,6 +25,8 @@ const STATUS_COLOR: Record<TSlabOrderStatus, string> = {
   cancelled: "red",
 };
 
+export const dynamic = "force-dynamic";
+
 export default function AdminSlabOrdersPage() {
   const { message } = App.useApp();
   const [page, setPage] = useState(1);
@@ -149,25 +151,30 @@ export default function AdminSlabOrdersPage() {
       },
     },
     {
-      title: "Card Details",
+      title: "Card & Pricing",
       key: "card",
       render: (_, record) => {
         const slab = record.slab;
         const report = typeof slab?.report === "object" ? slab.report : null;
         const card = report && typeof report.card === "object" ? report.card : null;
+        const sub = record.subtotal ?? record.quantity * 9.99;
+        const ship = record.shippingFee ?? 4.99;
+        const tax = record.taxAmount ?? sub * 0.08;
         return (
-          <div>
-            <span className="block text-xs font-medium text-white">
+          <div className="text-xs">
+            <span className="block font-medium text-white">
               {card?.name ?? "Custom Slab"}
             </span>
             {report && (
-              <span className="inline-block mt-1 rounded bg-violet-600/30 px-1.5 py-0.5 text-[10px] text-violet-300">
+              <span className="inline-block mt-0.5 rounded bg-violet-600/30 px-1.5 py-0.5 text-[10px] text-violet-300">
                 Grade {report.grade?.toFixed(1)} {report.gradeLabel}
               </span>
             )}
-            <span className="block text-[10px] text-amber-400 font-semibold mt-1">
-              Qty: {record.quantity} · ${record.totalAmount.toFixed(2)}
-            </span>
+            <div className="mt-1 space-y-0.5 text-[10px] text-zinc-400">
+              <span>Qty: {record.quantity} · Slabs: ${sub.toFixed(2)}</span>
+              <span className="block text-zinc-400">USPS Shipping: ${ship.toFixed(2)} · Tax: ${tax.toFixed(2)}</span>
+              <span className="block text-amber-400 font-bold">Total: ${record.totalAmount.toFixed(2)} USD</span>
+            </div>
           </div>
         );
       },

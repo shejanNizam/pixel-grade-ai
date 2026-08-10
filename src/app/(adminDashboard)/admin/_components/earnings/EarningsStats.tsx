@@ -56,7 +56,7 @@ export default function EarningsStats() {
     },
     {
       label: "Slab revenue",
-      value: (stats?.activeSubscriptions ?? 0).toLocaleString("en-US"),
+      value: money(stats?.slabRevenue ?? 0),
       delta:
         stats && stats.newThisMonth > 0
           ? `+${stats.newThisMonth} this month`

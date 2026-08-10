@@ -24,8 +24,8 @@ function SlabPreview() {
         width={403}
         height={656}
         priority
-        className="h-auto w-full drop-shadow-[0_0_60px_rgba(139,92,246,0.35)]"
-      />
+        className="h-auto w-full rounded-3xl object-contain drop-shadow-[0_0_60px_rgba(139,92,246,0.4)]"
+      />      
     </div>
   );
 }

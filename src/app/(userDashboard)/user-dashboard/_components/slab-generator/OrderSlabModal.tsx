@@ -26,7 +26,6 @@ interface OrderFormValues {
   quantity: number;
 }
 
-const ORIGINAL_UNIT_PRICE = 14.99;
 const UNIT_PRICE = 9.99;
 
 export default function OrderSlabModal({
@@ -41,7 +40,12 @@ export default function OrderSlabModal({
   const [quantity, setQuantity] = useState(1);
   const [createOrder, { isLoading }] = useCreateSlabOrderMutation();
 
-  const totalAmount = (quantity * UNIT_PRICE).toFixed(2);
+  const USPS_SHIPPING = 4.99;
+  const TAX_RATE = 0.08;
+  const subtotal = Number((quantity * UNIT_PRICE).toFixed(2));
+  const shippingFee = USPS_SHIPPING;
+  const taxAmount = Number((subtotal * TAX_RATE).toFixed(2));
+  const totalAmount = (subtotal + shippingFee + taxAmount).toFixed(2);
 
   const handleSubmit = async (values: OrderFormValues) => {
     if (!slabId) {
@@ -55,6 +59,8 @@ export default function OrderSlabModal({
         slabLabel: slabId,
         amount: Number(totalAmount),
         quantity: values.quantity || 1,
+        shippingFee,
+        taxAmount,
         shippingAddress: {
           fullName: values.fullName,
           phone: values.phone,
@@ -66,7 +72,7 @@ export default function OrderSlabModal({
         },
       }).unwrap();
 
-      message.success("Order placed successfully! We'll start producing your physical slab.");
+      message.success("Order placed successfully! USPS shipping label generated.");
       form.resetFields();
       onClose();
     } catch (err) {
@@ -183,16 +189,27 @@ export default function OrderSlabModal({
             </Form.Item>
           </div>
 
-          {/* Pricing breakdown */}
-          <div className="mt-4 flex items-center justify-between rounded-xl border border-white/10 bg-[#0d0d0f] p-3 text-sm">
-            <div className="flex flex-col">
-              <span className="text-zinc-400 font-medium">Total Price:</span>
-              <span className="text-[11px] text-zinc-500">
-                <span className="line-through mr-1">${(quantity * ORIGINAL_UNIT_PRICE).toFixed(2)}</span>
-                Sale price ($9.99/ea)
-              </span>
+          {/* Itemized Pricing breakdown */}
+          <div className="mt-4 rounded-xl border border-white/10 bg-[#0d0d0f] p-3 text-xs space-y-2">
+            <div className="flex justify-between text-zinc-300">
+              <span>Slab Subtotal ({quantity} × $9.99):</span>
+              <span className="font-mono">${subtotal.toFixed(2)}</span>
             </div>
-            <span className="text-base font-semibold text-amber-400">${totalAmount} USD</span>
+            <div className="flex justify-between text-zinc-300">
+              <span className="flex items-center gap-1.5">
+                <span className="rounded bg-blue-500/20 px-1 py-0.5 text-[10px] font-bold text-blue-400">USPS</span>
+                Standard Shipping:
+              </span>
+              <span className="font-mono">${shippingFee.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between text-zinc-400">
+              <span>Estimated Sales Tax (8%):</span>
+              <span className="font-mono">${taxAmount.toFixed(2)}</span>
+            </div>
+            <div className="border-t border-white/10 pt-2 flex items-center justify-between font-semibold text-sm">
+              <span className="text-white">Checkout Total:</span>
+              <span className="text-amber-400 font-bold">${totalAmount} USD</span>
+            </div>
           </div>
 
           <div className="mt-4 flex justify-end gap-3 pt-2">

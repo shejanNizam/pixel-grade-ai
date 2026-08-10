@@ -2,6 +2,8 @@ import BackHeading from "./_components/BackHeading";
 import RecentUsers from "./_components/dashboard/RecentUsers";
 import StatCards from "./_components/dashboard/StatCards";
 
+export const dynamic = "force-dynamic";
+
 export default function AdminDashboard() {
   return (
     <div className="space-y-10">

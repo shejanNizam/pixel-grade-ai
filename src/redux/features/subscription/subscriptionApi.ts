@@ -50,6 +50,8 @@ export interface TSubscriberStats {
   activeSubscriptions: number;
   /** Monthly recurring revenue — yearly plans counted at their effective monthly rate. */
   mrr: number;
+  /** Total dollar amount earned from custom physical slab sales. */
+  slabRevenue?: number;
   newThisMonth: number;
   newLastMonth: number;
 }

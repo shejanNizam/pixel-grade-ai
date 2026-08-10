@@ -47,14 +47,14 @@ const cardOf = (item: TCollectionItem) =>
 export default function PriceTable() {
   const { message } = App.useApp();
   const [page, setPage] = useState(1);
-  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
+  const [filterOption, setFilterOption] = useState<"asc" | "desc" | "favorites">("desc");
 
   const { data, isFetching } = useGetMyCollectionQuery({
     page,
     limit: PAGE_SIZE,
-    favorite: showFavoritesOnly ? true : undefined,
+    favorite: filterOption === "favorites" ? true : undefined,
     sortBy: "price",
-    sortOrder: "desc",
+    sortOrder: filterOption === "asc" ? "asc" : "desc",
   });
   const [updateItem] = useUpdateCollectionItemMutation();
   const [removeItem] = useRemoveCollectionItemMutation();
@@ -244,23 +244,55 @@ export default function PriceTable() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h3 className="text-base font-medium text-white">Tracked Cards</h3>
-        <button
-          type="button"
-          onClick={() => {
-            setPage(1);
-            setShowFavoritesOnly((prev) => !prev);
-          }}
-          className={`inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-xs font-medium transition-colors ${
-            showFavoritesOnly
-              ? "border-amber-500/50 bg-amber-500/10 text-amber-300"
-              : "border-zinc-800 bg-zinc-950 text-zinc-400 hover:text-white"
-          }`}
-        >
-          <FiStar className={showFavoritesOnly ? "fill-amber-400 text-amber-400" : ""} />
-          {showFavoritesOnly ? "Favorites Only" : "Show Favorites"}
-        </button>
+        <div className="flex items-center gap-1 rounded-full border border-white/10 bg-zinc-950 p-1">
+          <button
+            type="button"
+            onClick={() => {
+              setPage(1);
+              setFilterOption("asc");
+            }}
+            className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors cursor-pointer ${
+              filterOption === "asc"
+                ? "bg-zinc-800 text-white shadow-xs"
+                : "text-zinc-400 hover:text-white"
+            }`}
+          >
+            <FiArrowUp size={12} />
+            Ascending
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setPage(1);
+              setFilterOption("desc");
+            }}
+            className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors cursor-pointer ${
+              filterOption === "desc"
+                ? "bg-zinc-800 text-white shadow-xs"
+                : "text-zinc-400 hover:text-white"
+            }`}
+          >
+            <FiArrowDown size={12} />
+            Descending
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setPage(1);
+              setFilterOption("favorites");
+            }}
+            className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors cursor-pointer ${
+              filterOption === "favorites"
+                ? "bg-amber-500/20 border border-amber-500/40 text-amber-300 shadow-xs"
+                : "text-zinc-400 hover:text-white"
+            }`}
+          >
+            <FiStar size={12} className={filterOption === "favorites" ? "fill-amber-400 text-amber-400" : ""} />
+            Favorites
+          </button>
+        </div>
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-white/8">

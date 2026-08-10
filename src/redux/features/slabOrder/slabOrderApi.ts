@@ -28,7 +28,11 @@ export interface TSlabOrder {
   shippingAddress: IShippingAddress;
   quantity: number;
   unitPrice: number;
+  subtotal?: number;
+  shippingFee?: number;
+  taxAmount?: number;
   totalAmount: number;
+  shippingCarrier?: string;
   paymentStatus: "pending" | "paid" | "failed";
   orderStatus: TSlabOrderStatus;
   trackingNumber?: string;
@@ -45,6 +49,8 @@ export const slabOrderApi = baseApi.injectEndpoints({
         slabId: string;
         slabLabel?: string;
         amount?: number;
+        shippingFee?: number;
+        taxAmount?: number;
         shippingAddress: IShippingAddress;
         quantity?: number;
       }

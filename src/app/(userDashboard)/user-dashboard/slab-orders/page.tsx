@@ -82,14 +82,21 @@ export default function UserSlabOrdersPage() {
       },
     },
     {
-      title: "Quantity & Price",
+      title: "Pricing Breakdown",
       key: "price",
-      render: (_, record) => (
-        <div className="text-xs">
-          <span className="block font-medium text-white">Qty: {record.quantity}</span>
-          <span className="block font-semibold text-amber-400">${record.totalAmount.toFixed(2)} USD</span>
-        </div>
-      ),
+      render: (_, record) => {
+        const sub = record.subtotal ?? record.quantity * 9.99;
+        const ship = record.shippingFee ?? 4.99;
+        const tax = record.taxAmount ?? sub * 0.08;
+        return (
+          <div className="text-xs space-y-0.5">
+            <span className="block text-zinc-300 font-medium">Qty: {record.quantity} · Slabs: ${sub.toFixed(2)}</span>
+            <span className="block text-[11px] text-zinc-400">USPS Shipping: ${ship.toFixed(2)}</span>
+            <span className="block text-[11px] text-zinc-500">Tax: ${tax.toFixed(2)}</span>
+            <span className="block font-semibold text-amber-400 mt-1">Total: ${record.totalAmount.toFixed(2)} USD</span>
+          </div>
+        );
+      },
     },
     {
       title: "Status",
