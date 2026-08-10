@@ -55,7 +55,7 @@ export default function EarningsStats() {
       Icon: MdOutlineAccountBalanceWallet,
     },
     {
-      label: "Active subscriptions",
+      label: "Slab revenue",
       value: (stats?.activeSubscriptions ?? 0).toLocaleString("en-US"),
       delta:
         stats && stats.newThisMonth > 0

@@ -26,7 +26,8 @@ interface OrderFormValues {
   quantity: number;
 }
 
-const UNIT_PRICE = 24.99;
+const ORIGINAL_UNIT_PRICE = 14.99;
+const UNIT_PRICE = 9.99;
 
 export default function OrderSlabModal({
   open,
@@ -184,7 +185,13 @@ export default function OrderSlabModal({
 
           {/* Pricing breakdown */}
           <div className="mt-4 flex items-center justify-between rounded-xl border border-white/10 bg-[#0d0d0f] p-3 text-sm">
-            <span className="text-zinc-400">Total Price:</span>
+            <div className="flex flex-col">
+              <span className="text-zinc-400 font-medium">Total Price:</span>
+              <span className="text-[11px] text-zinc-500">
+                <span className="line-through mr-1">${(quantity * ORIGINAL_UNIT_PRICE).toFixed(2)}</span>
+                Sale price ($9.99/ea)
+              </span>
+            </div>
             <span className="text-base font-semibold text-amber-400">${totalAmount} USD</span>
           </div>
 
