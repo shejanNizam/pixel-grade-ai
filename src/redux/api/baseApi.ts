@@ -134,6 +134,7 @@ const baseApi = createApi({
     "cms",
     "plan",
     "dashboard",
+    "slabOrder",
   ],
   endpoints: () => ({}),
 });

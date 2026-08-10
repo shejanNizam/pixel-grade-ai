@@ -1,0 +1,333 @@
+"use client";
+
+import BackHeading from "../_components/BackHeading";
+import {
+  useExportLabelOnlyMutation,
+  useExportPrintSlabMutation,
+} from "@/redux/features/slab/slabApi";
+import {
+  useGetAllSlabOrdersQuery,
+  useUpdateSlabOrderStatusMutation,
+  type TSlabOrder,
+  type TSlabOrderStatus,
+} from "@/redux/features/slabOrder/slabOrderApi";
+import { getApiErrorMessage } from "@/utils/apiError";
+import { App, Button, Form, Input, Modal, Select, Table, Tag } from "antd";
+import type { ColumnsType } from "antd/es/table";
+import { useState } from "react";
+import { FiDownload, FiFileText, FiTruck } from "react-icons/fi";
+
+const STATUS_COLOR: Record<TSlabOrderStatus, string> = {
+  pending: "orange",
+  processing: "blue",
+  shipped: "purple",
+  delivered: "green",
+  cancelled: "red",
+};
+
+export default function AdminSlabOrdersPage() {
+  const { message } = App.useApp();
+  const [page, setPage] = useState(1);
+  const [statusFilter, setStatusFilter] = useState<string | undefined>();
+  const [selectedOrder, setSelectedOrder] = useState<TSlabOrder | null>(null);
+  const [statusModalOpen, setStatusModalOpen] = useState(false);
+  const [downloadingKey, setDownloadingKey] = useState<string | null>(null);
+
+  const { data, isLoading } = useGetAllSlabOrdersQuery({
+    page,
+    limit: 20,
+    status: statusFilter,
+  });
+
+  const [updateStatus, { isLoading: isUpdating }] = useUpdateSlabOrderStatusMutation();
+  const [exportPrint] = useExportPrintSlabMutation();
+  const [exportLabel] = useExportLabelOnlyMutation();
+  const [form] = Form.useForm();
+
+  const handleDownload = async (labelId: string, kind: "print" | "label") => {
+    const key = `${kind}-${labelId}`;
+    setDownloadingKey(key);
+    try {
+      const run = kind === "print" ? exportPrint : exportLabel;
+      const blob = await run({ labelId, format: "pdf" }).unwrap();
+
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download =
+        kind === "print"
+          ? `slab_print_${labelId}.pdf`
+          : `label_only_${labelId}.pdf`;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 10_000);
+    } catch (err) {
+      message.error(getApiErrorMessage(err, "Couldn't download print file."));
+    } finally {
+      setDownloadingKey(null);
+    }
+  };
+
+  const orders = data?.data ?? [];
+  const total = data?.meta?.total ?? 0;
+
+  const handleOpenStatusModal = (order: TSlabOrder) => {
+    setSelectedOrder(order);
+    form.setFieldsValue({
+      orderStatus: order.orderStatus,
+      trackingNumber: order.trackingNumber ?? "",
+      notes: order.notes ?? "",
+    });
+    setStatusModalOpen(true);
+  };
+
+  const handleUpdateStatus = async (values: {
+    orderStatus: TSlabOrderStatus;
+    trackingNumber?: string;
+    notes?: string;
+  }) => {
+    if (!selectedOrder) return;
+    try {
+      await updateStatus({
+        orderId: selectedOrder._id,
+        orderStatus: values.orderStatus,
+        trackingNumber: values.trackingNumber,
+        notes: values.notes,
+      }).unwrap();
+
+      message.success("Order status updated successfully!");
+      setStatusModalOpen(false);
+      setSelectedOrder(null);
+    } catch (err) {
+      message.error(getApiErrorMessage(err, "Couldn't update order status."));
+    }
+  };
+
+  const columns: ColumnsType<TSlabOrder> = [
+    {
+      title: "Order ID",
+      dataIndex: "_id",
+      key: "_id",
+      render: (id: string, record) => (
+        <div>
+          <span className="font-mono text-xs text-white">#{id.slice(-8).toUpperCase()}</span>
+          <span className="block text-[11px] text-zinc-500">
+            {new Date(record.createdAt).toLocaleDateString()}
+          </span>
+        </div>
+      ),
+    },
+    {
+      title: "Customer",
+      key: "user",
+      render: (_, record) => (
+        <div>
+          <span className="block text-xs font-medium text-white">{record.user?.name ?? "Customer"}</span>
+          <span className="block text-[11px] text-zinc-400">{record.user?.email}</span>
+          {record.user?.phone && (
+            <span className="block text-[10px] text-zinc-500">{record.user?.phone}</span>
+          )}
+        </div>
+      ),
+    },
+    {
+      title: "Shipping Address",
+      key: "address",
+      render: (_, record) => {
+        const addr = record.shippingAddress;
+        return (
+          <div className="max-w-xs text-xs text-zinc-300">
+            <span className="block font-medium text-white">{addr.fullName}</span>
+            <span className="block truncate text-zinc-400">{addr.streetAddress}</span>
+            <span className="block text-zinc-400">
+              {addr.city}, {addr.state ? `${addr.state} ` : ""}{addr.postalCode}
+            </span>
+            <span className="block font-medium text-amber-400">{addr.country}</span>
+          </div>
+        );
+      },
+    },
+    {
+      title: "Card Details",
+      key: "card",
+      render: (_, record) => {
+        const slab = record.slab;
+        const report = typeof slab?.report === "object" ? slab.report : null;
+        const card = report && typeof report.card === "object" ? report.card : null;
+        return (
+          <div>
+            <span className="block text-xs font-medium text-white">
+              {card?.name ?? "Custom Slab"}
+            </span>
+            {report && (
+              <span className="inline-block mt-1 rounded bg-violet-600/30 px-1.5 py-0.5 text-[10px] text-violet-300">
+                Grade {report.grade?.toFixed(1)} {report.gradeLabel}
+              </span>
+            )}
+            <span className="block text-[10px] text-amber-400 font-semibold mt-1">
+              Qty: {record.quantity} · ${record.totalAmount.toFixed(2)}
+            </span>
+          </div>
+        );
+      },
+    },
+    {
+      title: "Print Files",
+      key: "printFiles",
+      render: (_, record) => {
+        const labelId = record.slab?._id;
+        if (!labelId) return <span className="text-xs text-zinc-500">N/A</span>;
+        const printBusy = downloadingKey === `print-${labelId}`;
+        const labelBusy = downloadingKey === `label-${labelId}`;
+        return (
+          <div className="flex flex-col gap-1.5">
+            <button
+              type="button"
+              disabled={printBusy || labelBusy}
+              onClick={() => handleDownload(labelId, "print")}
+              className="inline-flex items-center gap-1 rounded border border-violet-500/30 bg-violet-500/10 px-2 py-1 text-[11px] font-medium text-violet-300 transition-colors hover:bg-violet-500/20 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
+            >
+              <FiDownload size={11} /> {printBusy ? "Building…" : "Slab Print PDF"}
+            </button>
+            <button
+              type="button"
+              disabled={printBusy || labelBusy}
+              onClick={() => handleDownload(labelId, "label")}
+              className="inline-flex items-center gap-1 rounded border border-white/15 bg-white/5 px-2 py-1 text-[11px] font-medium text-zinc-300 transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
+            >
+              <FiFileText size={11} /> {labelBusy ? "Building…" : "Label Only PDF"}
+            </button>
+          </div>
+        );
+      },
+    },
+    {
+      title: "Status",
+      key: "status",
+      render: (_, record) => (
+        <div>
+          <Tag color={STATUS_COLOR[record.orderStatus]} className="capitalize font-medium">
+            {record.orderStatus}
+          </Tag>
+          {record.trackingNumber && (
+            <span className="block mt-1 font-mono text-[10px] text-zinc-400">
+              Track: {record.trackingNumber}
+            </span>
+          )}
+        </div>
+      ),
+    },
+    {
+      title: "Action",
+      key: "action",
+      render: (_, record) => (
+        <Button
+          size="small"
+          onClick={() => handleOpenStatusModal(record)}
+          icon={<FiTruck size={12} />}
+          className="!rounded-lg !border-white/20 !bg-white/5 !text-xs !text-zinc-200 hover:!bg-white/10"
+        >
+          Update
+        </Button>
+      ),
+    },
+  ];
+
+  return (
+    <div className="space-y-6">
+      <BackHeading label="Physical Slab Orders" />
+
+      <div className="flex items-center justify-between gap-4">
+        <Select
+          allowClear
+          placeholder="Filter by Order Status"
+          value={statusFilter}
+          onChange={setStatusFilter}
+          className="w-48 [&_.ant-select-selector]:!rounded-full [&_.ant-select-selector]:!border-zinc-800 [&_.ant-select-selector]:!bg-zinc-950 [&_.ant-select-selection-item]:!text-white"
+          options={[
+            { label: "Pending", value: "pending" },
+            { label: "Processing", value: "processing" },
+            { label: "Shipped", value: "shipped" },
+            { label: "Delivered", value: "delivered" },
+            { label: "Cancelled", value: "cancelled" },
+          ]}
+        />
+
+        <span className="text-xs text-zinc-400">
+          Total Orders: <strong className="text-white">{total}</strong>
+        </span>
+      </div>
+
+      <div className="overflow-x-auto rounded-2xl border border-white/10 bg-[#111113] p-4">
+        <Table
+          columns={columns}
+          dataSource={orders}
+          rowKey="_id"
+          loading={isLoading}
+          pagination={{
+            current: page,
+            pageSize: 20,
+            total,
+            onChange: (p) => setPage(p),
+          }}
+          className="[&_.ant-table]:!bg-transparent [&_.ant-table-cell]:!border-white/8 [&_.ant-table-cell]:!bg-transparent [&_.ant-table-cell]:!text-white [&_.ant-table-thead_.ant-table-cell]:!bg-white/5 [&_.ant-table-thead_.ant-table-cell]:!text-zinc-400"
+        />
+      </div>
+
+      <Modal
+        open={statusModalOpen}
+        onCancel={() => setStatusModalOpen(false)}
+        footer={null}
+        title="Update Order Status & Tracking"
+        className="[&_.ant-modal-content]:!bg-[#111113] [&_.ant-modal-content]:!border [&_.ant-modal-content]:!border-white/10 [&_.ant-modal-header]:!bg-transparent [&_.ant-modal-title]:!text-white"
+      >
+        <Form
+          form={form}
+          layout="vertical"
+          onFinish={handleUpdateStatus}
+          requiredMark={false}
+          className="mt-4 space-y-4"
+        >
+          <Form.Item
+            name="orderStatus"
+            label={<span className="text-xs text-zinc-300">Order Status</span>}
+            rules={[{ required: true }]}
+          >
+            <Select
+              className="w-full"
+              options={[
+                { label: "Pending", value: "pending" },
+                { label: "Processing", value: "processing" },
+                { label: "Shipped", value: "shipped" },
+                { label: "Delivered", value: "delivered" },
+                { label: "Cancelled", value: "cancelled" },
+              ]}
+            />
+          </Form.Item>
+
+          <Form.Item
+            name="trackingNumber"
+            label={<span className="text-xs text-zinc-300">Tracking Number</span>}
+          >
+            <Input placeholder="e.g. USPS 940011189956" className="!rounded-lg !border-white/15 !bg-zinc-950 !text-white" />
+          </Form.Item>
+
+          <Form.Item
+            name="notes"
+            label={<span className="text-xs text-zinc-300">Notes / Internal Comment</span>}
+          >
+            <Input.TextArea rows={3} placeholder="Add any internal processing notes…" className="!rounded-lg !border-white/15 !bg-zinc-950 !text-white" />
+          </Form.Item>
+
+          <div className="flex justify-end gap-3 pt-2">
+            <Button onClick={() => setStatusModalOpen(false)}>Cancel</Button>
+            <Button type="primary" htmlType="submit" loading={isUpdating}>
+              Save Changes
+            </Button>
+          </div>
+        </Form>
+      </Modal>
+    </div>
+  );
+}

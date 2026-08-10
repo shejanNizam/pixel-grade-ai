@@ -7,8 +7,9 @@ import {
 import { getApiErrorMessage } from "@/utils/apiError";
 import { App } from "antd";
 import { useState } from "react";
-import { FiDownload, FiFileText, FiImage, FiTag } from "react-icons/fi";
+import { FiDownload, FiFileText, FiImage, FiShoppingBag, FiTag } from "react-icons/fi";
 import type { GradedCard, SlabSpec } from "./data";
+import OrderSlabModal from "./OrderSlabModal";
 
 /** Print resolution the export is rendered at, server-side. */
 const EXPORT_DPI = 300;
@@ -53,6 +54,7 @@ export default function ExportBar({
   const [exportPrint] = useExportPrintSlabMutation();
   const [exportLabel] = useExportLabelOnlyMutation();
   const [busy, setBusy] = useState<string | null>(null);
+  const [orderModalOpen, setOrderModalOpen] = useState(false);
 
   const widthPx = pxWithBleed(spec.widthMm, spec.bleedMm);
   const heightPx = pxWithBleed(spec.heightMm, spec.bleedMm);
@@ -121,6 +123,31 @@ export default function ExportBar({
 
   return (
     <div className="space-y-3">
+      {/* ---- Order Physical Slab ---- */}
+      <div className="rounded-2xl border border-violet-500/40 bg-linear-to-r from-violet-950/60 to-black p-4 shadow-lg">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h3 className="flex items-center gap-2 text-sm font-semibold text-white">
+              <FiShoppingBag size={15} className="text-amber-400" />
+              Order Physical Custom Slab
+            </h3>
+            <p className="mt-1 text-xs text-zinc-300">
+              Get this exact slab design produced in-house and shipped directly to your address.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            disabled={disabled || !labelId}
+            onClick={() => setOrderModalOpen(true)}
+            className="inline-flex items-center gap-2 rounded-full bg-linear-to-r from-amber-400 to-amber-500 px-6 py-2.5 text-xs font-semibold text-black transition-transform hover:scale-102 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
+          >
+            <FiShoppingBag size={14} />
+            Order Slab ($24.99)
+          </button>
+        </div>
+      </div>
+
       {/* ---- Full slab, card window left blank ---- */}
       <div className="rounded-2xl border border-white/10 bg-[#111113] p-4">
         <div className="flex flex-wrap items-center justify-between gap-4">
@@ -166,6 +193,14 @@ export default function ExportBar({
           {buttons("label")}
         </div>
       </div>
+
+      <OrderSlabModal
+        open={orderModalOpen}
+        onClose={() => setOrderModalOpen(false)}
+        card={card}
+        spec={spec}
+        slabId={labelId}
+      />
     </div>
   );
 }

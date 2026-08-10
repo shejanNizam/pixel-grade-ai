@@ -9,7 +9,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { FiChevronDown, FiX } from "react-icons/fi";
+import { FiChevronDown, FiShoppingBag, FiX } from "react-icons/fi";
 import { useDispatch } from "react-redux";
 import {
   MdOutlineAccountBalanceWallet,
@@ -29,6 +29,11 @@ const navItems = [
     href: "/admin/subscribed-users",
     label: "Subscribed Users",
     Icon: MdOutlineGroups,
+  },
+  {
+    href: "/admin/slab-orders",
+    label: "Slab Orders",
+    Icon: FiShoppingBag,
   },
   {
     href: "/admin/earnings",
