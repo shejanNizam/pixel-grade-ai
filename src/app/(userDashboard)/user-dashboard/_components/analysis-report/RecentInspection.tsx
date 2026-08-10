@@ -205,12 +205,12 @@ export default function RecentInspection() {
           <div className="grid grid-cols-2 gap-2">
             <button
               type="button"
-              onClick={() => setShowBack(!showBack)}
-              aria-label={`Flip ${name} card`}
+              onClick={() => router.push("/user-dashboard/new-analysis")}
+              aria-label={`Retake scan for ${name}`}
               className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-white/15 bg-white/5 py-2 text-xs font-medium text-zinc-300 transition-colors hover:bg-white/10"
             >
-              <FiRotateCw size={13} />
-              {showBack ? "Front view" : "Flip card"}
+              <FiRefreshCw size={13} />
+              Retake
             </button>
 
             <button

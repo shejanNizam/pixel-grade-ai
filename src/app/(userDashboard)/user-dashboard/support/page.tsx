@@ -9,6 +9,7 @@ import {
   type TSupportTicket,
   type TTicketStatus,
 } from "@/redux/features/support/supportApi";
+import { getApiErrorMessage } from "@/utils/apiError";
 import { App, Button, Form, Input, Tag } from "antd";
 import { useState } from "react";
 import { FiChevronDown, FiChevronUp, FiLifeBuoy } from "react-icons/fi";
@@ -150,17 +151,33 @@ export default function SupportPage() {
 
   const tickets = data?.data ?? [];
 
+  /** The Turnstile solution. Stays null until the challenge is passed — and
+   *  goes back to null when it expires, which disables submit again. */
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+
+  // The server allows one active ticket at a time, so the form is closed while
+  // one is open rather than letting the user write a message and lose it to a
+  // rejection on submit.
+  const activeTicket = tickets.find(
+    (ticket) => ticket.status === "open" || ticket.status === "answered",
+  );
+
   const onFinish = async (values: TicketFormValues) => {
     if (isCreating) return;
     try {
       await createTicket({
         subject: values.subject.trim(),
         message: values.message.trim(),
+        captchaToken: captchaToken ?? undefined,
       }).unwrap();
       form.resetFields();
       message.success("Ticket submitted. Support will reply here.");
-    } catch {
-      message.error("Couldn't submit the ticket. Try again.");
+    } catch (error) {
+      message.error(
+        getApiErrorMessage(error, "Couldn't submit the ticket. Try again."),
+      );
+    } finally {
+      setCaptchaToken(null);
     }
   };
 
@@ -182,38 +199,44 @@ export default function SupportPage() {
           <h2 className="mb-4 text-base font-semibold text-white">
             Open a ticket
           </h2>
-          <Form
-            form={form}
-            layout="vertical"
-            onFinish={onFinish}
-            requiredMark={false}
-          >
-            <Form.Item<TicketFormValues>
-              label="Subject"
-              name="subject"
-              rules={[{ required: true, message: "Subject is required" }]}
+          {activeTicket ? (
+            <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-xs text-amber-300">
+              You currently have an active support ticket (<strong>{activeTicket.subject}</strong>). You can reply directly in your open ticket thread or submit a new ticket once it is closed.
+            </div>
+          ) : (
+            <Form
+              form={form}
+              layout="vertical"
+              onFinish={onFinish}
+              requiredMark={false}
             >
-              <Input size="large" placeholder="Brief summary of the issue" />
-            </Form.Item>
+              <Form.Item<TicketFormValues>
+                label="Subject"
+                name="subject"
+                rules={[{ required: true, message: "Subject is required" }]}
+              >
+                <Input size="large" placeholder="Brief summary of the issue" />
+              </Form.Item>
 
-            <Form.Item<TicketFormValues>
-              label="Message"
-              name="message"
-              rules={[{ required: true, message: "Message is required" }]}
-            >
-              <Input.TextArea rows={4} placeholder="Describe what happened…" />
-            </Form.Item>
+              <Form.Item<TicketFormValues>
+                label="Message"
+                name="message"
+                rules={[{ required: true, message: "Message is required" }]}
+              >
+                <Input.TextArea rows={4} placeholder="Describe what happened…" />
+              </Form.Item>
 
-            <Button
-              type="primary"
-              htmlType="submit"
-              size="large"
-              block
-              loading={isCreating}
-            >
-              Submit ticket
-            </Button>
-          </Form>
+              <Button
+                type="primary"
+                htmlType="submit"
+                size="large"
+                block
+                loading={isCreating}
+              >
+                Submit ticket
+              </Button>
+            </Form>
+          )}
         </div>
 
         {/* Ticket list */}

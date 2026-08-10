@@ -47,10 +47,12 @@ const cardOf = (item: TCollectionItem) =>
 export default function PriceTable() {
   const { message } = App.useApp();
   const [page, setPage] = useState(1);
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
 
   const { data, isFetching } = useGetMyCollectionQuery({
     page,
     limit: PAGE_SIZE,
+    favorite: showFavoritesOnly ? true : undefined,
     sortBy: "price",
     sortOrder: "desc",
   });
@@ -241,24 +243,45 @@ export default function PriceTable() {
   ];
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-white/8">
-      <Table<TCollectionItem>
-        columns={columns}
-        dataSource={items}
-        rowKey="_id"
-        loading={isFetching}
-        pagination={{
-          current: page,
-          pageSize: PAGE_SIZE,
-          total,
-          showSizeChanger: false,
-          onChange: setPage,
-          showTotal: (t, [from, to]) =>
-            `Showing ${from} to ${to} of ${t} cards tracked`,
-        }}
-        scroll={{ x: 1050 }}
-        size="middle"
-      />
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="text-base font-medium text-white">Tracked Cards</h3>
+        <button
+          type="button"
+          onClick={() => {
+            setPage(1);
+            setShowFavoritesOnly((prev) => !prev);
+          }}
+          className={`inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-xs font-medium transition-colors ${
+            showFavoritesOnly
+              ? "border-amber-500/50 bg-amber-500/10 text-amber-300"
+              : "border-zinc-800 bg-zinc-950 text-zinc-400 hover:text-white"
+          }`}
+        >
+          <FiStar className={showFavoritesOnly ? "fill-amber-400 text-amber-400" : ""} />
+          {showFavoritesOnly ? "Favorites Only" : "Show Favorites"}
+        </button>
+      </div>
+
+      <div className="overflow-hidden rounded-2xl border border-white/8">
+        <Table<TCollectionItem>
+          columns={columns}
+          dataSource={items}
+          rowKey="_id"
+          loading={isFetching}
+          pagination={{
+            current: page,
+            pageSize: PAGE_SIZE,
+            total,
+            showSizeChanger: false,
+            onChange: setPage,
+            showTotal: (t, [from, to]) =>
+              `Showing ${from} to ${to} of ${t} cards tracked`,
+          }}
+          scroll={{ x: 1050 }}
+          size="middle"
+        />
+      </div>
     </div>
   );
 }

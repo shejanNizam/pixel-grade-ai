@@ -18,7 +18,7 @@ export interface TStatCard {
 export interface TAdminOverview {
   totalUsers: TStatCard;
   subscribedUsers: TStatCard;
-  newSubscribers: TStatCard;
+  totalScans: TStatCard;
   totalEarnings: TStatCard;
   /** Monthly recurring revenue — monthly-equivalent of active subscriptions. */
   mrr: number;

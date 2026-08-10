@@ -10,14 +10,20 @@ import {
 import { getApiErrorMessage } from "@/utils/apiError";
 import { App } from "antd";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useMemo, useState } from "react";
 import ExportBar from "../_components/slab-generator/ExportBar";
 import SlabControls from "../_components/slab-generator/SlabControls";
 import SlabPreview from "../_components/slab-generator/SlabPreview";
 import { slabSpecs, type GradedCard } from "../_components/slab-generator/data";
 
-export default function SlabGenerator() {
+function SlabGeneratorScreen() {
   const { message } = App.useApp();
+
+  // "Buy Slab" on a collection card deep-links here with the card's report id
+  // so the user never has to pick it out of the list — or re-upload the card —
+  // a second time.
+  const requestedReportId = useSearchParams().get("reportId");
 
   const { data: reports, isLoading } = useGetMyGradingReportsQuery({
     limit: 50,
@@ -64,7 +70,31 @@ export default function SlabGenerator() {
   /** The rendered label for the current card, keyed by report id. */
   const [labels, setLabels] = useState<Record<string, TSlabLabel>>({});
 
-  const card = cards.find((c) => c.id === cardId) ?? cards[0];
+  /**
+   * An explicit pick in the controls always wins. Failing that, honour the
+   * `?reportId` a "Buy Slab" click arrived with, and only then fall back to the
+   * most recent report.
+   */
+  const card = useMemo(() => {
+    if (cardId) return cards.find((c) => c.id === cardId) ?? cards[0];
+    if (requestedReportId) {
+      const requested = cards.find((c) => c.id === requestedReportId);
+      if (requested) return requested;
+    }
+    return cards[0];
+  }, [cards, cardId, requestedReportId]);
+
+  /**
+   * The picker only holds the 50 most recent reports, so a deep link to an
+   * older one lands on the wrong card. Say so rather than quietly slabbing
+   * whatever happens to be at the top of the list.
+   */
+  const requestedMissing =
+    !isLoading &&
+    !cardId &&
+    !!requestedReportId &&
+    !cards.some((c) => c.id === requestedReportId);
+
   const label = card ? labels[card.id] : undefined;
 
   const variants = label?.variants ?? [];
@@ -164,6 +194,13 @@ export default function SlabGenerator() {
         </p>
       </div>
 
+      {requestedMissing && (
+        <p className="rounded-xl border border-amber-500/40 bg-amber-500/5 px-4 py-3 text-xs text-amber-300">
+          That card isn&apos;t in your 50 most recent reports — pick it from the
+          card list on the right.
+        </p>
+      )}
+
       {isLoading || !card ? (
         <div className="h-96 animate-pulse rounded-2xl border border-violet-500/40 bg-[#111113]" />
       ) : (
@@ -215,12 +252,15 @@ export default function SlabGenerator() {
               )}
             </section>
 
+            {/* The label's OWN stored geometry, not the spec's — a label
+                already exported keeps the layout it was sold at. */}
             <ExportBar
               card={card}
               spec={spec}
               disabled={generating}
-              pngUrl={label?.exportPngUrl}
-              pdfUrl={label?.exportPdfUrl}
+              labelId={label?._id}
+              labelWidthMm={label?.labelWMm}
+              labelHeightMm={label?.labelHMm}
             />
           </div>
 
@@ -243,5 +283,18 @@ export default function SlabGenerator() {
         </div>
       )}
     </div>
+  );
+}
+
+/** `useSearchParams` needs a Suspense boundary above it to prerender. */
+export default function SlabGenerator() {
+  return (
+    <Suspense
+      fallback={
+        <div className="h-96 animate-pulse rounded-2xl border border-violet-500/40 bg-[#111113]" />
+      }
+    >
+      <SlabGeneratorScreen />
+    </Suspense>
   );
 }

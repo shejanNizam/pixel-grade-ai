@@ -131,39 +131,46 @@ export default function ProfileSettings() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <BackLink title="Profile" />
-
-        {isEditing ? (
-          <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={cancelEditing}
-              className="rounded-full border border-white/15 px-5 py-2 text-sm text-zinc-300 transition-colors hover:bg-white/5"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              form="profile-form"
-              disabled={busy}
-              className="rounded-full border border-amber-500/60 px-5 py-2 text-sm text-amber-400 transition-colors hover:bg-amber-500/10 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {busy ? "Saving…" : "Save changes"}
-            </button>
-          </div>
-        ) : (
-          <button
-            type="button"
-            onClick={startEditing}
-            className="inline-flex items-center gap-2 rounded-full border border-amber-500/60 px-5 py-2 text-sm text-amber-400 transition-colors hover:bg-amber-500/10"
-          >
-            Edit
-          </button>
-        )}
-      </div>
+      <BackLink title="Profile" />
 
       <div className="max-w-2xl rounded-2xl border border-white/10 bg-[#0d0d0f] p-6">
+        <div className="mb-6 flex items-center justify-between border-b border-white/8 pb-4">
+          <div>
+            <h3 className="text-base font-medium text-white">Profile Details</h3>
+            <p className="text-xs text-zinc-500">
+              Manage your personal information and public handle
+            </p>
+          </div>
+
+          {isEditing ? (
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={cancelEditing}
+                className="cursor-pointer rounded-full border border-white/15 px-5 py-2 text-sm text-zinc-300 transition-colors hover:bg-white/5"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                form="profile-form"
+                disabled={busy}
+                className="cursor-pointer rounded-full border border-amber-500/60 px-5 py-2 text-sm text-amber-400 transition-colors hover:bg-amber-500/10 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {busy ? "Saving…" : "Save changes"}
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={startEditing}
+              className="cursor-pointer inline-flex items-center gap-2 rounded-full border border-amber-500/60 px-5 py-2 text-sm text-amber-400 transition-colors hover:bg-amber-500/10"
+            >
+              Edit
+            </button>
+          )}
+        </div>
+
         <div className="flex flex-col gap-8 sm:flex-row">
           {/* Avatar */}
           <div className="flex shrink-0 flex-col items-center gap-2">

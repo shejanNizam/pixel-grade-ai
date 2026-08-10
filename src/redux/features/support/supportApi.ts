@@ -50,7 +50,9 @@ export const supportApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     createTicket: builder.mutation<
       TSupportTicket,
-      { subject: string; message: string }
+      /** `captchaToken` is the Turnstile solution. Omitted when the widget is
+       *  unconfigured; the server decides whether that is acceptable. */
+      { subject: string; message: string; captchaToken?: string }
     >({
       query: (body) => ({ url: "/support", method: "POST", body }),
       transformResponse: (res: TResponse<TSupportTicket>) => res.data,

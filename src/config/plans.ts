@@ -8,11 +8,17 @@
 //
 // BUSINESS MODEL — CREDITS (confirmed by client, Jul 2026)
 // The product meters usage in *credits*, not a raw scan count.
-//   • 10 credits = 1 finished grading report (see CREDITS_PER_SCAN). They are
+//   • 5 credits = 1 finished grading report (see CREDITS_PER_SCAN). They are
 //     debited when the scan starts and refunded whenever no report results —
 //     a failure, a cancel, or a scan left unconfirmed.
 //   • Free is topped up DAILY; paid plans get a MONTHLY allowance.
 //   • Credits are also spent by future premium AI features.
+//
+// ⚠️ The client specifies allowances in SCANS (2026-08-10: Free 5/day,
+// Collector 300/month, Pro 1,200/month, Enterprise unlimited) but `credits`
+// below is in CREDITS. Always write `<scans> * CREDITS_PER_SCAN`. Pasting the
+// scan count straight in fails silently — the pricing page still renders, it
+// just advertises a fifth of the allowance.
 // Pricing/tiers come from the client's "Pricing Plans (Developer
 // Specification)" sheet: Free / Collector / Pro / Enterprise.
 // ---------------------------------------------------------------------------
@@ -27,7 +33,7 @@ export const BILLING_PERIODS = ["monthly", "yearly"] as const;
 export type Billing = (typeof BILLING_PERIODS)[number];
 
 /** Credits burned per AI grading report. Mirrors the server constant. */
-export const CREDITS_PER_SCAN = 10;
+export const CREDITS_PER_SCAN = 5;
 
 /** How long a plan runs before it renews. `1 Year` backs the yearly billing
  *  toggle on the pricing page. */
@@ -82,7 +88,8 @@ export const planCatalog: PlanDefinition[] = [
       "No Pixel Verified badge",
     ],
     popular: false,
-    credits: 20,
+    // 5 scans/day
+    credits: 5 * CREDITS_PER_SCAN,
     creditInterval: "daily",
     pixelscope: false,
   },
@@ -102,7 +109,8 @@ export const planCatalog: PlanDefinition[] = [
       "Order custom slab labels",
     ],
     popular: true,
-    credits: 1500,
+    // 300 scans/month
+    credits: 300 * CREDITS_PER_SCAN,
     creditInterval: "monthly",
     pixelscope: true,
   },
@@ -122,7 +130,8 @@ export const planCatalog: PlanDefinition[] = [
       "Priority support",
     ],
     popular: false,
-    credits: 6000,
+    // 1,200 scans/month
+    credits: 1200 * CREDITS_PER_SCAN,
     creditInterval: "monthly",
     pixelscope: true,
   },

@@ -1,6 +1,5 @@
 "use client";
 
-import PillButton from "@/components/shared/PillButton";
 import {
   useGetMyCollectionQuery,
   useRemoveCollectionItemMutation,
@@ -8,27 +7,45 @@ import {
   type TCollectionItem,
 } from "@/redux/features/collection/collectionApi";
 import { getApiErrorMessage } from "@/utils/apiError";
-import { App } from "antd";
+import { App, Input, Select } from "antd";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { FiPlus } from "react-icons/fi";
-import AddCardModal from "../_components/my-collection/AddCardModal";
+import { FiSearch } from "react-icons/fi";
 import CardGrid from "../_components/my-collection/CardGrid";
 import CollectionStats from "../_components/my-collection/CollectionStats";
 
 const PAGE_SIZE = 24;
 
+const FILTER_OPTIONS = [
+  { label: "All", value: "all" },
+  { label: "Recently Added", value: "recently_added" },
+  { label: "Favorites", value: "favorites" },
+  { label: "Highest Grade", value: "highest_grade" },
+  { label: "Highest Value", value: "highest_value" },
+];
+
 export default function MyCollection() {
+  const router = useRouter();
   const { message, modal } = App.useApp();
-  const [isAdding, setIsAdding] = useState(false);
   const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState("all");
   const [removingId, setRemovingId] = useState<string | null>(null);
 
   const { data, isLoading } = useGetMyCollectionQuery({
     page,
     limit: PAGE_SIZE,
-    sortBy: "addedAt",
+    searchTerm: search.trim() || undefined,
+    favorite: filter === "favorites" ? true : undefined,
+    sortBy:
+      filter === "highest_grade"
+        ? "grade"
+        : filter === "highest_value"
+          ? "price"
+          : "addedAt",
     sortOrder: "desc",
   });
+
   const [updateItem] = useUpdateCollectionItemMutation();
   const [removeCollectionItem] = useRemoveCollectionItemMutation();
 
@@ -47,15 +64,6 @@ export default function MyCollection() {
     }
   };
 
-  /**
-   * Removes a card from the collection.
-   *
-   * Confirmed first because it is not undoable from the UI. What it removes is
-   * the COLLECTION ENTRY — the grading report, its images, and the price
-   * history are retained permanently as training data and are unaffected. The
-   * copy says so, because "delete" on a card the user paid credits to grade
-   * otherwise reads as destroying the grade.
-   */
   const removeItem = async (item: TCollectionItem) => {
     const card = typeof item.card === "object" ? item.card : null;
     const name = card?.name ?? "this card";
@@ -85,25 +93,37 @@ export default function MyCollection() {
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-medium text-white">My Collection</h2>
-          <p className="mt-1.5 text-xs text-zinc-500">
-            View and manage all cards in your collection
-          </p>
-        </div>
-
-        <PillButton onClick={() => setIsAdding(true)} icon={<FiPlus />}>
-          Add card
-        </PillButton>
+      <div>
+        <h2 className="text-2xl font-medium text-white">My Collection</h2>
+        <p className="mt-1.5 text-xs text-zinc-500">
+          View and manage all cards in your collection
+        </p>
       </div>
 
       <CollectionStats />
 
       <section>
-        <h3 className="mb-5 text-lg font-medium text-white">
-          Recently added {total > 0 && `( ${total} )`}
-        </h3>
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+          <h3 className="text-lg font-medium text-white">
+            Collection Cards {total > 0 && `( ${total} )`}
+          </h3>
+
+          <div className="flex flex-row items-center gap-3">
+            <Select
+              value={filter}
+              onChange={setFilter}
+              options={FILTER_OPTIONS}
+              className="w-40 [&_.ant-select-selector]:!rounded-full [&_.ant-select-selector]:!border-zinc-800 [&_.ant-select-selector]:!bg-zinc-950 [&_.ant-select-selection-item]:!text-white"
+            />
+            <Input
+              placeholder="Search cards..."
+              prefix={<FiSearch className="text-zinc-500" />}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-60 !rounded-full !border-zinc-800 !bg-zinc-950 !text-white"
+            />
+          </div>
+        </div>
 
         {isLoading ? (
           <ul className="grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
@@ -118,9 +138,15 @@ export default function MyCollection() {
           <CardGrid
             items={items}
             onToggleFavorite={toggleFavorite}
-            onBuySlab={() =>
-              message.info("Custom slab ordering is coming soon.")
-            }
+            onBuySlab={(item) => {
+              const reportId =
+                typeof item.report === "object" ? item.report?._id : item.report;
+              if (reportId) {
+                router.push(`/user-dashboard/slab-generator?reportId=${reportId}`);
+              } else {
+                router.push("/user-dashboard/slab-generator");
+              }
+            }}
             onRemove={removeItem}
             removingId={removingId}
           />
@@ -150,8 +176,6 @@ export default function MyCollection() {
           </div>
         )}
       </section>
-
-      <AddCardModal open={isAdding} onClose={() => setIsAdding(false)} />
     </div>
   );
 }

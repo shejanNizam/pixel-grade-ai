@@ -5,7 +5,7 @@ import {
   type TStatCard,
 } from "@/redux/features/dashboard/dashboardApi";
 import type { IconType } from "react-icons";
-import { FiDollarSign, FiExternalLink } from "react-icons/fi";
+import { FiCamera, FiDollarSign } from "react-icons/fi";
 import { MdOutlineGroups, MdOutlineHowToReg } from "react-icons/md";
 import AdminStatCard from "../AdminStatCard";
 
@@ -62,9 +62,9 @@ export default function StatCards() {
       Icon: MdOutlineHowToReg,
     },
     {
-      label: "New subscribers",
-      stat: data.newSubscribers,
-      Icon: FiExternalLink,
+      label: "Total scans",
+      stat: data.totalScans,
+      Icon: FiCamera,
     },
     {
       label: "Total earnings",

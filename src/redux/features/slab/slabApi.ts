@@ -128,6 +128,42 @@ export const slabApi = baseApi.injectEndpoints({
       transformResponse: (res: TResponse<TSlabLabel>) => res.data,
       invalidatesTags: ["slab"],
     }),
+
+    /**
+     * The full slab print file, with the card window left BLANK.
+     *
+     * This is what actually goes to the printer: the press prints the artwork
+     * around the opening and the collector's own card sits in it. Deliberately
+     * different from `compositeUrl`/`exportPngUrl`, which carry the card image
+     * so the on-screen preview shows the finished object.
+     */
+    exportPrintSlab: builder.mutation<
+      Blob,
+      { labelId: string; format: "png" | "pdf" }
+    >({
+      query: ({ labelId, format }) => ({
+        url: `/slab/${labelId}/export-print`,
+        method: "GET",
+        params: { format },
+        responseHandler: (response: Response) => response.blob(),
+      }),
+    }),
+
+    /**
+     * The grading label alone, at print dimensions, for users printing their
+     * own labels at home.
+     */
+    exportLabelOnly: builder.mutation<
+      Blob,
+      { labelId: string; format: "png" | "pdf" }
+    >({
+      query: ({ labelId, format }) => ({
+        url: `/slab/${labelId}/export-label`,
+        method: "GET",
+        params: { format },
+        responseHandler: (response: Response) => response.blob(),
+      }),
+    }),
   }),
 });
 
@@ -137,4 +173,6 @@ export const {
   useGetSlabLabelQuery,
   useRegenerateSlabMutation,
   useSelectSlabVariantMutation,
+  useExportPrintSlabMutation,
+  useExportLabelOnlyMutation,
 } = slabApi;
