@@ -39,7 +39,11 @@ export const metadata: Metadata = {
     title: siteConfig.title,
     description: siteConfig.description,
   },
-  icons: { icon: "/favicon.ico" },
+  icons: {
+    icon: "/assets/main_logo.png",
+    shortcut: "/assets/main_logo.png",
+    apple: "/assets/main_logo.png",
+  },
 };
 
 export default async function RootLayout({
