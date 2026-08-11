@@ -113,14 +113,14 @@ export default function MyCollection() {
               value={filter}
               onChange={setFilter}
               options={FILTER_OPTIONS}
-              className="w-40 [&_.ant-select-selector]:!rounded-full [&_.ant-select-selector]:!border-zinc-800 [&_.ant-select-selector]:!bg-zinc-950 [&_.ant-select-selection-item]:!text-white"
+              className="w-40 [&_.ant-select-selector]:rounded-full! [&_.ant-select-selector]:border-zinc-800! [&_.ant-select-selector]:bg-zinc-950! [&_.ant-select-selection-item]:text-white!"
             />
             <Input
               placeholder="Search cards..."
               prefix={<FiSearch className="text-zinc-500" />}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-60 !rounded-full !border-zinc-800 !bg-zinc-950 !text-white"
+              className="w-60 rounded-full! border-zinc-800! bg-zinc-950! text-white!"
             />
           </div>
         </div>
@@ -140,9 +140,13 @@ export default function MyCollection() {
             onToggleFavorite={toggleFavorite}
             onBuySlab={(item) => {
               const reportId =
-                typeof item.report === "object" ? item.report?._id : item.report;
+                typeof item.report === "object"
+                  ? item.report?._id
+                  : item.report;
               if (reportId) {
-                router.push(`/user-dashboard/slab-generator?reportId=${reportId}`);
+                router.push(
+                  `/user-dashboard/slab-generator?reportId=${reportId}`,
+                );
               } else {
                 router.push("/user-dashboard/slab-generator");
               }

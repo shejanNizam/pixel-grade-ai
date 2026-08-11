@@ -19,13 +19,13 @@ function SlabPreview() {
       />
 
       <Image
-        src="/assets/sight_phone_img.png"
+        src="/assets/banner_image.png"
         alt="A Charizard EX card in a PixelGrade slab, graded MINT 10"
         width={403}
         height={656}
         priority
         className="h-auto w-full rounded-3xl object-contain drop-shadow-[0_0_60px_rgba(139,92,246,0.4)]"
-      />      
+      />
     </div>
   );
 }

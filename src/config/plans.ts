@@ -109,8 +109,8 @@ export const planCatalog: PlanDefinition[] = [
       "Order custom slab labels",
     ],
     popular: true,
-    // 300 scans/month
-    credits: 300 * CREDITS_PER_SCAN,
+    // 600 scans/month = 3,000 credits
+    credits: 600 * CREDITS_PER_SCAN,
     creditInterval: "monthly",
     pixelscope: true,
   },
@@ -130,8 +130,8 @@ export const planCatalog: PlanDefinition[] = [
       "Priority support",
     ],
     popular: false,
-    // 1,200 scans/month
-    credits: 1200 * CREDITS_PER_SCAN,
+    // 1,500 scans/month = 7,500 credits
+    credits: 1500 * CREDITS_PER_SCAN,
     creditInterval: "monthly",
     pixelscope: true,
   },

@@ -88,6 +88,7 @@ const Signup: React.FC = () => {
         <Form.Item<SignupFormValues>
           name="username"
           className="mb-4!"
+          hasFeedback
           rules={[
             { required: true, message: "Username is required" },
             { min: 3, message: "At least 3 characters" },
@@ -95,6 +96,27 @@ const Signup: React.FC = () => {
             {
               pattern: /^[a-zA-Z0-9_]+$/,
               message: "Letters, numbers, and underscores only",
+            },
+            {
+              validator: async (_, value) => {
+                if (!value || value.length < 3 || value.length > 24) return;
+                try {
+                  const baseUrl =
+                    process.env.NEXT_PUBLIC_BASE_API ||
+                    "https://api.pixelgradeai.com/api/v1";
+                  const res = await fetch(
+                    `${baseUrl}/user/check-username?username=${encodeURIComponent(value.trim().toLowerCase())}`,
+                  );
+                  const data = await res.json();
+                  if (data?.data?.available === false) {
+                    return Promise.reject(
+                      new Error(data.data.message || "That username is already taken"),
+                    );
+                  }
+                } catch {
+                  // Fall back to server registration check if network fails
+                }
+              },
             },
           ]}
           extra={
