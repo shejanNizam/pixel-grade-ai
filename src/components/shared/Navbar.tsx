@@ -38,13 +38,6 @@ export default function Navbar() {
   // Auth comes from getMe (the Redux auth slice is empty after a fresh load).
   const { data: me } = useGetMeQuery();
   const isStaff = me?.role === "admin" || me?.role === "super_admin";
-  const cta = me
-    ? {
-        href: isStaff ? "/admin" : "/user-dashboard",
-        label: "Dashboard",
-        icon: <FiGrid />,
-      }
-    : { href: "/login", label: "Sign in", icon: <FiArrowRight /> };
 
   // The bar is transparent over the hero, but needs a solid backing once content
   // scrolls beneath it — otherwise the links sit on top of the page copy.
@@ -82,13 +75,41 @@ export default function Navbar() {
           ))}
         </div>
 
-        <PillButton
-          href={cta.href}
-          icon={cta.icon}
-          className="hidden md:inline-flex"
-        >
-          {cta.label}
-        </PillButton>
+        {me ? (
+          isStaff ? (
+            <div className="hidden items-center gap-3 md:flex">
+              <PillButton
+                href="/user-dashboard"
+                icon={<FiGrid />}
+                variant="outline"
+              >
+                User Dashboard
+              </PillButton>
+              <PillButton
+                href="/admin"
+                icon={<FiGrid />}
+              >
+                Admin Dashboard
+              </PillButton>
+            </div>
+          ) : (
+            <PillButton
+              href="/user-dashboard"
+              icon={<FiGrid />}
+              className="hidden md:inline-flex"
+            >
+              User Dashboard
+            </PillButton>
+          )
+        ) : (
+          <PillButton
+            href="/login"
+            icon={<FiArrowRight />}
+            className="hidden md:inline-flex"
+          >
+            Sign in
+          </PillButton>
+        )}
 
         <button
           onClick={() => setIsOpen((open) => !open)}
@@ -113,15 +134,49 @@ export default function Navbar() {
                 {link.label}
               </Link>
             ))}
-            <PillButton
-              href={cta.href}
-              onClick={closeMenu}
-              icon={cta.icon}
-              block
-              className="mt-3"
-            >
-              {cta.label}
-            </PillButton>
+            {me ? (
+              isStaff ? (
+                <div className="mt-3 flex flex-col gap-2">
+                  <PillButton
+                    href="/user-dashboard"
+                    onClick={closeMenu}
+                    icon={<FiGrid />}
+                    variant="outline"
+                    block
+                  >
+                    User Dashboard
+                  </PillButton>
+                  <PillButton
+                    href="/admin"
+                    onClick={closeMenu}
+                    icon={<FiGrid />}
+                    block
+                  >
+                    Admin Dashboard
+                  </PillButton>
+                </div>
+              ) : (
+                <PillButton
+                  href="/user-dashboard"
+                  onClick={closeMenu}
+                  icon={<FiGrid />}
+                  block
+                  className="mt-3"
+                >
+                  User Dashboard
+                </PillButton>
+              )
+            ) : (
+              <PillButton
+                href="/login"
+                onClick={closeMenu}
+                icon={<FiArrowRight />}
+                block
+                className="mt-3"
+              >
+                Sign in
+              </PillButton>
+            )}
           </div>
         </div>
       )}

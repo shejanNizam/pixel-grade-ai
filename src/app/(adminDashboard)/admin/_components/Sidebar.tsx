@@ -123,7 +123,7 @@ export default function AdminSidebar({ isOpen, toggleSidebar }: SidebarProps) {
           violet-500 and needs a flat panel to read against. */}
       <div className="flex h-full flex-col overflow-y-auto rounded-3xl border border-violet-500/20 bg-[#111113] p-5">
         <div className="mb-10 flex items-center justify-between px-2 pt-3">
-          <Link href="/admin" aria-label="PixelGrade AI admin home">
+          <Link href="/" aria-label="PixelGrade AI home">
             <Image
               src="/assets/main_logo_all.png"
               alt="PixelGrade AI"
