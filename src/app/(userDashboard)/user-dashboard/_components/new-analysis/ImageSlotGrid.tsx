@@ -70,8 +70,17 @@ export default function ImageSlotGrid({
               width={120}
               height={120}
               unoptimized
-              className="aspect-square w-full rounded-lg border border-violet-500/40 object-cover"
+              className={`aspect-square w-full rounded-lg border object-cover ${
+                i === 0
+                  ? "border-emerald-500/70 shadow-sm shadow-emerald-500/20"
+                  : "border-violet-500/40"
+              }`}
             />
+            {i === 0 && (
+              <span className="absolute top-1 left-1 rounded bg-emerald-500/90 px-1 py-0.5 text-[9px] font-semibold text-black uppercase tracking-wider">
+                Full Card
+              </span>
+            )}
             <button
               type="button"
               onClick={() => removeAt(i)}
@@ -83,28 +92,41 @@ export default function ImageSlotGrid({
           </li>
         ))}
 
-        {emptySlots.map((_, i) => (
-          <li key={`empty-${i}`}>
-            {/* Only the first empty slot is a real control — the rest are
-                placeholders, so screen readers hear one "add" action per side. */}
-            {i === 0 ? (
-              <label
-                htmlFor={inputId}
-                className="flex aspect-square cursor-pointer items-center justify-center rounded-lg border border-violet-500/40 bg-violet-500/5 text-violet-400 transition-colors hover:bg-violet-500/15"
-              >
-                <FiPlus size={20} />
-                <span className="sr-only">Add images to {label}</span>
-              </label>
-            ) : (
-              <span
-                aria-hidden
-                className="flex aspect-square items-center justify-center rounded-lg border border-violet-500/20 text-violet-500/40"
-              >
-                <FiPlus size={20} />
-              </span>
-            )}
-          </li>
-        ))}
+        {emptySlots.map((_, i) => {
+          const currentSlotIndex = files.length + i;
+          const isMainSlot = currentSlotIndex === 0;
+
+          return (
+            <li key={`empty-${i}`}>
+              {i === 0 ? (
+                <label
+                  htmlFor={inputId}
+                  className={`flex aspect-square cursor-pointer flex-col items-center justify-center rounded-lg border p-1 text-center transition-colors ${
+                    isMainSlot
+                      ? "border-dashed border-emerald-500/60 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20"
+                      : "border-violet-500/40 bg-violet-500/5 text-violet-400 hover:bg-violet-500/15"
+                  }`}
+                >
+                  <FiPlus size={18} />
+                  <span className="mt-1 text-[10px] font-medium leading-tight">
+                    {isMainSlot ? "Full Card (ID)" : "PixelScope"}
+                  </span>
+                  <span className="sr-only">Add images to {label}</span>
+                </label>
+              ) : (
+                <span
+                  aria-hidden
+                  className="flex aspect-square flex-col items-center justify-center rounded-lg border border-violet-500/20 p-1 text-center text-violet-500/40"
+                >
+                  <FiPlus size={18} />
+                  <span className="mt-1 text-[10px] font-medium leading-tight">
+                    {isMainSlot ? "Full Card" : "PixelScope"}
+                  </span>
+                </span>
+              )}
+            </li>
+          );
+        })}
       </ul>
 
       <input

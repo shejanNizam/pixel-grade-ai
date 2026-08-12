@@ -38,6 +38,10 @@ export default function AdvancedImport({
         Pixel Verified badge.
       </p>
 
+      <div className="mt-3.5 rounded-xl border border-violet-500/30 bg-violet-500/10 p-3 text-xs text-zinc-300">
+        <span className="font-semibold text-violet-300">PixelScope Guide:</span> Upload your <strong className="text-emerald-400">Full Card Photo</strong> in Slot 1 for instant AI card identification, followed by up to 9 <strong className="text-violet-300">PixelScope Macro Close-ups</strong> for defect inspection &amp; Pixel Verified status.
+      </div>
+
       {locked ? (
         // Free plan: PixelScope + Pixel Verified are paid-only. Show the value,
         // not a working uploader.
