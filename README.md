@@ -74,16 +74,19 @@ The `src/app/` folder uses [route groups](https://nextjs.org/docs/app/building-y
 - `(userDashboard)/` — signed-in user area at `/user-dashboard` with its own sidebar.
 - `(adminDashboard)/` — admin area at `/admin` with an admin sidebar.
 
-## Authentication
+## Authentication & Backend Integration
 
-The template ships **auth UI and infrastructure, but the flows are frontend-only demos** — the login page simulates success without calling an API. Wiring it to a real backend is intentionally left to you. Two token layers are already in place and kept in sync:
+The frontend is **fully integrated with the Express.js REST API backend** using RTK Query and JWT authentication.
 
-- **API calls** read a bearer token from `localStorage` (`token` / `refresh`) in `src/redux/api/baseApi.ts`, which also auto-refreshes on a 401.
-- **Route gating** uses an `auth-token` **cookie** (see `src/utils/cookieUtils.ts`) so `src/middleware.ts` can redirect on the server. Middleware is a no-op by default; uncomment the example inside it to protect `/user-dashboard` and `/admin`.
-
-> Note: `localStorage` tokens are simpler but exposed to XSS. For stronger security, move the token to an httpOnly cookie set by your backend and read it in middleware instead.
-
-To connect a real backend: call the `useLoginMutation` (in `src/redux/features/auth/authApi.ts`) from the login page, store the returned tokens (`localStorage` + `setAuthCookie`), dispatch `setCredentials`, then enable the middleware guard.
+- **API Layer**: All requests are routed through `src/redux/api/baseApi.ts`, injecting JWT bearer tokens and automatically handling 401 token refreshes.
+- **Route Protection**: Server-side middleware (`src/middleware.ts`) gates protected routes (`/user-dashboard`, `/admin`) based on authentication state and user roles.
+- **Key Workflows Integrated**:
+  - Full Authentication & User Profile Management (Login, Signup, Google OAuth, Change/Reset Password)
+  - Scrydex AI Vision Card Identification & OpenAI GPT-4o AI Grading
+  - PixelScope Multi-Image Upload & Pixel Verified Badge workflow
+  - Slab Generator & Physical Slab Order Fulfillment with automated USPS Tracking and HTML confirmation emails
+  - Stripe Subscription Checkout & Plan Management
+  - Admin & Super Admin Management Dashboards
 
 ## Customizing for a new project
 
