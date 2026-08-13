@@ -57,9 +57,34 @@ interface ScanFlowModalProps {
 
 /** Pull the backend envelope's message out of an RTK error, if there is one. */
 const errorMessage = (err: unknown, fallback: string): string => {
-  if (typeof err === "object" && err !== null && "data" in err) {
-    const data = (err as { data?: { message?: string } }).data;
-    if (data?.message) return data.message;
+  try {
+    if (typeof err === "string") return err;
+    if (typeof err !== "object" || err === null) return fallback;
+
+    // RTK FetchBaseQueryError shape: { data: { message } }
+    if ("data" in err) {
+      const data = (err as Record<string, unknown>).data;
+      if (typeof data === "object" && data !== null && "message" in data) {
+        const msg = (data as Record<string, unknown>).message;
+        if (typeof msg === "string" && msg.length > 0) return msg;
+      }
+      // Sometimes data itself is a string (plain-text error body)
+      if (typeof data === "string" && data.length > 0) return data;
+    }
+
+    // RTK SerializedError shape: { message }
+    if ("message" in err) {
+      const msg = (err as Record<string, unknown>).message;
+      if (typeof msg === "string" && msg.length > 0) return msg;
+    }
+
+    // Fallback: { error } (e.g., fetch network failure)
+    if ("error" in err) {
+      const nested = (err as Record<string, unknown>).error;
+      if (typeof nested === "string" && nested.length > 0) return nested;
+    }
+  } catch {
+    // Never let the error-message extractor itself crash.
   }
   return fallback;
 };
@@ -495,11 +520,35 @@ export default function ScanFlowModal({
         )}
 
         {step.name === "error" && (
-          <div className="py-6 text-center">
-            <p className="text-sm text-red-400">{step.message}</p>
+          <div className="py-8 text-center">
+            {/* Error icon */}
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-500/10">
+              <svg
+                className="h-7 w-7 text-red-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"
+                />
+              </svg>
+            </div>
+            <h3 className="mb-2 text-lg font-semibold text-white">
+              Grading Unsuccessful
+            </h3>
+            <p className="mx-auto max-w-xs text-sm leading-relaxed text-zinc-400">
+              {step.message}
+            </p>
+            <p className="mt-2 text-xs text-zinc-500">
+              Your credits have been refunded automatically.
+            </p>
             <button
               onClick={closeDialog}
-              className="mt-6 rounded-full border border-white/20 px-6 py-2.5 text-sm text-white transition-colors hover:border-white/50"
+              className="mt-6 rounded-full border border-white/20 bg-white/5 px-8 py-2.5 text-sm font-medium text-white transition-all hover:border-white/40 hover:bg-white/10"
             >
               Close
             </button>
