@@ -7,7 +7,9 @@ import AuthHeader, {
 } from "@/components/auth/AuthHeader";
 import GoogleAuthButton, {
   AuthDivider,
+  SHOW_GOOGLE_SIGN_IN,
 } from "@/components/auth/GoogleAuthButton";
+import { BASE_URL } from "@/redux/api/baseApi";
 import { useSignupMutation } from "@/redux/features/auth/authApi";
 import { SignupFormValues } from "@/types/auth";
 import { getApiErrorMessage } from "@/utils/apiError";
@@ -56,9 +58,14 @@ const Signup: React.FC = () => {
       <AuthHeader title="Create account" />
 
       {/* Same button as /login — Google cannot distinguish sign-up from
-          sign-in, and the backend does not need it to. */}
-      <GoogleAuthButton label="Sign up with Google" />
-      <AuthDivider text="or sign up with email" />
+          sign-in, and the backend does not need it to.
+          Hidden for now — flip SHOW_GOOGLE_SIGN_IN in GoogleAuthButton.tsx. */}
+      {SHOW_GOOGLE_SIGN_IN && (
+        <>
+          <GoogleAuthButton label="Sign up with Google" />
+          <AuthDivider text="or sign up with email" />
+        </>
+      )}
 
       <Form
         form={form}
@@ -103,11 +110,13 @@ const Signup: React.FC = () => {
               validator: async (_, value) => {
                 if (!value || value.length < 3 || value.length > 24) return;
                 try {
-                  const baseUrl =
-                    process.env.NEXT_PUBLIC_BASE_API ||
-                    "https://api.pixelgradeai.com/api/v1";
+                  // BASE_URL, not a private env var: NEXT_PUBLIC_BASE_API is
+                  // set nowhere, so this used to fall through to a hardcoded
+                  // production URL and check usernames against the live
+                  // database no matter which backend the rest of the app was
+                  // pointed at.
                   const res = await fetch(
-                    `${baseUrl}/user/check-username?username=${encodeURIComponent(value.trim().toLowerCase())}`,
+                    `${BASE_URL}/user/check-username?username=${encodeURIComponent(value.trim().toLowerCase())}`,
                   );
                   const data = await res.json();
                   if (data?.data?.available === false) {

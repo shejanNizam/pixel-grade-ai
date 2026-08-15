@@ -7,6 +7,7 @@ import AuthHeader, {
 } from "@/components/auth/AuthHeader";
 import GoogleAuthButton, {
   AuthDivider,
+  SHOW_GOOGLE_SIGN_IN,
 } from "@/components/auth/GoogleAuthButton";
 import { ACCESS_TOKEN_KEY } from "@/redux/api/baseApi";
 import {
@@ -78,8 +79,13 @@ const Login: React.FC = () => {
     <>
       <AuthHeader title="Sign In" />
 
-      <GoogleAuthButton />
-      <AuthDivider text="or sign in with email" />
+      {/* Hidden for now — flip SHOW_GOOGLE_SIGN_IN in GoogleAuthButton.tsx. */}
+      {SHOW_GOOGLE_SIGN_IN && (
+        <>
+          <GoogleAuthButton />
+          <AuthDivider text="or sign in with email" />
+        </>
+      )}
 
       <Form
         form={form}

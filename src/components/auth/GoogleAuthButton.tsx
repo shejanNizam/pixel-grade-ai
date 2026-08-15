@@ -19,6 +19,21 @@ import { useState } from "react";
 // config/passport.ts). That is what makes it work for new AND returning users.
 // ---------------------------------------------------------------------------
 
+/**
+ * Master switch for "Continue with Google" on /login and /signup.
+ *
+ * Hidden at the client's request on 2026-08-15 — NOT because anything is
+ * broken. The whole flow is wired and verified end to end: the passport
+ * strategy, the /oauth/callback token bridge, and the production redirect URI.
+ * Set this to `true` to bring it back on both pages; nothing else needs to
+ * change.
+ *
+ * Typed `boolean` rather than inferred as the literal `false` so the pages
+ * behind it stay type-checked instead of being narrowed into dead branches.
+ */
+export const SHOW_GOOGLE_SIGN_IN: boolean = false;
+// export const SHOW_GOOGLE_SIGN_IN: boolean = true;
+
 interface GoogleAuthButtonProps {
   /** Where to land after a successful login. Defaults to the `?next=` the
    *  middleware added when it bounced the user here; failing that, the role's
