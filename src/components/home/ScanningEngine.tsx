@@ -1,4 +1,4 @@
-import { FiActivity, FiClipboard, FiCpu, FiCrop } from "react-icons/fi";
+import { FiClipboard, FiCpu, FiCrop, FiSearch } from "react-icons/fi";
 import type { IconType } from "react-icons";
 
 const cardBase =
@@ -25,12 +25,11 @@ export default function ScanningEngine() {
           <article className={cardBase}>
             <CardIcon Icon={FiCpu} />
             <h3 className="mt-6 text-lg font-medium text-white">
-              AI grade prediction
+              AI-Powered Card Grading
             </h3>
             <p className="mt-4 text-sm leading-relaxed text-zinc-400">
-              Get grading estimates powered by advanced Vision AI. Analyze your
-              card&apos;s centering, corners, edges, and surface instantly, with
-              a confidence score that helps you make informed grading decisions.
+              Upload images of your card and receive an AI-powered grade
+              estimate based on its visible condition.
             </p>
           </article>
 
@@ -38,14 +37,14 @@ export default function ScanningEngine() {
           <div className="grid gap-5 lg:grid-rows-2">
             <article className={cardBase}>
               <div className="flex items-center gap-4">
-                <CardIcon Icon={FiActivity} />
+                <CardIcon Icon={FiSearch} />
                 <h3 className="text-lg font-medium text-white">
-                  Surface Analysis
+                  Card Identification
                 </h3>
               </div>
               <p className="mt-4 text-sm leading-relaxed text-zinc-400">
-                Automatically detect scratches, wear, dirt, print defects, and
-                holo damage with advanced AI analysis.
+                Identify your card and view key details such as the card name,
+                set, year, and card number.
               </p>
             </article>
 
@@ -53,12 +52,12 @@ export default function ScanningEngine() {
               <div className="flex items-center gap-4">
                 <CardIcon Icon={FiCrop} />
                 <h3 className="text-lg font-medium text-white">
-                  Corner &amp; Edge Inspection
+                  Condition Breakdown
                 </h3>
               </div>
               <p className="mt-4 text-sm leading-relaxed text-zinc-400">
-                Analyze corner sharpness, whitening, chipping, and edge wear
-                with precise AI-powered condition assessment.
+                Review your card across key grading areas including centering,
+                corners, edges, and surface.
               </p>
             </article>
           </div>
@@ -66,12 +65,11 @@ export default function ScanningEngine() {
           <article className={cardBase}>
             <CardIcon Icon={FiClipboard} />
             <h3 className="mt-6 text-lg font-medium text-white">
-              Professional Reports
+              Grading Report
             </h3>
             <p className="mt-4 text-sm leading-relaxed text-zinc-400">
-              Generate professional PDF inspection reports with detailed grading
-              insights. Download, save, and share them effortlessly with buyers,
-              collectors, investors, or authentication services anytime.
+              See your estimated grade, condition breakdown, confidence score,
+              and grading summary in one easy-to-read report.
             </p>
           </article>
         </div>

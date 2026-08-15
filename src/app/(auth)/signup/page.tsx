@@ -5,14 +5,15 @@ import AuthHeader, {
   authFootnote,
   authPrimaryBtn,
 } from "@/components/auth/AuthHeader";
+import GoogleAuthButton, {
+  AuthDivider,
+} from "@/components/auth/GoogleAuthButton";
 import { useSignupMutation } from "@/redux/features/auth/authApi";
 import { SignupFormValues } from "@/types/auth";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { App, Button, Form, Input } from "antd";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { PhoneInput } from "react-international-phone";
-import "react-international-phone/style.css";
 import { FiAtSign, FiKey, FiMail, FiUser } from "react-icons/fi";
 
 const Signup: React.FC = () => {
@@ -24,15 +25,11 @@ const Signup: React.FC = () => {
 
   const onFinish = async (values: SignupFormValues): Promise<void> => {
     try {
-      const rawPhone = values.phone ? values.phone.replace(/[^\d+]/g, "") : "";
-      const formattedPhone = rawPhone.length > 4 ? rawPhone : undefined;
-
       const created = await signup({
         name: values.name,
         username: values.username.trim().toLowerCase(),
         email: values.email,
         password: values.password,
-        phone: formattedPhone,
       }).unwrap();
 
       if (created?.verificationEmailSent === false) {
@@ -57,6 +54,11 @@ const Signup: React.FC = () => {
   return (
     <>
       <AuthHeader title="Create account" />
+
+      {/* Same button as /login — Google cannot distinguish sign-up from
+          sign-in, and the backend does not need it to. */}
+      <GoogleAuthButton label="Sign up with Google" />
+      <AuthDivider text="or sign up with email" />
 
       <Form
         form={form}
@@ -149,38 +151,10 @@ const Signup: React.FC = () => {
           />
         </Form.Item>
 
-        <Form.Item<SignupFormValues>
-          name="phone"
-          className="mb-4! [&_.react-international-phone-input-container]:!w-full [&_.react-international-phone-input-container]:!h-[48px] [&_.react-international-phone-input-container]:!flex [&_.react-international-phone-input-container]:!box-border"
-          rules={[
-            {
-              validator(_, value) {
-                if (!value || value.length <= 4) {
-                  return Promise.resolve();
-                }
-                const digits = value.replace(/[^\d+]/g, "");
-                if (/^\+[1-9]\d{6,14}$/.test(digits)) {
-                  return Promise.resolve();
-                }
-                return Promise.reject(
-                  new Error("Enter a valid international phone number"),
-                );
-              },
-            },
-          ]}
-        >
-          <PhoneInput
-            defaultCountry="us"
-            placeholder="Phone number (optional)"
-            inputClassName="!w-full !bg-[#09090b] !border-zinc-800 !text-white !h-[48px] !rounded-r-full !text-sm !pl-3.5 focus:!border-violet-500 transition-colors !box-border"
-            countrySelectorStyleProps={{
-              buttonClassName: "!bg-[#09090b] !border-zinc-800 !h-[48px] !rounded-l-full !px-4 hover:!bg-zinc-900 transition-colors !box-border",
-              dropdownStyleProps: {
-                className: "!bg-zinc-950 !text-white !border-zinc-800 !rounded-2xl !p-2 !shadow-2xl [&_.react-international-phone-country-selector-dropdown__item]:!rounded-xl [&_.react-international-phone-country-selector-dropdown__item]:!px-3 [&_.react-international-phone-country-selector-dropdown__item]:!py-2 [&_.react-international-phone-country-selector-dropdown__item]:hover:!bg-zinc-800/80",
-              },
-            }}
-          />
-        </Form.Item>
+        {/* Phone was removed from sign-up on 2026-08-15 (client request).
+            Nothing in the product uses it — verification, password reset, and
+            every notification go by email — and it stays editable in
+            Settings → Profile for anyone who wants to add one. */}
 
         <Form.Item<SignupFormValues>
           name="password"

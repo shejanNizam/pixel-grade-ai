@@ -64,7 +64,6 @@ export interface SignupFormValues {
   /** Required at sign-up — this is the public Creator Profile handle. */
   username: string;
   email: string;
-  phone: string;
   password: string;
   confirmPassword: string;
   agree: boolean;

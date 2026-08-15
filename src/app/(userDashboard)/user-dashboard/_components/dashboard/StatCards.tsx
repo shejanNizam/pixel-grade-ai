@@ -55,7 +55,8 @@ export default function StatCards() {
     Icon: IconType;
   }[] = [
     {
-      label: "Total collection value",
+      // "Total collection value" was truncating in the tile (client, 2026-08-15).
+      label: "Total collection",
       stat: data.collectionValue,
       money: true,
       Icon: FiDollarSign,

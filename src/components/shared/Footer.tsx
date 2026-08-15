@@ -20,10 +20,9 @@ const columns = [
   },
 ];
 
-const support = [
-  { label: "+880 78 97 328473483", href: "tel:+8807897328473483" },
-  { label: "abc@gmail.com", href: "mailto:abc@gmail.com" },
-];
+/* Client, 2026-08-15: support is this address only — the phone number is gone
+   and the address is deliberately plain text, not a mailto link. */
+const support = ["admin@pixelgradeai.com"];
 
 export default function Footer() {
   return (
@@ -70,13 +69,8 @@ export default function Footer() {
           <h3 className="text-base font-medium text-white">Support</h3>
           <ul className="mt-5 space-y-3">
             {support.map((item) => (
-              <li key={item.label}>
-                <a
-                  href={item.href}
-                  className="text-sm text-white! transition-opacity hover:opacity-70"
-                >
-                  {item.label}
-                </a>
+              <li key={item} className="text-sm break-all text-white">
+                {item}
               </li>
             ))}
           </ul>

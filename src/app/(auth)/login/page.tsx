@@ -5,6 +5,9 @@ import AuthHeader, {
   authFootnote,
   authPrimaryBtn,
 } from "@/components/auth/AuthHeader";
+import GoogleAuthButton, {
+  AuthDivider,
+} from "@/components/auth/GoogleAuthButton";
 import { ACCESS_TOKEN_KEY } from "@/redux/api/baseApi";
 import {
   useLoginMutation,
@@ -74,6 +77,9 @@ const Login: React.FC = () => {
   return (
     <>
       <AuthHeader title="Sign In" />
+
+      <GoogleAuthButton />
+      <AuthDivider text="or sign in with email" />
 
       <Form
         form={form}

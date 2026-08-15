@@ -22,7 +22,6 @@ export const authApi = baseApi.injectEndpoints({
         password: string;
         /** Required by the server — the public Creator Profile handle. */
         username: string;
-        phone?: string;
       }
     >({
       query: (body) => ({
