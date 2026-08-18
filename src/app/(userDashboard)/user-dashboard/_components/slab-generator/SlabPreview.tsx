@@ -200,10 +200,10 @@ export default function SlabPreview({
             <p className="truncate text-[9px] leading-tight font-bold text-white">
               {card.name}
             </p>
-            <p className="line-clamp-2 text-[6px] leading-tight text-neutral-400">
+            <p className="line-clamp-2 text-[6px] leading-tight font-bold text-white">
               {[card.year, card.set].filter(Boolean).join(" ")}
             </p>
-            <p className="truncate text-[6px] leading-tight text-neutral-500">
+            <p className="truncate text-[6px] leading-tight font-bold text-white">
               {[card.number, card.language].filter(Boolean).join(" · ")}
             </p>
           </div>
@@ -226,10 +226,10 @@ export default function SlabPreview({
           </div>
 
           <div className="flex shrink-0 flex-col justify-center text-right leading-none">
-            <span className="text-[5px] tracking-wider text-neutral-500">
+            <span className="text-[5.5px] font-bold tracking-wider text-white">
               PIXEL ID
             </span>
-            <span className="text-[5px] text-neutral-300">{card.pixelId}</span>
+            <span className="text-[5.5px] font-bold text-white">{card.pixelId}</span>
           </div>
         </div>
 
