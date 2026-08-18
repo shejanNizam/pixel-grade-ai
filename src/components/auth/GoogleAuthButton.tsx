@@ -31,8 +31,9 @@ import { useState } from "react";
  * Typed `boolean` rather than inferred as the literal `false` so the pages
  * behind it stay type-checked instead of being narrowed into dead branches.
  */
-export const SHOW_GOOGLE_SIGN_IN: boolean = false;
-// export const SHOW_GOOGLE_SIGN_IN: boolean = true;
+
+// export const SHOW_GOOGLE_SIGN_IN: boolean = false;
+export const SHOW_GOOGLE_SIGN_IN: boolean = true;
 
 interface GoogleAuthButtonProps {
   /** Where to land after a successful login. Defaults to the `?next=` the
