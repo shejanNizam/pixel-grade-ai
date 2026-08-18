@@ -260,7 +260,7 @@ export default function PriceTable() {
             }`}
           >
             <FiArrowUp size={12} />
-            Ascending
+            Sort Ascending
           </button>
           <button
             type="button"
@@ -275,7 +275,7 @@ export default function PriceTable() {
             }`}
           >
             <FiArrowDown size={12} />
-            Descending
+            Sort Descending
           </button>
           <button
             type="button"

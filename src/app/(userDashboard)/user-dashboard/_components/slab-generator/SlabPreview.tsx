@@ -200,29 +200,29 @@ export default function SlabPreview({
             <p className="truncate text-[9px] leading-tight font-bold text-white">
               {card.name}
             </p>
-            <p className="truncate text-[6px] leading-tight text-neutral-400">
+            <p className="line-clamp-2 text-[6px] leading-tight text-neutral-400">
               {[card.year, card.set].filter(Boolean).join(" ")}
             </p>
             <p className="truncate text-[6px] leading-tight text-neutral-500">
               {[card.number, card.language].filter(Boolean).join(" · ")}
             </p>
-            {card.pixelVerified && (
-              <span className="inline-flex items-center gap-0.5 text-[5px] leading-tight font-bold text-emerald-400">
-                <MdVerified size={5} />
-                PIXEL VERIFIED
-              </span>
-            )}
           </div>
 
           <div className="w-px shrink-0 self-stretch bg-white/20" />
 
           <div className="flex shrink-0 flex-col items-center justify-center leading-none">
-            <span className="text-[15px] font-bold text-white tabular-nums">
+            <span className="text-[14px] font-bold text-white tabular-nums">
               {formatGrade(card.grade)}
             </span>
             <span className="text-[5px] font-bold tracking-wider text-amber-300">
               {card.gradeLabel.toUpperCase()}
             </span>
+            {card.pixelVerified && (
+              <span className="mt-0.5 inline-flex items-center gap-0.5 text-[4.5px] leading-tight font-bold text-purple-400">
+                <MdVerified size={5} />
+                PIXEL VERIFIED
+              </span>
+            )}
           </div>
 
           <div className="flex shrink-0 flex-col justify-center text-right leading-none">

@@ -253,10 +253,10 @@ export default function RecentInspection() {
                 PixelScope and confidence cleared the threshold. */}
             {report.pixelVerified && (
               <span
-                title="Inspected with PixelScope — awarded automatically"
-                className="inline-flex w-fit items-center gap-1 rounded-md bg-blue-500/15 px-2 py-0.5 text-[11px] font-medium text-blue-400"
+                title="Inspected with PixelScope — Pixel Verified"
+                className="inline-flex w-fit items-center gap-1 rounded-md border border-purple-500/40 bg-purple-500/20 px-2.5 py-0.5 text-xs font-semibold text-purple-300 shadow-xs"
               >
-                <MdVerified size={12} />
+                <MdVerified size={13} className="text-purple-400" />
                 Pixel Verified
               </span>
             )}

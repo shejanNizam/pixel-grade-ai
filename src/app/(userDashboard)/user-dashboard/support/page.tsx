@@ -48,10 +48,11 @@ function TicketRow({ ticket }: { ticket: TSupportTicket }) {
   });
   const [addMessage, { isLoading: isSending }] = useAddTicketMessageMutation();
 
-  const closed = ticket.status === "closed";
+  const isResolvedOrClosed =
+    ticket.status === "closed" || ticket.status === "resolved";
 
   const sendReply = async () => {
-    if (!reply.trim() || isSending) return;
+    if (!reply.trim() || isSending || isResolvedOrClosed) return;
     try {
       await addMessage({
         ticketId: ticket._id,
@@ -110,9 +111,11 @@ function TicketRow({ ticket }: { ticket: TSupportTicket }) {
             ))
           )}
 
-          {closed ? (
-            <p className="rounded-lg border border-white/10 p-3 text-xs text-zinc-500">
-              This ticket is closed. Open a new one to continue.
+          {isResolvedOrClosed ? (
+            <p className="rounded-lg border border-white/10 bg-white/5 p-3 text-xs text-zinc-400">
+              {ticket.status === "resolved"
+                ? "This ticket has been marked as Resolved. Replies are disabled."
+                : "This ticket is closed. Open a new ticket to continue."}
             </p>
           ) : (
             <div className="flex gap-2">

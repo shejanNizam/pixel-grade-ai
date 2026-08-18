@@ -23,8 +23,11 @@ export default function SupportCta() {
 
         <div className="relative">
           <h2 className="text-xl font-semibold text-white sm:text-2xl">
-            Are you need any support
+            Need Support?
           </h2>
+          <p className="mt-2 text-sm text-zinc-400">
+            Our team is here to help.
+          </p>
 
           <PillButton
             href="/contact"

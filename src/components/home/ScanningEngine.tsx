@@ -17,7 +17,7 @@ export default function ScanningEngine() {
     <section id="working-process" className="bg-black px-4 py-20">
       <div className="mx-auto max-w-6xl">
         <h2 className="mb-10 text-2xl font-semibold tracking-tight text-white sm:text-3xl">
-          Advanced Scanning Engine
+          AI-Powered Card Analysis
         </h2>
 
         <div className="grid gap-5 lg:grid-cols-3">
@@ -25,7 +25,7 @@ export default function ScanningEngine() {
           <article className={cardBase}>
             <CardIcon Icon={FiCpu} />
             <h3 className="mt-6 text-lg font-medium text-white">
-              AI-Powered Card Grading
+              Card Grading
             </h3>
             <p className="mt-4 text-sm leading-relaxed text-zinc-400">
               Upload images of your card and receive an AI-powered grade
