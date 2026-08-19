@@ -214,11 +214,11 @@ export default function SlabPreview({
             <span className="text-[14px] font-bold text-white tabular-nums">
               {formatGrade(card.grade)}
             </span>
-            <span className="text-[5px] font-bold tracking-wider text-amber-300">
+            <span className="text-[5px] font-bold tracking-wider text-white">
               {card.gradeLabel.toUpperCase()}
             </span>
             {card.pixelVerified && (
-              <span className="mt-0.5 inline-flex items-center gap-0.5 text-[4.5px] leading-tight font-bold text-purple-400">
+              <span className="mt-0.5 inline-flex items-center gap-0.5 text-[4.5px] leading-tight font-bold text-white">
                 <MdVerified size={5} />
                 PIXEL VERIFIED
               </span>
