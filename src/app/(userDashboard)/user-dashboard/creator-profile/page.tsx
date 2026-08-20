@@ -39,6 +39,7 @@ export default function CreatorProfile() {
   // disagreed with the "Total cards" stat right above it.
   const { data: collection } = useGetMyCollectionQuery({
     limit: 8,
+    favorite: true,
     sortBy: "addedAt",
     sortOrder: "desc",
   });
@@ -222,8 +223,16 @@ export default function CreatorProfile() {
                     className="h-auto w-full object-cover"
                   />
                   <div className="flex items-center justify-between px-3 py-2">
-                    <span className="truncate text-xs text-zinc-300">
-                      {card?.name ?? "Card"}
+                    <span className="flex items-center gap-1 min-w-0 truncate text-xs text-zinc-300">
+                      <span className="truncate">{card?.name ?? "Card"}</span>
+                      {report?.pixelVerified && (
+                        <MdVerified
+                          className="shrink-0 text-blue-400"
+                          size={14}
+                          title="Pixel Verified"
+                          aria-label="Pixel Verified"
+                        />
+                      )}
                     </span>
                     <span className="shrink-0 text-xs font-semibold text-violet-300 tabular-nums">
                       {report

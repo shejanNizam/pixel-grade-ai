@@ -36,6 +36,7 @@ export interface CollectionListParams {
   set?: string;
   rarity?: string;
   favorite?: boolean;
+  verified?: boolean;
   minGrade?: number;
   maxGrade?: number;
   minPrice?: number;

@@ -4,6 +4,7 @@ import type { TCollectionItem } from "@/redux/features/collection/collectionApi"
 import Image from "next/image";
 import Link from "next/link";
 import { FiHeart, FiTrash2 } from "react-icons/fi";
+import { MdVerified } from "react-icons/md";
 import { CARD_IMAGE } from "./data";
 
 interface CardGridProps {
@@ -125,9 +126,19 @@ export default function CardGrid({
               <p className="mt-0.5 text-xs text-zinc-500">
                 {card?.cardNumber ?? item.externalGrade ?? ""}
               </p>
-              <p className="mt-0.5 text-xs text-zinc-600">
-                {addedOn(item.addedAt)}
-              </p>
+              <div className="mt-0.5 flex items-center justify-between text-xs text-zinc-600">
+                <span>{addedOn(item.addedAt)}</span>
+                {typeof item.report === "object" &&
+                  item.report !== null &&
+                  item.report.pixelVerified && (
+                    <MdVerified
+                      className="text-blue-400"
+                      size={14}
+                      title="Pixel Verified"
+                      aria-label="Pixel Verified"
+                    />
+                  )}
+              </div>
             </div>
 
             <div className="mt-3 space-y-2">

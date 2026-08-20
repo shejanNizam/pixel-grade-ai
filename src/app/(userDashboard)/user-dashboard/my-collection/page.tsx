@@ -19,6 +19,7 @@ const PAGE_SIZE = 24;
 const FILTER_OPTIONS = [
   { label: "All", value: "all" },
   { label: "Recently Added", value: "recently_added" },
+  { label: "Verified", value: "verified" },
   { label: "Favorites", value: "favorites" },
   { label: "Highest Grade", value: "highest_grade" },
   { label: "Highest Value", value: "highest_value" },
@@ -37,6 +38,7 @@ export default function MyCollection() {
     limit: PAGE_SIZE,
     searchTerm: search.trim() || undefined,
     favorite: filter === "favorites" ? true : undefined,
+    verified: filter === "verified" ? true : undefined,
     sortBy:
       filter === "highest_grade"
         ? "grade"
