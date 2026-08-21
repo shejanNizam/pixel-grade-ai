@@ -4,7 +4,7 @@ import type { TSlabLabel } from "../slab/slabApi";
 
 export interface IShippingAddress {
   fullName: string;
-  phone: string;
+  phone?: string;
   streetAddress: string;
   city: string;
   state?: string;
@@ -12,10 +12,41 @@ export interface IShippingAddress {
   country: string;
 }
 
-export type TSlabOrderStatus = "pending" | "processing" | "shipped" | "delivered" | "cancelled";
+export type TSlabOrderStatus =
+  | "order_received"
+  | "processing"
+  | "ready_to_ship"
+  | "shipped"
+  | "in_transit"
+  | "delivered"
+  | "shipping_exception"
+  | "shipping_error"
+  | "pending"
+  | "cancelled";
+
+export interface TSlabOrderItem {
+  _id?: string;
+  slab: TSlabLabel | string;
+  cardName: string;
+  grade: number;
+  gradeLabel: string;
+  compositeUrl: string;
+  price: number;
+}
+
+export interface TShippoInfo {
+  shipmentId?: string;
+  rateId?: string;
+  transactionId?: string;
+  labelUrl?: string;
+  trackingNumber?: string;
+  trackingUrl?: string;
+  carrier?: string;
+}
 
 export interface TSlabOrder {
   _id: string;
+  orderNumber: string;
   user: {
     _id: string;
     name: string;
@@ -24,18 +55,20 @@ export interface TSlabOrder {
     username?: string;
     avatar?: { url?: string };
   };
-  slab: TSlabLabel;
+  items: TSlabOrderItem[];
+  slab?: TSlabLabel;
   shippingAddress: IShippingAddress;
   quantity: number;
   unitPrice: number;
-  subtotal?: number;
-  shippingFee?: number;
-  taxAmount?: number;
+  subtotal: number;
+  shippingFee: number;
+  taxAmount: number;
   totalAmount: number;
   shippingCarrier?: string;
   paymentStatus: "pending" | "paid" | "failed";
   orderStatus: TSlabOrderStatus;
   trackingNumber?: string;
+  shippo?: TShippoInfo;
   notes?: string;
   createdAt: string;
   updatedAt: string;
@@ -46,13 +79,12 @@ export const slabOrderApi = baseApi.injectEndpoints({
     createSlabOrder: builder.mutation<
       TSlabOrder,
       {
-        slabId: string;
-        slabLabel?: string;
-        amount?: number;
+        items?: any[];
+        slabId?: string;
+        shippingAddress: IShippingAddress;
         shippingFee?: number;
         taxAmount?: number;
-        shippingAddress: IShippingAddress;
-        quantity?: number;
+        paymentStatus?: string;
       }
     >({
       query: (body) => ({
@@ -61,7 +93,24 @@ export const slabOrderApi = baseApi.injectEndpoints({
         body,
       }),
       transformResponse: (res: TResponse<TSlabOrder>) => res.data,
-      invalidatesTags: ["slabOrder"],
+      invalidatesTags: ["slabOrder", "Cart"],
+    }),
+
+    createStripeCheckout: builder.mutation<
+      { url?: string; sessionId?: string },
+      {
+        items: any[];
+        shippingAddress: IShippingAddress;
+        shippingFee?: number;
+        taxAmount?: number;
+      }
+    >({
+      query: (body) => ({
+        url: "/slab-order/create-checkout-session",
+        method: "POST",
+        body,
+      }),
+      transformResponse: (res: TResponse<{ url?: string; sessionId?: string }>) => res.data,
     }),
 
     getMySlabOrders: builder.query<
@@ -96,6 +145,19 @@ export const slabOrderApi = baseApi.injectEndpoints({
       providesTags: ["slabOrder"],
     }),
 
+    purchaseShippoLabel: builder.mutation<
+      TSlabOrder,
+      { orderId: string; rateId?: string }
+    >({
+      query: ({ orderId, rateId }) => ({
+        url: `/slab-order/admin/${orderId}/purchase-label`,
+        method: "POST",
+        body: { rateId },
+      }),
+      transformResponse: (res: TResponse<TSlabOrder>) => res.data,
+      invalidatesTags: ["slabOrder"],
+    }),
+
     updateSlabOrderStatus: builder.mutation<
       TSlabOrder,
       {
@@ -118,7 +180,9 @@ export const slabOrderApi = baseApi.injectEndpoints({
 
 export const {
   useCreateSlabOrderMutation,
+  useCreateStripeCheckoutMutation,
   useGetMySlabOrdersQuery,
   useGetAllSlabOrdersQuery,
+  usePurchaseShippoLabelMutation,
   useUpdateSlabOrderStatusMutation,
 } = slabOrderApi;

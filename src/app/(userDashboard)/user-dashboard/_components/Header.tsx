@@ -3,20 +3,20 @@
 import HeaderProfile from "@/components/shared/HeaderProfile";
 import NotificationBell from "@/components/shared/NotificationBell";
 import PillButton from "@/components/shared/PillButton";
+import { useGetCartQuery } from "@/redux/features/cart/cartApi";
 import { useGetMySubscriptionQuery } from "@/redux/features/subscription/subscriptionApi";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { FiMenu } from "react-icons/fi";
+import { FiMenu, FiShoppingCart } from "react-icons/fi";
 
-/** Page titles keyed by route — the header is shared by every dashboard screen.
- *  Every route needs an entry: the fallback is "Dashboard", so a missing one
- *  does not look broken, it just silently mislabels the page (which is why the
- *  Creator Profile screen was captioned "Dashboard" in the client's v1 feedback). */
 const pageTitles: Record<string, string> = {
   "/user-dashboard": "Dashboard",
   "/user-dashboard/creator-profile": "Creator Profile",
   "/user-dashboard/new-analysis": "New analysis",
   "/user-dashboard/analysis-report": "Analysis report",
   "/user-dashboard/slab-generator": "Slab Generator",
+  "/user-dashboard/cart": "Shopping Cart",
+  "/user-dashboard/checkout": "Checkout",
   "/user-dashboard/my-collection": "My Collection",
   "/user-dashboard/price-tracker": "Price Tracker",
   "/user-dashboard/subscription": "Subscription",
@@ -31,8 +31,10 @@ interface HeaderProps {
 export default function Header({ toggleSidebar }: HeaderProps) {
   const pathname = usePathname();
   const { data: mySub } = useGetMySubscriptionQuery();
+  const { data: cartData } = useGetCartQuery();
 
-  // Upgrade button is ONLY shown for Free users without an active paid subscription.
+  const cartItemCount = cartData?.data?.items?.length ?? 0;
+
   const isPaidUser = Boolean(
     mySub?.subscription ||
       (mySub?.plan?.name && mySub.plan.name !== "Free"),
@@ -47,11 +49,7 @@ export default function Header({ toggleSidebar }: HeaderProps) {
     "Dashboard";
 
   return (
-    // Sticky so the title and actions stay reachable while the page scrolls.
-    // z-10 keeps it above the content but below the mobile overlay (z-20) and
-    // the sidebar (z-30), so an open menu still covers it.
     <header className="sticky top-0 z-10 flex items-center gap-3 bg-black px-4 py-4 sm:gap-4 md:px-6 md:py-6">
-      {/* min-w-0 lets the title truncate instead of pushing the actions off-screen. */}
       <div className="flex min-w-0 flex-1 items-center gap-3">
         <button
           onClick={toggleSidebar}
@@ -66,8 +64,6 @@ export default function Header({ toggleSidebar }: HeaderProps) {
       </div>
 
       <div className="flex shrink-0 items-center gap-2 sm:gap-3 md:gap-5">
-        {/* Only shown on Free — a paid user has no upgrade to make here. Label
-            shortens rather than disappearing so it stays reachable on a phone. */}
         {showUpgradeButton && (
           <PillButton
             href="/user-dashboard/subscription"
@@ -79,14 +75,25 @@ export default function Header({ toggleSidebar }: HeaderProps) {
           </PillButton>
         )}
 
+        <Link
+          href="/user-dashboard/cart"
+          className="relative flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-zinc-300 transition-colors hover:border-violet-500/40 hover:text-white"
+          title="Shopping Cart"
+          aria-label="Shopping Cart"
+        >
+          <FiShoppingCart size={18} />
+          {cartItemCount > 0 && (
+            <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-violet-600 px-1 text-[10px] font-bold text-white">
+              {cartItemCount}
+            </span>
+          )}
+        </Link>
+
         <NotificationBell
           audience="user"
           seeAllHref="/user-dashboard/settings/notification"
         />
 
-        {/* Creator Profile lives here rather than in the sidebar (UI Feedback
-            v1, edit #2) — it is your own public page, which belongs with the
-            account, not with the app's sections. */}
         <HeaderProfile
           href="/user-dashboard/settings/profile"
           subtitle="My Profile"

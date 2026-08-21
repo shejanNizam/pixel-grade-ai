@@ -7,6 +7,7 @@ import {
 } from "@/redux/features/slab/slabApi";
 import {
   useGetAllSlabOrdersQuery,
+  usePurchaseShippoLabelMutation,
   useUpdateSlabOrderStatusMutation,
   type TSlabOrder,
   type TSlabOrderStatus,
@@ -15,13 +16,18 @@ import { getApiErrorMessage } from "@/utils/apiError";
 import { App, Button, Form, Input, Modal, Select, Table, Tag } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { useState } from "react";
-import { FiDownload, FiFileText, FiTruck } from "react-icons/fi";
+import { FiDownload, FiExternalLink, FiFileText, FiPrinter, FiTruck } from "react-icons/fi";
 
 const STATUS_COLOR: Record<TSlabOrderStatus, string> = {
-  pending: "orange",
-  processing: "blue",
+  order_received: "blue",
+  processing: "gold",
+  ready_to_ship: "cyan",
   shipped: "purple",
+  in_transit: "indigo",
   delivered: "green",
+  shipping_exception: "volcano",
+  shipping_error: "red",
+  pending: "orange",
   cancelled: "red",
 };
 
@@ -34,6 +40,7 @@ export default function AdminSlabOrdersPage() {
   const [selectedOrder, setSelectedOrder] = useState<TSlabOrder | null>(null);
   const [statusModalOpen, setStatusModalOpen] = useState(false);
   const [downloadingKey, setDownloadingKey] = useState<string | null>(null);
+  const [purchasingOrderId, setPurchasingOrderId] = useState<string | null>(null);
 
   const { data, isLoading } = useGetAllSlabOrdersQuery({
     page,
@@ -42,9 +49,22 @@ export default function AdminSlabOrdersPage() {
   });
 
   const [updateStatus, { isLoading: isUpdating }] = useUpdateSlabOrderStatusMutation();
+  const [purchaseShippoLabel] = usePurchaseShippoLabelMutation();
   const [exportPrint] = useExportPrintSlabMutation();
   const [exportLabel] = useExportLabelOnlyMutation();
   const [form] = Form.useForm();
+
+  const handlePurchaseLabel = async (order: TSlabOrder) => {
+    setPurchasingOrderId(order._id);
+    try {
+      const updatedOrder = await purchaseShippoLabel({ orderId: order._id }).unwrap();
+      message.success(`Shippo shipping label purchased! Tracking #: ${updatedOrder.trackingNumber}`);
+    } catch (err) {
+      message.error(getApiErrorMessage(err, "Failed to purchase Shippo label."));
+    } finally {
+      setPurchasingOrderId(null);
+    }
+  };
 
   const handleDownload = async (labelId: string, kind: "print" | "label") => {
     const key = `${kind}-${labelId}`;
@@ -108,12 +128,14 @@ export default function AdminSlabOrdersPage() {
 
   const columns: ColumnsType<TSlabOrder> = [
     {
-      title: "Order ID",
-      dataIndex: "_id",
-      key: "_id",
-      render: (id: string, record) => (
+      title: "Order #",
+      dataIndex: "orderNumber",
+      key: "orderNumber",
+      render: (orderNum: string, record) => (
         <div>
-          <span className="font-mono text-xs text-white">#{id.slice(-8).toUpperCase()}</span>
+          <span className="font-mono text-xs font-bold text-violet-300">
+            {orderNum || `#PG-${record._id.slice(-5).toUpperCase()}`}
+          </span>
           <span className="block text-[11px] text-zinc-500">
             {new Date(record.createdAt).toLocaleDateString()}
           </span>
@@ -127,9 +149,6 @@ export default function AdminSlabOrdersPage() {
         <div>
           <span className="block text-xs font-medium text-white">{record.user?.name ?? "Customer"}</span>
           <span className="block text-[11px] text-zinc-400">{record.user?.email}</span>
-          {record.user?.phone && (
-            <span className="block text-[10px] text-zinc-500">{record.user?.phone}</span>
-          )}
         </div>
       ),
     },
@@ -138,6 +157,7 @@ export default function AdminSlabOrdersPage() {
       key: "address",
       render: (_, record) => {
         const addr = record.shippingAddress;
+        if (!addr) return <span className="text-xs text-zinc-500">—</span>;
         return (
           <div className="max-w-xs text-xs text-zinc-300">
             <span className="block font-medium text-white">{addr.fullName}</span>
@@ -151,28 +171,29 @@ export default function AdminSlabOrdersPage() {
       },
     },
     {
-      title: "Card & Pricing",
+      title: "Custom Slabs & Pricing",
       key: "card",
       render: (_, record) => {
-        const slab = record.slab;
-        const report = typeof slab?.report === "object" ? slab.report : null;
-        const card = report && typeof report.card === "object" ? report.card : null;
-        const sub = record.subtotal ?? record.quantity * 9.99;
-        const ship = record.shippingFee ?? 4.99;
-        const tax = record.taxAmount ?? sub * 0.08;
+        const items = record.items || [];
+        const sub = record.subtotal ?? 24.99;
+        const ship = record.shippingFee ?? 5.95;
+        const tax = record.taxAmount ?? sub * 0.085;
         return (
           <div className="text-xs">
-            <span className="block font-medium text-white">
-              {card?.name ?? "Custom Slab"}
-            </span>
-            {report && (
-              <span className="inline-block mt-0.5 rounded bg-violet-600/30 px-1.5 py-0.5 text-[10px] text-violet-300">
-                Grade {report.grade?.toFixed(1)} {report.gradeLabel}
-              </span>
+            {items.length > 0 ? (
+              <div className="space-y-0.5 mb-1">
+                {items.map((i, idx) => (
+                  <div key={idx} className="font-medium text-white">
+                    {i.cardName} <span className="text-[10px] text-violet-300">(Grade {i.grade})</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <span className="block font-medium text-white">Custom Slab</span>
             )}
-            <div className="mt-1 space-y-0.5 text-[10px] text-zinc-400">
-              <span>Qty: {record.quantity} · Slabs: ${sub.toFixed(2)}</span>
-              <span className="block text-zinc-400">USPS Shipping: ${ship.toFixed(2)} · Tax: ${tax.toFixed(2)}</span>
+            <div className="space-y-0.5 text-[10px] text-zinc-400">
+              <span>Qty: {record.quantity} · Sub: ${sub.toFixed(2)}</span>
+              <span className="block">Shipping: ${ship.toFixed(2)} · Tax: ${tax.toFixed(2)}</span>
               <span className="block text-amber-400 font-bold">Total: ${record.totalAmount.toFixed(2)} USD</span>
             </div>
           </div>
@@ -183,7 +204,13 @@ export default function AdminSlabOrdersPage() {
       title: "Print Files",
       key: "printFiles",
       render: (_, record) => {
-        const labelId = record.slab?._id;
+        const firstItemSlab = record.items?.[0]?.slab;
+        const labelId =
+          typeof firstItemSlab === "object" && firstItemSlab !== null
+            ? firstItemSlab._id
+            : typeof record.slab === "object" && record.slab !== null
+              ? record.slab._id
+              : (firstItemSlab as string | undefined);
         if (!labelId) return <span className="text-xs text-zinc-500">N/A</span>;
         const printBusy = downloadingKey === `print-${labelId}`;
         const labelBusy = downloadingKey === `label-${labelId}`;
@@ -193,7 +220,7 @@ export default function AdminSlabOrdersPage() {
               type="button"
               disabled={printBusy || labelBusy}
               onClick={() => handleDownload(labelId, "print")}
-              className="inline-flex items-center gap-1 rounded border border-violet-500/30 bg-violet-500/10 px-2 py-1 text-[11px] font-medium text-violet-300 transition-colors hover:bg-violet-500/20 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
+              className="inline-flex items-center gap-1 rounded border border-violet-500/30 bg-violet-500/10 px-2 py-1 text-[11px] font-medium text-violet-300 transition-colors hover:bg-violet-500/20 disabled:opacity-50 cursor-pointer"
             >
               <FiDownload size={11} /> {printBusy ? "Building…" : "Slab Print PDF"}
             </button>
@@ -201,7 +228,7 @@ export default function AdminSlabOrdersPage() {
               type="button"
               disabled={printBusy || labelBusy}
               onClick={() => handleDownload(labelId, "label")}
-              className="inline-flex items-center gap-1 rounded border border-white/15 bg-white/5 px-2 py-1 text-[11px] font-medium text-zinc-300 transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
+              className="inline-flex items-center gap-1 rounded border border-white/15 bg-white/5 px-2 py-1 text-[11px] font-medium text-zinc-300 transition-colors hover:bg-white/10 disabled:opacity-50 cursor-pointer"
             >
               <FiFileText size={11} /> {labelBusy ? "Building…" : "Label Only PDF"}
             </button>
@@ -210,20 +237,47 @@ export default function AdminSlabOrdersPage() {
       },
     },
     {
-      title: "Status",
+      title: "Status & Shippo Label",
       key: "status",
-      render: (_, record) => (
-        <div>
-          <Tag color={STATUS_COLOR[record.orderStatus]} className="capitalize font-medium">
-            {record.orderStatus}
-          </Tag>
-          {record.trackingNumber && (
-            <span className="block mt-1 font-mono text-[10px] text-zinc-400">
-              Track: {record.trackingNumber}
-            </span>
-          )}
-        </div>
-      ),
+      render: (_, record) => {
+        const hasLabel = Boolean(record.shippo?.labelUrl);
+        const isPurchasing = purchasingOrderId === record._id;
+
+        return (
+          <div className="space-y-2">
+            <div>
+              <Tag color={STATUS_COLOR[record.orderStatus] || "blue"} className="capitalize font-medium">
+                {record.orderStatus?.replace("_", " ")}
+              </Tag>
+              {record.trackingNumber && (
+                <span className="block mt-1 font-mono text-[10px] text-zinc-400">
+                  <FiTruck className="inline mr-1" /> {record.trackingNumber}
+                </span>
+              )}
+            </div>
+
+            {hasLabel ? (
+              <a
+                href={record.shippo?.labelUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 rounded bg-emerald-600 px-2.5 py-1 text-[11px] font-semibold text-white transition-colors hover:bg-emerald-500 cursor-pointer"
+              >
+                <FiPrinter size={11} /> Print Shipping Label
+              </a>
+            ) : (
+              <button
+                type="button"
+                disabled={isPurchasing}
+                onClick={() => handlePurchaseLabel(record)}
+                className="inline-flex items-center gap-1 rounded bg-violet-600 px-2.5 py-1 text-[11px] font-semibold text-white transition-colors hover:bg-violet-500 disabled:opacity-50 cursor-pointer"
+              >
+                <FiTruck size={11} /> {isPurchasing ? "Purchasing..." : "Create Shipping Label"}
+              </button>
+            )}
+          </div>
+        );
+      },
     },
     {
       title: "Action",
@@ -232,10 +286,9 @@ export default function AdminSlabOrdersPage() {
         <Button
           size="small"
           onClick={() => handleOpenStatusModal(record)}
-          icon={<FiTruck size={12} />}
           className="!rounded-lg !border-white/20 !bg-white/5 !text-xs !text-zinc-200 hover:!bg-white/10"
         >
-          Update
+          Update Status
         </Button>
       ),
     },
@@ -251,13 +304,14 @@ export default function AdminSlabOrdersPage() {
           placeholder="Filter by Order Status"
           value={statusFilter}
           onChange={setStatusFilter}
-          className="w-48 [&_.ant-select-selector]:!rounded-full [&_.ant-select-selector]:!border-zinc-800 [&_.ant-select-selector]:!bg-zinc-950 [&_.ant-select-selection-item]:!text-white"
+          className="w-52 [&_.ant-select-selector]:!rounded-full [&_.ant-select-selector]:!border-zinc-800 [&_.ant-select-selector]:!bg-zinc-950 [&_.ant-select-selection-item]:!text-white"
           options={[
-            { label: "Pending", value: "pending" },
+            { label: "Order Received", value: "order_received" },
             { label: "Processing", value: "processing" },
+            { label: "Ready to Ship", value: "ready_to_ship" },
             { label: "Shipped", value: "shipped" },
+            { label: "In Transit", value: "in_transit" },
             { label: "Delivered", value: "delivered" },
-            { label: "Cancelled", value: "cancelled" },
           ]}
         />
 
@@ -304,11 +358,12 @@ export default function AdminSlabOrdersPage() {
             <Select
               className="w-full"
               options={[
-                { label: "Pending", value: "pending" },
+                { label: "Order Received", value: "order_received" },
                 { label: "Processing", value: "processing" },
+                { label: "Ready to Ship", value: "ready_to_ship" },
                 { label: "Shipped", value: "shipped" },
+                { label: "In Transit", value: "in_transit" },
                 { label: "Delivered", value: "delivered" },
-                { label: "Cancelled", value: "cancelled" },
               ]}
             />
           </Form.Item>
@@ -317,7 +372,7 @@ export default function AdminSlabOrdersPage() {
             name="trackingNumber"
             label={<span className="text-xs text-zinc-300">Tracking Number</span>}
           >
-            <Input placeholder="e.g. USPS 940011189956" className="!rounded-lg !border-white/15 !bg-zinc-950 !text-white" />
+            <Input placeholder="e.g. 940011189956..." className="!rounded-lg !border-white/15 !bg-zinc-950 !text-white" />
           </Form.Item>
 
           <Form.Item

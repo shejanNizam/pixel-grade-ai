@@ -135,6 +135,7 @@ const baseApi = createApi({
     "plan",
     "dashboard",
     "slabOrder",
+    "Cart",
   ],
   endpoints: () => ({}),
 });

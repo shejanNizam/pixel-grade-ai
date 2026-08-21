@@ -9,13 +9,18 @@ import {
 import { Table, Tag } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { useState } from "react";
-import { FiShoppingBag, FiTruck } from "react-icons/fi";
+import { FiExternalLink, FiShoppingBag, FiTruck } from "react-icons/fi";
 
 const STATUS_COLOR: Record<TSlabOrderStatus, string> = {
-  pending: "orange",
-  processing: "blue",
+  order_received: "blue",
+  processing: "gold",
+  ready_to_ship: "cyan",
   shipped: "purple",
+  in_transit: "indigo",
   delivered: "green",
+  shipping_exception: "volcano",
+  shipping_error: "red",
+  pending: "orange",
   cancelled: "red",
 };
 
@@ -28,13 +33,13 @@ export default function UserSlabOrdersPage() {
 
   const columns: ColumnsType<TSlabOrder> = [
     {
-      title: "Order ID & Date",
-      dataIndex: "_id",
-      key: "_id",
-      render: (id: string, record) => (
+      title: "Order # & Date",
+      dataIndex: "orderNumber",
+      key: "orderNumber",
+      render: (orderNum: string, record) => (
         <div>
-          <span className="font-mono text-xs font-semibold text-white">
-            #{id.slice(-8).toUpperCase()}
+          <span className="font-mono text-xs font-bold text-violet-300">
+            {orderNum || `#PG-${record._id.slice(-5).toUpperCase()}`}
           </span>
           <span className="block text-[11px] text-zinc-500">
             {new Date(record.createdAt).toLocaleDateString("en-US", {
@@ -47,24 +52,25 @@ export default function UserSlabOrdersPage() {
       ),
     },
     {
-      title: "Card & Slab",
-      key: "card",
+      title: "Custom Slabs",
+      key: "items",
       render: (_, record) => {
-        const slab = record.slab;
-        const report = typeof slab?.report === "object" ? slab.report : null;
-        const card = report && typeof report.card === "object" ? report.card : null;
-        return (
-          <div>
-            <span className="block text-xs font-medium text-white">
-              {card?.name ?? "Custom Slab"}
-            </span>
-            {report && (
-              <span className="inline-block mt-1 rounded bg-violet-600/30 px-2 py-0.5 text-[10px] text-violet-300">
-                Grade {report.grade?.toFixed(1)} {report.gradeLabel}
-              </span>
-            )}
-          </div>
-        );
+        const items = record.items || [];
+        if (items.length > 0) {
+          return (
+            <div className="space-y-1">
+              {items.map((item, idx) => (
+                <div key={idx} className="text-xs">
+                  <span className="font-medium text-white">{item.cardName}</span>
+                  <span className="ml-1 text-[11px] text-violet-300">
+                    Grade {item.grade?.toFixed(1)} {item.gradeLabel}
+                  </span>
+                </div>
+              ))}
+            </div>
+          );
+        }
+        return <span className="text-xs text-white">Custom Slab</span>;
       },
     },
     {
@@ -72,6 +78,7 @@ export default function UserSlabOrdersPage() {
       key: "address",
       render: (_, record) => {
         const addr = record.shippingAddress;
+        if (!addr) return <span className="text-xs text-zinc-500">—</span>;
         return (
           <div className="text-xs text-zinc-300">
             <span className="block font-medium text-white">{addr.fullName}</span>
@@ -82,33 +89,45 @@ export default function UserSlabOrdersPage() {
       },
     },
     {
-      title: "Pricing Breakdown",
+      title: "Pricing",
       key: "price",
       render: (_, record) => {
-        const sub = record.subtotal ?? record.quantity * 9.99;
-        const ship = record.shippingFee ?? 4.99;
-        const tax = record.taxAmount ?? sub * 0.08;
+        const sub = record.subtotal ?? 24.99;
+        const ship = record.shippingFee ?? 5.95;
+        const tax = record.taxAmount ?? sub * 0.085;
         return (
           <div className="text-xs space-y-0.5">
             <span className="block text-zinc-300 font-medium">Qty: {record.quantity} · Slabs: ${sub.toFixed(2)}</span>
-            <span className="block text-[11px] text-zinc-400">USPS Shipping: ${ship.toFixed(2)}</span>
+            <span className="block text-[11px] text-zinc-400">Shipping: ${ship.toFixed(2)}</span>
             <span className="block text-[11px] text-zinc-500">Tax: ${tax.toFixed(2)}</span>
-            <span className="block font-semibold text-amber-400 mt-1">Total: ${record.totalAmount.toFixed(2)} USD</span>
+            <span className="block font-bold text-amber-400 mt-1">Total: ${record.totalAmount.toFixed(2)} USD</span>
           </div>
         );
       },
     },
     {
-      title: "Status",
+      title: "Status & Tracking",
       key: "status",
       render: (_, record) => (
         <div>
-          <Tag color={STATUS_COLOR[record.orderStatus]} className="capitalize font-medium">
-            {record.orderStatus}
+          <Tag color={STATUS_COLOR[record.orderStatus] || "blue"} className="capitalize font-medium">
+            {record.orderStatus?.replace("_", " ")}
           </Tag>
-          {record.trackingNumber && (
-            <span className="block mt-1 font-mono text-[10px] text-zinc-400">
-              <FiTruck className="inline mr-1" /> {record.trackingNumber}
+
+          {record.trackingNumber ? (
+            <div className="mt-1 font-mono text-[11px] text-zinc-300">
+              <a
+                href={record.shippo?.trackingUrl || `https://tools.usps.com/go/TrackConfirmAction?tLabels=${record.trackingNumber}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-violet-400 hover:underline"
+              >
+                <FiTruck className="inline" /> {record.trackingNumber} <FiExternalLink size={10} />
+              </a>
+            </div>
+          ) : (
+            <span className="block mt-1 text-[10px] text-zinc-500 italic">
+              Tracking issued upon admin shipment
             </span>
           )}
         </div>
@@ -134,7 +153,7 @@ export default function UserSlabOrdersPage() {
           <EmptyState
             icon={<FiShoppingBag />}
             title="No slab orders yet"
-            description="You haven't ordered any physical slabs. Go to the Slab Generator to place your first order!"
+            description="You haven't ordered any physical slabs. Add custom slabs to your cart to place an order!"
           />
         ) : (
           <Table

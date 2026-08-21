@@ -9,7 +9,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { FiChevronDown, FiShoppingBag, FiX } from "react-icons/fi";
+import { FiChevronDown, FiShoppingBag, FiShoppingCart, FiX } from "react-icons/fi";
 import { useDispatch } from "react-redux";
 import {
   MdOutlineAutoAwesome,
@@ -49,6 +49,11 @@ const navItems = [
     href: "/user-dashboard/slab-generator",
     label: "Slab Generator",
     Icon: MdOutlineAutoAwesome,
+  },
+  {
+    href: "/user-dashboard/cart",
+    label: "Shopping Cart",
+    Icon: FiShoppingCart,
   },
   {
     href: "/user-dashboard/slab-orders",
