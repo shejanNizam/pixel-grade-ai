@@ -79,12 +79,13 @@ export const slabOrderApi = baseApi.injectEndpoints({
     createSlabOrder: builder.mutation<
       TSlabOrder,
       {
-        items?: any[];
+        items?: Partial<TSlabOrderItem>[];
         slabId?: string;
         shippingAddress: IShippingAddress;
         shippingFee?: number;
         taxAmount?: number;
         paymentStatus?: string;
+        shippoRateId?: string;
       }
     >({
       query: (body) => ({
@@ -99,7 +100,7 @@ export const slabOrderApi = baseApi.injectEndpoints({
     createStripeCheckout: builder.mutation<
       { url?: string; sessionId?: string },
       {
-        items: any[];
+        items: Partial<TSlabOrderItem>[];
         shippingAddress: IShippingAddress;
         shippingFee?: number;
         taxAmount?: number;

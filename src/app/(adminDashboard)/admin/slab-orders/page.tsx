@@ -16,7 +16,7 @@ import { getApiErrorMessage } from "@/utils/apiError";
 import { App, Button, Form, Input, Modal, Select, Table, Tag } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { useState } from "react";
-import { FiDownload, FiExternalLink, FiFileText, FiPrinter, FiTruck } from "react-icons/fi";
+import { FiDownload, FiFileText, FiPrinter, FiTruck } from "react-icons/fi";
 
 const STATUS_COLOR: Record<TSlabOrderStatus, string> = {
   order_received: "blue",

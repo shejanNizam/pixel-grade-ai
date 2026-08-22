@@ -42,7 +42,7 @@ export default function CheckoutPage() {
   // Rates & Step State
   const [step, setStep] = useState<1 | 2>(1);
   const [validatedRate, setValidatedRate] = useState<number | null>(null);
-  const [shippoRateId, setShippoRateId] = useState<string | null>(null);
+  const [shippoRateId, setShippoRateId] = useState<string | undefined>(undefined);
   const [shippoValidated, setShippoValidated] = useState(false);
 
   const subtotal = items.reduce((sum, i) => sum + (i.price || 24.99), 0);
@@ -109,6 +109,7 @@ export default function CheckoutPage() {
         shippingFee,
         taxAmount,
         paymentStatus: "paid",
+        ...(shippoRateId ? { shippoRateId } : {}),
       }).unwrap();
 
       await clearCart().unwrap();
@@ -140,7 +141,7 @@ export default function CheckoutPage() {
       } else {
         await handleCompletePayment();
       }
-    } catch (err) {
+    } catch {
       await handleCompletePayment();
     }
   };

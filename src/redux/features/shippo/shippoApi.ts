@@ -28,7 +28,7 @@ export interface TShippoRatesResponse {
 
 export const shippoApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    validateAddress: builder.mutation<TResponse<any>, TShippoAddressInput>({
+    validateAddress: builder.mutation<TResponse<Record<string, unknown>>, TShippoAddressInput>({
       query: (body) => ({
         url: "/shippo/validate-address",
         method: "POST",
