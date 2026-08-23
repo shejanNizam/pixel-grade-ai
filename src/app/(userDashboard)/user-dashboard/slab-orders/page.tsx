@@ -1,14 +1,17 @@
 "use client";
 
 import EmptyState from "@/components/shared/EmptyState";
+import { useClearCartMutation } from "@/redux/features/cart/cartApi";
 import {
+  useConfirmStripePaymentMutation,
   useGetMySlabOrdersQuery,
   type TSlabOrder,
   type TSlabOrderStatus,
 } from "@/redux/features/slabOrder/slabOrderApi";
-import { Table, Tag } from "antd";
+import { message, Table, Tag } from "antd";
 import type { ColumnsType } from "antd/es/table";
-import { useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
 import { FiExternalLink, FiShoppingBag, FiTruck } from "react-icons/fi";
 
 const STATUS_COLOR: Record<TSlabOrderStatus, string> = {
@@ -25,11 +28,49 @@ const STATUS_COLOR: Record<TSlabOrderStatus, string> = {
 };
 
 export default function UserSlabOrdersPage() {
-  const [page, setPage] = useState(1);
+  return (
+    <Suspense fallback={<div className="h-40 animate-pulse rounded-2xl bg-[#111113]" />}>
+      <UserSlabOrdersContent />
+    </Suspense>
+  );
+}
 
-  const { data, isLoading } = useGetMySlabOrdersQuery({ page, limit: 10 });
+function UserSlabOrdersContent() {
+  const [page, setPage] = useState(1);
+  const searchParams = useSearchParams();
+
+  const { data, isLoading, refetch } = useGetMySlabOrdersQuery({ page, limit: 10 });
+  const [confirmStripePayment] = useConfirmStripePaymentMutation();
+  const [clearCart] = useClearCartMutation();
+
   const orders = data?.data ?? [];
   const total = data?.meta?.total ?? 0;
+
+  useEffect(() => {
+    const isCheckoutSuccess = searchParams.get("checkout") === "success";
+    const orderId = searchParams.get("orderId");
+
+    if (isCheckoutSuccess) {
+      const handleCheckoutSuccess = async () => {
+        try {
+          if (orderId) {
+            await confirmStripePayment({ orderId }).unwrap();
+          }
+          await clearCart().unwrap();
+          message.success("Payment completed successfully! Your physical slab order has been placed.");
+          refetch();
+        } catch {
+          await clearCart().unwrap();
+        } finally {
+          const url = new URL(window.location.href);
+          url.searchParams.delete("checkout");
+          url.searchParams.delete("orderId");
+          window.history.replaceState({}, "", url.toString());
+        }
+      };
+      handleCheckoutSuccess();
+    }
+  }, [searchParams, confirmStripePayment, clearCart, refetch]);
 
   const columns: ColumnsType<TSlabOrder> = [
     {

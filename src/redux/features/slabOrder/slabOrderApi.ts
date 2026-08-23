@@ -114,6 +114,16 @@ export const slabOrderApi = baseApi.injectEndpoints({
       transformResponse: (res: TResponse<{ url?: string; sessionId?: string }>) => res.data,
     }),
 
+    confirmStripePayment: builder.mutation<TSlabOrder, { orderId: string }>({
+      query: (body) => ({
+        url: "/slab-order/confirm-stripe-payment",
+        method: "POST",
+        body,
+      }),
+      transformResponse: (res: TResponse<TSlabOrder>) => res.data,
+      invalidatesTags: ["slabOrder", "Cart"],
+    }),
+
     getMySlabOrders: builder.query<
       { data: TSlabOrder[]; meta?: TMeta },
       { page?: number; limit?: number } | void
@@ -182,6 +192,7 @@ export const slabOrderApi = baseApi.injectEndpoints({
 export const {
   useCreateSlabOrderMutation,
   useCreateStripeCheckoutMutation,
+  useConfirmStripePaymentMutation,
   useGetMySlabOrdersQuery,
   useGetAllSlabOrdersQuery,
   usePurchaseShippoLabelMutation,
