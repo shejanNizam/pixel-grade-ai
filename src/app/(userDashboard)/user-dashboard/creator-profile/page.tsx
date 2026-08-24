@@ -30,13 +30,9 @@ const initialsOf = (name: string) =>
 
 export default function CreatorProfile() {
   const { data: me, isLoading: loadingMe } = useGetMeQuery();
-  const { data: summary } = useGetCollectionSummaryQuery();
+  const { data: summary } = useGetCollectionSummaryQuery({ favorite: true });
 
-  // The showcase is the COLLECTION, not the grading history (client, UI
-  // Feedback v1 edit #3). Grading a card does not put it in your collection —
-  // adding it does. Sourcing this from reports meant a card the user scanned
-  // and never kept still appeared on their public profile, and the tile count
-  // disagreed with the "Total cards" stat right above it.
+  // The showcase is favorited cards in collection
   const { data: collection } = useGetMyCollectionQuery({
     limit: 8,
     favorite: true,
@@ -46,14 +42,11 @@ export default function CreatorProfile() {
 
   const showcase = collection?.data ?? [];
 
-  // Every stat comes from the server's collection-scoped summary. Counting
-  // client-side over one page silently under-reports anyone holding more than
-  // the page size, and Pixel Verified in particular must be counted on the
-  // server-awarded flag rather than inferred from "has a report".
+  // Metrics reflect favorited/showcased cards only (UI Feedback v2, edit #3)
   const pixelVerifiedCount = summary?.pixelVerifiedCount ?? 0;
   const avgConfidence = summary?.averageConfidence ?? null;
 
-  // The creator badge is earned once a held card has cleared the bar.
+  // The creator badge is earned once a favorited/showcased card is verified
   const hasVerified = pixelVerifiedCount > 0;
 
   const summaryStats = [

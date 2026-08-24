@@ -185,7 +185,17 @@ export default function SlabPreview({
           className="mx-auto flex items-stretch gap-1.5 overflow-hidden rounded-md bg-[#0B0B0C]/45 px-1.5 py-1 shadow-lg ring-1 ring-white/25 backdrop-blur-md backdrop-brightness-[0.55]"
           style={{ width: `${labelWidthPct}%`, aspectRatio: labelAspect }}
         >
-          <div className="flex shrink-0 flex-col justify-center leading-none">
+          {/* Every column hangs from the band's TOP edge and its rows stack
+              tight beneath it, mirroring `bandRails().top` and `bandRowLead` in
+              slab.composite.ts. Centring each column independently — which is
+              what this did — is the CSS spelling of the misalignment the client
+              reported on 2026-08-24: four columns each centred on their own
+              content start on four different lines.
+
+              Not `justify-between`: spreading the rows to the band's floor is
+              the other half of that note ("decrease the gap as before"). A
+              column's rows caption its head and have to stay under it. */}
+          <div className="flex shrink-0 flex-col justify-start leading-none">
             <span className="text-[6px] font-bold tracking-wider text-white">
               PIXEL
             </span>
@@ -196,7 +206,7 @@ export default function SlabPreview({
 
           <div className="w-px shrink-0 self-stretch bg-white/20" />
 
-          <div className="flex min-w-0 flex-1 flex-col justify-center">
+          <div className="flex min-w-0 flex-1 flex-col justify-start gap-0.5">
             <p className="truncate text-[9px] leading-tight font-bold text-white">
               {card.name}
             </p>
@@ -210,22 +220,27 @@ export default function SlabPreview({
 
           <div className="w-px shrink-0 self-stretch bg-white/20" />
 
-          <div className="flex shrink-0 flex-col items-center justify-center leading-none">
+          <div className="flex shrink-0 flex-col items-center justify-start leading-none">
             <span className="text-[14px] font-bold text-white tabular-nums">
               {formatGrade(card.grade)}
             </span>
-            <span className="text-[5px] font-bold tracking-wider text-white">
+            {/* Directly under the numeral it names, not floated in the column
+                (client, 2026-08-24: "move up the NM info more higher up"). */}
+            <span className="mt-px text-[5px] font-bold tracking-wider text-white">
               {card.gradeLabel.toUpperCase()}
             </span>
             {card.pixelVerified && (
-              <span className="mt-0.5 inline-flex items-center gap-0.5 text-[4.5px] leading-tight font-bold text-white">
+              <span className="mt-1 inline-flex items-center gap-0.5 text-[4.5px] leading-tight font-bold text-white">
                 <MdVerified size={5} />
                 PIXEL VERIFIED
               </span>
             )}
           </div>
 
-          <div className="flex shrink-0 flex-col justify-center text-right leading-none">
+          {/* The one column that does reach the band's floor — the server's QR
+              plate fills its column, and this stand-in has no QR to fill it
+              with. See `stackRows` in slab.composite.ts. */}
+          <div className="flex shrink-0 flex-col justify-end text-right leading-none">
             <span className="text-[5.5px] font-bold tracking-wider text-white">
               PIXEL ID
             </span>

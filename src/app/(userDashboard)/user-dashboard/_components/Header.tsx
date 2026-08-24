@@ -3,11 +3,18 @@
 import HeaderProfile from "@/components/shared/HeaderProfile";
 import NotificationBell from "@/components/shared/NotificationBell";
 import PillButton from "@/components/shared/PillButton";
+import { ACCESS_TOKEN_KEY } from "@/redux/api/baseApi";
+import { useLogoutApiMutation } from "@/redux/features/auth/authApi";
+import { logout } from "@/redux/features/auth/authSlice";
 import { useGetCartQuery } from "@/redux/features/cart/cartApi";
 import { useGetMySubscriptionQuery } from "@/redux/features/subscription/subscriptionApi";
+import { clearAuthCookie } from "@/utils/cookieUtils";
+import { App, Modal } from "antd";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useState } from "react";
 import { FiMenu, FiShoppingCart } from "react-icons/fi";
+import { useDispatch } from "react-redux";
 
 const pageTitles: Record<string, string> = {
   "/user-dashboard": "Dashboard",
@@ -30,8 +37,35 @@ interface HeaderProps {
 
 export default function Header({ toggleSidebar }: HeaderProps) {
   const pathname = usePathname();
+  const router = useRouter();
+  const dispatch = useDispatch();
+  const { message } = App.useApp();
+  const [logoutApi] = useLogoutApiMutation();
+
   const { data: mySub } = useGetMySubscriptionQuery();
   const { data: cartData } = useGetCartQuery();
+
+  const [confirmingSignOut, setConfirmingSignOut] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
+
+  const signOut = async () => {
+    setIsSigningOut(true);
+
+    try {
+      await logoutApi().unwrap();
+    } catch {
+      // Offline or already-expired session
+    }
+
+    dispatch(logout());
+    clearAuthCookie();
+    localStorage.removeItem(ACCESS_TOKEN_KEY);
+
+    setConfirmingSignOut(false);
+    setIsSigningOut(false);
+    message.success("Signed out.");
+    router.push("/login");
+  };
 
   const cartItemCount = cartData?.data?.items?.length ?? 0;
 
@@ -77,11 +111,11 @@ export default function Header({ toggleSidebar }: HeaderProps) {
 
         <Link
           href="/user-dashboard/cart"
-          className="relative flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-zinc-300 transition-colors hover:border-violet-500/40 hover:text-white"
+          className="relative flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white transition-colors hover:border-violet-500/40"
           title="Shopping Cart"
           aria-label="Shopping Cart"
         >
-          <FiShoppingCart size={18} />
+          <FiShoppingCart size={18} className="text-white" />
           {cartItemCount > 0 && (
             <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-violet-600 px-1 text-[10px] font-bold text-white">
               {cartItemCount}
@@ -102,10 +136,36 @@ export default function Header({ toggleSidebar }: HeaderProps) {
               href: "/user-dashboard/creator-profile",
               label: "Creator Profile",
             },
+            { href: "/user-dashboard/subscription", label: "Subscription" },
+            { href: "/user-dashboard/support", label: "Support" },
             { href: "/user-dashboard/settings/profile", label: "My Profile" },
+            {
+              href: "/user-dashboard/settings/change-password",
+              label: "Change Password",
+            },
+            {
+              label: "Sign out",
+              danger: true,
+              onClick: () => setConfirmingSignOut(true),
+            },
           ]}
         />
       </div>
+
+      <Modal
+        open={confirmingSignOut}
+        onCancel={() => setConfirmingSignOut(false)}
+        onOk={signOut}
+        okText="Sign out"
+        cancelText="Cancel"
+        okButtonProps={{ danger: true, loading: isSigningOut }}
+        centered
+        title="Sign out"
+      >
+        <p className="text-sm text-zinc-400">
+          Are you sure you want to sign out of your account?
+        </p>
+      </Modal>
     </header>
   );
 }

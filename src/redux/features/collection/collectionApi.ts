@@ -101,8 +101,15 @@ export const collectionApi = baseApi.injectEndpoints({
       providesTags: ["collection"],
     }),
 
-    getCollectionSummary: builder.query<TCollectionSummary, void>({
-      query: () => ({ url: "/collection/summary", method: "GET" }),
+    getCollectionSummary: builder.query<
+      TCollectionSummary,
+      { favorite?: boolean } | void
+    >({
+      query: (params) => ({
+        url: "/collection/summary",
+        method: "GET",
+        params: params?.favorite ? { favorite: true } : undefined,
+      }),
       transformResponse: (res: TResponse<TCollectionSummary>) => res.data,
       providesTags: ["collection"],
     }),

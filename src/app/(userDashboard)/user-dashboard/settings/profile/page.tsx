@@ -20,8 +20,6 @@ interface ProfileValues {
    *  clash comes back from the server as a 409. */
   username: string;
   email: string;
-  /** Full E.164 number, e.g. +8801712345678 — what the backend validates. */
-  phone: string;
 }
 
 export default function ProfileSettings() {
@@ -50,12 +48,6 @@ export default function ProfileSettings() {
   const onFinish = async (values: ProfileValues) => {
     if (!me || isSaving || isUploading) return;
 
-    const phone = values.phone.trim();
-    if (phone && !/^\+[1-9]\d{6,14}$/.test(phone)) {
-      message.error("Phone must be in international format, e.g. +14155551234");
-      return;
-    }
-
     // Lower-cased to match the server, which stores usernames lower-case so
     // "Ash" and "ash" cannot both be claimed. Sending the raw casing would let
     // the client think it saved something the server then normalised.
@@ -83,7 +75,6 @@ export default function ProfileSettings() {
         body: {
           name: values.name.trim(),
           ...(username ? { username } : {}),
-          ...(phone ? { phone } : {}),
           ...(uploadedAvatar ? { avatar: uploadedAvatar } : {}),
         },
       }).unwrap();
@@ -106,7 +97,6 @@ export default function ProfileSettings() {
       name: me.name,
       username: me.username ?? "",
       email: me.email,
-      phone: me.phone ?? "",
     });
     setIsEditing(true);
   };
@@ -266,19 +256,6 @@ export default function ProfileSettings() {
               name="email"
             >
               <Input readOnly />
-            </Form.Item>
-
-            <Form.Item<ProfileValues>
-              label={<span className="text-sm text-white">Phone No.</span>}
-              name="phone"
-              rules={[
-                {
-                  pattern: /^\+[1-9]\d{6,14}$/,
-                  message: "Use international format, e.g. +14155551234",
-                },
-              ]}
-            >
-              <Input readOnly={!isEditing} placeholder="+14155551234" />
             </Form.Item>
           </Form>
         </div>

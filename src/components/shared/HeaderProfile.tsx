@@ -6,8 +6,10 @@ import Image from "next/image";
 import Link from "next/link";
 
 export interface HeaderProfileLink {
-  href: string;
+  href?: string;
   label: string;
+  onClick?: () => void;
+  danger?: boolean;
 }
 
 interface HeaderProfileProps {
@@ -100,9 +102,16 @@ export default function HeaderProfile({
     );
   }
 
-  const items: MenuProps["items"] = links.map((link) => ({
-    key: link.href,
-    label: <Link href={link.href}>{link.label}</Link>,
+  const items: MenuProps["items"] = links.map((link, idx) => ({
+    key: link.href || `link-${idx}`,
+    danger: link.danger,
+    label: link.href ? (
+      <Link href={link.href}>{link.label}</Link>
+    ) : (
+      <span onClick={link.onClick} className="block w-full cursor-pointer">
+        {link.label}
+      </span>
+    ),
   }));
 
   return (
