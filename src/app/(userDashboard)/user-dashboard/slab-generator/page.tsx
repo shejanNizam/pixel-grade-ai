@@ -7,6 +7,7 @@ import {
   useSelectSlabVariantMutation,
   type TSlabLabel,
 } from "@/redux/features/slab/slabApi";
+import { useGetMeQuery } from "@/redux/features/user/userApi";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { App } from "antd";
 import Link from "next/link";
@@ -29,6 +30,12 @@ function SlabGeneratorScreen() {
     limit: 50,
     sort: "-createdAt",
   });
+
+  // The band prints the owner's avatar and @handle in its first column, so the
+  // pre-generation stand-in needs them to show the band that will actually
+  // print. The server takes these from the authenticated user, never from the
+  // request — this query is only so the preview does not have to guess.
+  const { data: me } = useGetMeQuery();
   const [createLabel] = useCreateSlabLabelMutation();
   const [regenerateLabel] = useRegenerateSlabMutation();
   const [selectVariantMutation] = useSelectSlabVariantMutation();
@@ -229,6 +236,8 @@ function SlabGeneratorScreen() {
                   compositeUrl={composite}
                   seed={1}
                   showBleed={showBleed}
+                  ownerUsername={me?.username}
+                  ownerAvatarUrl={me?.avatar?.url}
                 />
               </div>
 

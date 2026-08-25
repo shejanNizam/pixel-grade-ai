@@ -18,6 +18,14 @@ interface SlabPreviewProps {
   /** Changes on every regenerate — re-rolls the placeholder artwork. */
   seed: number;
   showBleed: boolean;
+  /**
+   * The signed-in user's public handle and avatar, printed in the band's first
+   * column. Both optional: accounts predate the username field, and an avatar
+   * is never required — the server falls back to an initial disc and so does
+   * the stand-in below.
+   */
+  ownerUsername?: string;
+  ownerAvatarUrl?: string;
 }
 
 /** Deterministic 0-1 from the seed, so the same seed always renders the same
@@ -45,6 +53,8 @@ export default function SlabPreview({
   compositeUrl,
   seed,
   showBleed,
+  ownerUsername,
+  ownerAvatarUrl,
 }: SlabPreviewProps) {
   // Bleed as a % of the slab, so the guide scales with the preview.
   const bleedX = (spec.bleedMm / spec.widthMm) * 100;
@@ -172,7 +182,9 @@ export default function SlabPreview({
       >
         {/* ---- Grading label band — FIXED, at the TOP of the slab ----
             Mirrors the four-column strip the server composites in
-            slab.composite.ts: wordmark │ card info │ grade │ Pixel ID.
+            slab.composite.ts:
+
+              owner avatar + handle │ card info │ grade │ QR over Pixel ID
 
             Frosted, not solid, to match buildFrostedBand: the server dims the
             artwork behind the band by BAND_FROST_BRIGHTNESS and lays a scrim of
@@ -180,9 +192,13 @@ export default function SlabPreview({
             constants — a solid bar here would show the client a black plate
             while the export renders glass, on the exact detail he is judging.
             (CSS gets backdrop-filter; the server has to blur pixels by hand
-            because SVG overlays cannot sample what is beneath them.) */}
+            because SVG overlays cannot sample what is beneath them.)
+
+            Both constants darkened on 2026-08-25 with the server's; keep them
+            in step. Padding grew with them, mirroring `bandRails` — the band
+            now carries ~3.5 mm of clear air above and below its content. */}
         <div
-          className="mx-auto flex items-stretch gap-1.5 overflow-hidden rounded-md bg-[#0B0B0C]/45 px-1.5 py-1 shadow-lg ring-1 ring-white/25 backdrop-blur-md backdrop-brightness-[0.55]"
+          className="mx-auto flex items-stretch gap-1.5 overflow-hidden rounded-md bg-[#0B0B0C]/80 px-1.5 py-[3.5%] shadow-lg ring-1 ring-white/15 backdrop-blur-md backdrop-brightness-[0.34]"
           style={{ width: `${labelWidthPct}%`, aspectRatio: labelAspect }}
         >
           {/* Every column hangs from the band's TOP edge and its rows stack
@@ -195,56 +211,98 @@ export default function SlabPreview({
               Not `justify-between`: spreading the rows to the band's floor is
               the other half of that note ("decrease the gap as before"). A
               column's rows caption its head and have to stay under it. */}
-          <div className="flex shrink-0 flex-col justify-start leading-none">
-            <span className="text-[6px] font-bold tracking-wider text-white">
-              PIXEL
-            </span>
-            <span className="text-[6px] font-bold tracking-wider text-white">
-              GRADE
-            </span>
+          <div className="flex w-[13%] shrink-0 flex-col items-center justify-start leading-none">
+            {/* The owner's identity, which replaced the PixelGrade wordmark on
+                2026-07-30 at the client's direction. The stand-in had never
+                caught up and still drew the wordmark, so the one screen whose
+                job is to promise what will print was promising the wrong
+                band. */}
+            <div className="relative aspect-square w-[85%] overflow-hidden rounded-full ring-1 ring-white/15">
+              {ownerAvatarUrl ? (
+                <Image
+                  src={ownerAvatarUrl}
+                  alt=""
+                  fill
+                  sizes="32px"
+                  unoptimized
+                  className="object-cover"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center bg-[#6D4AFF] text-[6px] font-bold text-white">
+                  {(ownerUsername ?? "").slice(0, 2).toUpperCase()}
+                </div>
+              )}
+            </div>
+            {/* The caption lead, not the head lead the card name gets — this
+                column's head is an image, whose drawn edge is its measured
+                edge, so the same gap buys visibly more air under it than under
+                a word. Client, 2026-08-25: "the gap is too much, need minimal
+                space." */}
+            {ownerUsername && (
+              <span className="mt-[4%] w-full truncate text-center text-[5px] font-bold text-white">
+                @{ownerUsername}
+              </span>
+            )}
           </div>
 
+          {/* One rule per column boundary (2026-08-25) — the band carried a
+              single one before the grade, and the client's reference separates
+              all four. */}
           <div className="w-px shrink-0 self-stretch bg-white/20" />
 
-          <div className="flex min-w-0 flex-1 flex-col justify-start gap-0.5">
-            <p className="truncate text-[9px] leading-tight font-bold text-white">
+          {/* The card name is this column's head, so the step below it is a
+              full lead and the rows after it are a tight caption block —
+              `bandRowLead` and `bandCaptionLead`. A uniform gap spaced the two
+              halves of a wrapped set name as far apart as the name is from its
+              set, and the one name read as two unrelated lines. */}
+          <div className="flex min-w-0 flex-1 flex-col justify-start">
+            <p className="truncate font-serif text-[9px] leading-none font-bold text-white">
               {card.name}
             </p>
-            <p className="line-clamp-2 text-[6px] leading-tight font-bold text-white">
+            <p className="mt-[4%] line-clamp-2 text-[6px] leading-[1.35] font-bold text-white">
               {[card.year, card.set].filter(Boolean).join(" ")}
             </p>
-            <p className="truncate text-[6px] leading-tight font-bold text-white">
-              {[card.number, card.language].filter(Boolean).join(" · ")}
+            <p className="mt-[1.5%] truncate text-[5.5px] leading-none font-bold text-white">
+              {[card.number, card.language].filter(Boolean).join(" • ")}
             </p>
           </div>
 
           <div className="w-px shrink-0 self-stretch bg-white/20" />
 
-          <div className="flex shrink-0 flex-col items-center justify-start leading-none">
-            <span className="text-[14px] font-bold text-white tabular-nums">
+          <div className="flex w-[21%] shrink-0 flex-col items-center justify-start leading-none">
+            <span className="text-[15px] leading-none font-bold text-white tabular-nums">
               {formatGrade(card.grade)}
             </span>
             {/* Directly under the numeral it names, not floated in the column
                 (client, 2026-08-24: "move up the NM info more higher up"). */}
-            <span className="mt-px text-[5px] font-bold tracking-wider text-white">
+            <span className="mt-[6%] text-[6.5px] font-bold tracking-wider text-white">
               {card.gradeLabel.toUpperCase()}
             </span>
             {card.pixelVerified && (
-              <span className="mt-1 inline-flex items-center gap-0.5 text-[4.5px] leading-tight font-bold text-white">
-                <MdVerified size={5} />
+              <span className="mt-[9%] inline-flex items-center gap-0.75 text-[4.5px] leading-none font-bold whitespace-nowrap text-white">
+                <MdVerified size={7} className="text-[#8B5CF6]" />
                 PIXEL VERIFIED
               </span>
             )}
           </div>
 
+          <div className="w-px shrink-0 self-stretch bg-white/20" />
+
           {/* The one column that does reach the band's floor — the server's QR
               plate fills its column, and this stand-in has no QR to fill it
-              with. See `stackRows` in slab.composite.ts. */}
-          <div className="flex shrink-0 flex-col justify-end text-right leading-none">
+              with. See `stackRows` in slab.composite.ts.
+
+              The CAPTION is the brighter of the pair and the value sits under
+              it muted, matching `.idvalue` on the server: the caption is what
+              tells a reader what the string is, and the string itself is a
+              machine identifier under a code that resolves the same page. */}
+          <div className="flex w-[15%] shrink-0 flex-col items-center justify-end text-center leading-none">
             <span className="text-[5.5px] font-bold tracking-wider text-white">
               PIXEL ID
             </span>
-            <span className="text-[5.5px] font-bold text-white">{card.pixelId}</span>
+            <span className="mt-[6%] w-full truncate text-[5px] font-bold text-[#A9AEB8]">
+              {card.pixelId}
+            </span>
           </div>
         </div>
 
