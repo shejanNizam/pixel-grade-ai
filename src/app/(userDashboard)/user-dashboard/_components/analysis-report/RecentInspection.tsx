@@ -25,7 +25,7 @@ const SEVERITY_DOT: Record<TDefectSeverity, string> = {
 /** Colour tracks the number so a low confidence reads as low at a glance
  *  instead of relying on the reader parsing two digits. */
 const confidenceBarClass = (confidence: number): string => {
-  if (confidence >= 80) return "bg-emerald-500";
+  if (confidence >= 85) return "bg-emerald-500";
   if (confidence >= 50) return "bg-amber-400";
   return "bg-red-500";
 };
