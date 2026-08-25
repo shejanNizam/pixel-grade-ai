@@ -27,13 +27,14 @@ export default function CartPage() {
   const cart = cartData?.data;
   const items = cart?.items ?? [];
 
-  const subtotal = items.reduce((acc, item) => acc + (item.price || 24.99), 0);
+  const subtotal = items.reduce((acc, item) => acc + (item.price || 24.99) * (item.quantity || 1), 0);
+  const totalQuantity = items.reduce((acc, item) => acc + (item.quantity || 1), 0);
 
   const handleRemove = async (item: TCartItem) => {
     setRemovingId(item._id);
     try {
       await removeFromCart({ itemId: item._id }).unwrap();
-      message.success(`Removed ${item.cardName} slab from cart.`);
+      message.success(`Removed ${item.cardName} from cart.`);
     } catch (err) {
       message.error(getApiErrorMessage(err, "Couldn't remove item."));
     } finally {
@@ -44,7 +45,7 @@ export default function CartPage() {
   const handleClear = () => {
     modal.confirm({
       title: "Clear your cart?",
-      content: "This removes all custom slabs from your shopping cart.",
+      content: "This removes all items from your shopping cart.",
       okText: "Clear Cart",
       okButtonProps: { danger: true },
       onOk: async () => {
@@ -73,7 +74,7 @@ export default function CartPage() {
         <div>
           <h2 className="text-2xl font-medium text-white">Shopping Cart</h2>
           <p className="mt-1 text-xs text-zinc-400">
-            Review your custom physical slabs before proceeding to checkout.
+            Review your selected items before proceeding to checkout.
           </p>
         </div>
 
@@ -96,14 +97,14 @@ export default function CartPage() {
           <div className="space-y-1">
             <h3 className="text-lg font-medium text-white">Your cart is empty</h3>
             <p className="text-xs text-zinc-400 max-w-sm mx-auto">
-              Scan and grade a card, generate your custom slab artwork, then add it to your cart to order physical slabs.
+              Browse our products or grade a custom slab to add items to your shopping cart.
             </p>
           </div>
           <Link
-            href="/user-dashboard/slab-generator"
+            href="/pixelscope"
             className="inline-flex items-center gap-2 rounded-full bg-violet-600 px-6 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-violet-500"
           >
-            Go to Slab Generator <FiArrowRight size={14} />
+            Browse PixelScope <FiArrowRight size={14} />
           </Link>
         </div>
       ) : (
@@ -127,19 +128,21 @@ export default function CartPage() {
 
                 <div className="flex-1 min-w-0">
                   <h4 className="text-sm font-semibold text-white truncate">
-                    {item.cardName} Custom Slab
+                    {item.cardName.includes("PixelScope") ? item.cardName : `${item.cardName} Custom Slab`}
                   </h4>
-                  <p className="mt-1 text-xs text-violet-300">
-                    Grade {item.grade.toFixed(1)} {item.gradeLabel}
+                  <p className="mt-1 text-xs text-amber-300">
+                    {item.cardName.includes("PixelScope")
+                      ? "10X-15X Magnification • 2.1\" IPS Screen"
+                      : `Grade ${item.grade.toFixed(1)} ${item.gradeLabel}`}
                   </p>
-                  <p className="mt-1 text-[11px] text-zinc-500">
-                    Quantity: 1 (Custom One-off Slab)
+                  <p className="mt-1 text-[11px] text-zinc-400">
+                    Quantity: <span className="font-bold text-white">{item.quantity || 1}</span> • ${(item.price || 24.99).toFixed(2)} each
                   </p>
                 </div>
 
                 <div className="text-right shrink-0 space-y-2">
                   <p className="text-base font-bold text-white tabular-nums">
-                    ${item.price.toFixed(2)}
+                    ${((item.price || 24.99) * (item.quantity || 1)).toFixed(2)}
                   </p>
                   <button
                     type="button"
@@ -162,7 +165,7 @@ export default function CartPage() {
 
               <div className="space-y-3 text-xs text-zinc-400 border-b border-white/10 pb-4">
                 <div className="flex justify-between">
-                  <span>Subtotal ({items.length} {items.length === 1 ? "item" : "items"})</span>
+                  <span>Subtotal ({totalQuantity} {totalQuantity === 1 ? "item" : "items"})</span>
                   <span className="font-semibold text-white tabular-nums">${subtotal.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">

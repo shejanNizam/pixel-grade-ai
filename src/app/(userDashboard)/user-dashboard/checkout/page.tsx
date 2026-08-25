@@ -45,9 +45,10 @@ export default function CheckoutPage() {
   const [shippoRateId, setShippoRateId] = useState<string | undefined>(undefined);
   const [shippoValidated, setShippoValidated] = useState(false);
 
-  const subtotal = items.reduce((sum, i) => sum + (i.price || 24.99), 0);
-  const shippingFee = validatedRate ?? 5.95;
-  const taxAmount = Number((subtotal * TAX_RATE).toFixed(2));
+  const subtotal = items.reduce((sum, i) => sum + (i.price || 24.99) * (i.quantity || 1), 0);
+  const containsHardware = items.some((i) => i.cardName.includes("PixelScope") || i.gradeLabel === "HARDWARE");
+  const shippingFee = containsHardware ? 0 : (validatedRate ?? 5.95);
+  const taxAmount = containsHardware ? 0 : Number((subtotal * TAX_RATE).toFixed(2));
   const totalAmount = Number((subtotal + shippingFee + taxAmount).toFixed(2));
 
   const handleValidateAddress = async (e: React.FormEvent) => {
@@ -386,7 +387,9 @@ export default function CheckoutPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-medium text-white truncate">{i.cardName}</p>
-                    <p className="text-[11px] text-zinc-400">Qty 1 · Grade {i.grade.toFixed(1)}</p>
+                    <p className="text-[11px] text-zinc-400">
+                      {i.cardName.includes("PixelScope") ? "Hardware Magnifier" : `Qty 1 · Grade ${i.grade.toFixed(1)}`}
+                    </p>
                   </div>
                   <span className="text-xs font-bold text-white tabular-nums">${i.price.toFixed(2)}</span>
                 </div>

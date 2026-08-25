@@ -32,11 +32,11 @@ export default function HardwareCard() {
       </ul>
 
       <PillButton
-        disabled
-        aria-label="PixelScope hardware is coming soon"
-        className="mt-8 bg-amber-500! py-2.5! text-black! ring-amber-300/70! shadow-[0_0_24px_rgba(245,158,11,0.45)]! disabled:cursor-default"
+        href="/pixelscope"
+        aria-label="View PixelScope Digital Magnifier"
+        className="mt-8 bg-amber-500! py-2.5! text-black! ring-amber-300/70! shadow-[0_0_24px_rgba(245,158,11,0.45)]!"
       >
-        Coming Soon
+        Buy Now & Details
       </PillButton>
     </article>
   );

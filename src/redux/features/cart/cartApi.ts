@@ -9,6 +9,7 @@ export interface TCartItem {
   gradeLabel: string;
   compositeUrl: string;
   price: number;
+  quantity?: number;
   addedAt: string;
 }
 
@@ -27,7 +28,10 @@ export const cartApi = baseApi.injectEndpoints({
       }),
       providesTags: ["Cart"],
     }),
-    addToCart: builder.mutation<TResponse<TCart>, { slabId: string }>({
+    addToCart: builder.mutation<
+      TResponse<TCart>,
+      { slabId?: string; itemType?: string; cardName?: string; compositeUrl?: string; price?: number; quantity?: number }
+    >({
       query: (body) => ({
         url: "/cart/add",
         method: "POST",

@@ -10,6 +10,7 @@ import { FiArrowRight, FiGrid, FiMenu, FiX } from "react-icons/fi";
 const navLinks = [
   { href: "/", label: "Home" },
   { href: "/#working-process", label: "Working process" },
+  { href: "/pixelscope", label: "PixelScope" },
   { href: "/#pricing", label: "Pricing" },
   { href: "/#contact", label: "Contact us" },
 ];
@@ -85,10 +86,7 @@ export default function Navbar() {
               >
                 User Dashboard
               </PillButton>
-              <PillButton
-                href="/admin"
-                icon={<FiGrid />}
-              >
+              <PillButton href="/admin" icon={<FiGrid />}>
                 Admin Dashboard
               </PillButton>
             </div>
