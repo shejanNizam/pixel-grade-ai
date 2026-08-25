@@ -1,6 +1,5 @@
 "use client";
 
-import PillButton from "@/components/shared/PillButton";
 import { useAddToCartMutation } from "@/redux/features/cart/cartApi";
 import { useCreateStripeCheckoutMutation } from "@/redux/features/slabOrder/slabOrderApi";
 import { useGetMeQuery } from "@/redux/features/user/userApi";
@@ -98,10 +97,11 @@ export default function PixelScopeHero() {
     country: "US",
   });
 
+  const TAX_RATE = 0.085;
   const subtotal = Number((UNIT_PRICE * quantity).toFixed(2));
-  const shippingFee = 0;
-  const taxAmount = 0;
-  const totalAmount = subtotal;
+  const shippingFee = subtotal >= 50 ? 0 : 5.95;
+  const taxAmount = Number((subtotal * TAX_RATE).toFixed(2));
+  const totalAmount = Number((subtotal + shippingFee + taxAmount).toFixed(2));
 
   const activeImage = galleryImages[activeImageIndex];
 
@@ -170,8 +170,8 @@ export default function PixelScopeHero() {
       const res = await createStripeCheckout({
         items: itemsPayload,
         shippingAddress,
-        shippingFee: 0,
-        taxAmount: 0,
+        shippingFee,
+        taxAmount,
       }).unwrap();
 
       if (res?.url) {
@@ -186,77 +186,139 @@ export default function PixelScopeHero() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white pb-20">
+    <div className="min-h-screen bg-black text-white pb-16 sm:pb-24">
       {/* 1. Top Guarantee Banner Bar (Offset below fixed Navbar at pt-20 to avoid collision) */}
       <div className="pt-20">
-        <div className="border-b border-purple-500/20 bg-gradient-to-r from-purple-950/60 via-indigo-950/40 to-purple-950/60 py-3.5 backdrop-blur-xl">
-          <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 text-xs font-medium text-purple-200">
-            <div className="flex items-center gap-2">
-              <FiTruck className="text-purple-400 text-sm shrink-0" />
-              <span>Free shipping on orders over $50</span>
+        <div className="border-b border-purple-500/20 bg-gradient-to-r from-purple-950/80 via-indigo-950/60 to-purple-950/80 py-2.5 sm:py-3 backdrop-blur-xl">
+          {/* `whitespace-nowrap` only from `sm` up.
+              On mobile these sit in a two-column grid, and at 320 px — an
+              iPhone SE, still the narrowest phone worth supporting — a column
+              is 140 px against 137 px of "Free shipping over $50". Three pixels
+              is not a margin; it is a rounding error away from a nowrap run
+              pushing the whole page into horizontal scroll. Wrapping to two
+              lines in a grid cell is the correct behaviour at that width, and
+              from `sm` the row is a flex line where nowrap is what keeps each
+              claim on one line. */}
+          <div className="mx-auto max-w-6xl px-4 grid grid-cols-2 sm:flex sm:flex-wrap sm:items-center sm:justify-between gap-2 text-[11px] sm:text-xs font-medium text-purple-200">
+            <div className="flex items-center justify-center sm:justify-start gap-1.5">
+              <FiTruck className="text-purple-400 text-xs sm:text-sm shrink-0" />
+              <span className="sm:whitespace-nowrap">Free shipping over $50</span>
             </div>
             <span className="hidden sm:inline text-purple-500/30">|</span>
-            <div className="flex items-center gap-2">
-              <FiRefreshCw className="text-purple-400 text-sm shrink-0" />
-              <span>30-day returns</span>
+            <div className="flex items-center justify-center sm:justify-start gap-1.5">
+              <FiRefreshCw className="text-purple-400 text-xs sm:text-sm shrink-0" />
+              <span className="sm:whitespace-nowrap">30-day returns</span>
             </div>
             <span className="hidden sm:inline text-purple-500/30">|</span>
-            <div className="flex items-center gap-2">
-              <FiShield className="text-purple-400 text-sm shrink-0" />
-              <span>1-year warranty</span>
+            <div className="flex items-center justify-center sm:justify-start gap-1.5">
+              <FiShield className="text-purple-400 text-xs sm:text-sm shrink-0" />
+              <span className="sm:whitespace-nowrap">1-year warranty</span>
             </div>
             <span className="hidden sm:inline text-purple-500/30">|</span>
-            <div className="flex items-center gap-2">
-              <FiLock className="text-purple-400 text-sm shrink-0" />
-              <span>Secure checkout</span>
+            <div className="flex items-center justify-center sm:justify-start gap-1.5">
+              <FiLock className="text-purple-400 text-xs sm:text-sm shrink-0" />
+              <span className="sm:whitespace-nowrap">Secure checkout</span>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="mx-auto max-w-6xl px-4 pt-4">
+      <div className="mx-auto max-w-6xl px-4 pt-4 sm:pt-6">
         {/* 2. Breadcrumb */}
-        <nav aria-label="Breadcrumb" className="mb-6 flex items-center gap-2 text-xs text-zinc-400">
+        <nav aria-label="Breadcrumb" className="mb-4 sm:mb-6 flex items-center gap-2 text-xs text-zinc-400 overflow-x-auto whitespace-nowrap scrollbar-none pb-1">
           <Link href="/" className="hover:text-purple-400 transition-colors">
             Home
           </Link>
-          <FiChevronRight size={12} />
-          <span className="text-white font-semibold">PixelScope Digital Magnifier</span>
+          <FiChevronRight size={12} className="shrink-0" />
+          <span className="text-white font-semibold truncate">PixelScope Digital Magnifier</span>
         </nav>
 
-        {/* 3. Product Upper Grid (Left: Gallery & 17-Image Carousel | Right: Buy Box) */}
-        <div className="grid gap-8 lg:grid-cols-12 lg:items-start">
-          {/* Left Column: Main Image & 17-Image Thumbnail Carousel */}
-          <div className="lg:col-span-7 space-y-4">
+        {/* 3. Mobile Product Title & Price Header (Visible on Mobile only above gallery) */}
+        <div className="lg:hidden mb-4 space-y-2">
+          <span className="text-[11px] font-mono font-bold uppercase tracking-widest text-purple-400">
+            PIXELSCOPE
+          </span>
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white leading-tight">
+            PixelScope Digital Magnifier
+          </h1>
+          <div className="flex items-center justify-between gap-2 pt-1">
+            <div className="text-2xl font-extrabold text-white tracking-tight">$69.99</div>
+            <div className="flex items-center gap-1.5 text-xs font-medium text-emerald-400">
+              <FiCheckCircle className="text-emerald-400 shrink-0" />
+              <span>In Stock – Ships in 24h</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 pt-0.5">
+            <div className="flex items-center text-amber-400 text-xs">
+              {[...Array(5)].map((_, i) => (
+                <FiStar key={i} className="fill-amber-400 text-amber-400" />
+              ))}
+            </div>
+            <span className="text-xs font-semibold text-amber-300">4.8</span>
+            <span className="text-xs text-zinc-400">(126 reviews)</span>
+          </div>
+        </div>
+
+        {/* 4. Main Product Upper Grid (Left: Gallery & 7-Image Carousel | Right: Buy Box) */}
+        <div className="grid gap-6 lg:gap-8 lg:grid-cols-12 lg:items-start">
+          {/* Left Column: Gallery
+              ⚠️ `min-w-0` is load-bearing, not tidying. A GRID item defaults to
+              `min-width: auto` exactly like a flex item, so it refuses to
+              shrink below its own min-content — and this column's min-content
+              is the thumbnail rail's full 440 px (7 × 56 px + gaps). On a
+              375 px phone that forced the column to 440 inside a 343 px track
+              and pushed the whole PAGE to 456 px of horizontal scroll.
+              The square card is `w-full` of this column, so it inherited the
+              440 and hung 81 px off the right of the screen — which reads as
+              "the product image is cut off" even though the image itself was
+              being contained correctly the whole time.
+              The rail's own `overflow-x-auto` does NOT rescue this: that zeroes
+              the automatic minimum of the SCROLLER, and the measurement still
+              propagates up through the flex row to this grid item. */}
+          <div className="min-w-0 lg:col-span-7 space-y-3 sm:space-y-4">
             {/* Main Image Container */}
-            <div className="relative aspect-square w-full overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-b from-zinc-900/90 to-black p-2 shadow-2xl shadow-purple-950/20">
+            <div className="relative aspect-square w-full overflow-hidden rounded-2xl sm:rounded-3xl border border-white/10 bg-gradient-to-b from-zinc-900/90 to-black p-2 shadow-2xl shadow-purple-950/20">
+              {/* `fill` with no `sizes` defaults to `100vw`, so a 320 px phone
+                  was told to pick the widest entry in the srcset and downloaded
+                  the desktop asset — on the LCP image of a shopping page. Below
+                  `lg` the gallery is the full container; at `lg` and up it is
+                  the 7/12 column, which tops out around 640 px. */}
               <Image
                 src={activeImage.src}
                 alt={activeImage.alt}
                 fill
                 priority
-                className="object-cover transition-all duration-300 rounded-2xl"
+                sizes="(min-width: 1024px) 640px, 100vw"
+                className="object-contain p-2 transition-all duration-300 rounded-xl sm:rounded-2xl"
               />
-              <span className="absolute top-4 left-4 rounded-full bg-purple-600/90 px-3.5 py-1 text-xs font-semibold text-white shadow-lg backdrop-blur-md">
+              <span className="absolute top-3 left-3 sm:top-4 sm:left-4 rounded-full bg-purple-600/90 px-3 py-1 text-[11px] sm:text-xs font-semibold text-white shadow-lg backdrop-blur-md">
                 ★ Best for Card Collectors
               </span>
             </div>
 
-            {/* 17-Image Thumbnail Carousel with Left (<) and Right (>) Arrows */}
-            <div className="relative flex items-center gap-2 pt-1">
+            {/* Thumbnail rail.
+                The arrows are hidden below `sm`: they are a pointer affordance,
+                and on a touch screen the rail already scrolls by swipe. Keeping
+                them cost ~72 px of a 288 px row — a quarter of the rail — to
+                duplicate a gesture the device does natively. They come back at
+                `sm`, where a mouse is plausible and there is room. */}
+            <div className="relative flex items-center gap-1.5 sm:gap-2 pt-1">
               <button
                 type="button"
                 onClick={() => scrollThumbnails("left")}
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/15 bg-zinc-900/90 text-white shadow-lg hover:bg-purple-600 hover:border-purple-500 transition-all cursor-pointer z-10"
+                className="hidden sm:flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-full border border-white/15 bg-zinc-900/90 text-white shadow-lg hover:bg-purple-600 hover:border-purple-500 transition-all cursor-pointer z-10"
                 aria-label="Scroll thumbnails left"
               >
-                <FiChevronLeft size={18} />
+                <FiChevronLeft size={16} />
               </button>
 
               <div
                 ref={thumbnailContainerRef}
-                className="flex flex-1 gap-3 overflow-x-auto scrollbar-none py-1 scroll-smooth"
-                style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+                // `min-w-0` so the rail can shrink below its content width. A
+                // flex item defaults to `min-width: auto`, so `flex-1` alone
+                // would let seven 56 px thumbnails size the track and push the
+                // right-hand arrow off the screen instead of scrolling.
+                className="flex min-w-0 flex-1 gap-2 sm:gap-3 overflow-x-auto scrollbar-none py-1 scroll-smooth"
               >
                 {galleryImages.map((img, index) => {
                   const isActive = index === activeImageIndex;
@@ -265,13 +327,15 @@ export default function PixelScopeHero() {
                       key={img.id}
                       type="button"
                       onClick={() => setActiveImageIndex(index)}
-                      className={`relative h-16 w-16 shrink-0 overflow-hidden rounded-xl border-2 transition-all cursor-pointer ${
+                      aria-label={`Show ${img.title}`}
+                      aria-current={isActive}
+                      className={`relative h-14 w-14 sm:h-16 sm:w-16 shrink-0 overflow-hidden rounded-lg sm:rounded-xl border-2 transition-all cursor-pointer ${
                         isActive
                           ? "border-purple-500 ring-2 ring-purple-500/50 scale-105"
                           : "border-white/10 opacity-70 hover:opacity-100 hover:border-white/30"
                       }`}
                     >
-                      <Image src={img.src} alt={img.title} fill className="object-cover" />
+                      <Image src={img.src} alt={img.title} fill sizes="64px" className="object-contain p-1 rounded-md" />
                     </button>
                   );
                 })}
@@ -280,51 +344,59 @@ export default function PixelScopeHero() {
               <button
                 type="button"
                 onClick={() => scrollThumbnails("right")}
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/15 bg-zinc-900/90 text-white shadow-lg hover:bg-purple-600 hover:border-purple-500 transition-all cursor-pointer z-10"
+                className="hidden sm:flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-full border border-white/15 bg-zinc-900/90 text-white shadow-lg hover:bg-purple-600 hover:border-purple-500 transition-all cursor-pointer z-10"
                 aria-label="Scroll thumbnails right"
               >
-                <FiChevronRight size={18} />
+                <FiChevronRight size={16} />
               </button>
             </div>
           </div>
 
           {/* Right Column: Buy Box */}
-          <div className="lg:col-span-5 flex flex-col justify-between space-y-6">
+          <div className="min-w-0 lg:col-span-5 flex flex-col justify-between space-y-5 sm:space-y-6">
             <div>
-              <span className="text-xs font-mono font-bold uppercase tracking-widest text-purple-400">
-                PIXELSCOPE
-              </span>
+              {/* Desktop Header Info */}
+              <div className="hidden lg:block space-y-3">
+                <span className="text-[11px] font-mono font-bold uppercase tracking-widest text-purple-400">
+                  PIXELSCOPE
+                </span>
 
-              <h1 className="mt-1 text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
-                PixelScope Digital Magnifier
-              </h1>
+                <h1 className="text-3xl lg:text-4xl font-extrabold tracking-tight text-white">
+                  PixelScope Digital Magnifier
+                </h1>
 
-              {/* Rating */}
-              <div className="mt-2.5 flex items-center gap-2">
-                <div className="flex items-center text-amber-400 text-sm">
-                  {[...Array(5)].map((_, i) => (
-                    <FiStar key={i} className="fill-amber-400 text-amber-400" />
-                  ))}
+                {/* Rating */}
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center text-amber-400 text-sm">
+                    {[...Array(5)].map((_, i) => (
+                      <FiStar key={i} className="fill-amber-400 text-amber-400" />
+                    ))}
+                  </div>
+                  <span className="text-xs font-semibold text-amber-300">4.8</span>
+                  <span className="text-xs text-zinc-400">(126 reviews)</span>
                 </div>
-                <span className="text-xs font-semibold text-amber-300">4.8</span>
-                <span className="text-xs text-zinc-400">(126 reviews)</span>
+
+                <p className="mt-4 text-xs leading-relaxed text-zinc-300">
+                  See what your eyes can&apos;t. Inspect cards and collectibles in stunning detail with 10X–15X magnification, white &amp; UV lighting, and built-in screen.
+                </p>
+
+                {/* Price & Stock */}
+                <div className="mt-5">
+                  <div className="text-3xl font-extrabold text-white tracking-tight">$69.99</div>
+                  <div className="mt-1 flex items-center gap-1.5 text-xs font-medium text-emerald-400">
+                    <FiCheckCircle className="text-emerald-400" />
+                    <span>In Stock – Ships within 24 hours</span>
+                  </div>
+                </div>
               </div>
 
-              <p className="mt-4 text-xs leading-relaxed text-zinc-300">
+              {/* Mobile Description */}
+              <p className="lg:hidden text-xs leading-relaxed text-zinc-300">
                 See what your eyes can&apos;t. Inspect cards and collectibles in stunning detail with 10X–15X magnification, white &amp; UV lighting, and built-in screen.
               </p>
 
-              {/* Price & Stock */}
-              <div className="mt-5">
-                <div className="text-3xl font-extrabold text-white tracking-tight">$69.99</div>
-                <div className="mt-1 flex items-center gap-1.5 text-xs font-medium text-emerald-400">
-                  <FiCheckCircle className="text-emerald-400" />
-                  <span>In Stock – Ships within 24 hours</span>
-                </div>
-              </div>
-
-              {/* Quantity */}
-              <div className="mt-6">
+              {/* Quantity Selector */}
+              <div className="mt-5 sm:mt-6">
                 <label className="block text-xs font-medium text-zinc-300 mb-2">Quantity</label>
                 <div className="inline-flex items-center rounded-xl border border-white/15 bg-zinc-900/90 p-1">
                   <button
@@ -346,12 +418,12 @@ export default function PixelScopeHero() {
               </div>
 
               {/* Action Buttons */}
-              <div className="mt-6 space-y-3">
+              <div className="mt-5 sm:mt-6 space-y-3">
                 <button
                   type="button"
                   onClick={handleAddToCart}
                   disabled={isAddingToCart}
-                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-purple-600 py-3.5 text-sm font-bold text-white transition-all hover:bg-purple-500 shadow-lg shadow-purple-600/30 cursor-pointer disabled:opacity-50"
+                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-purple-600 py-3.5 text-xs sm:text-sm font-bold text-white transition-all hover:bg-purple-500 shadow-lg shadow-purple-600/30 cursor-pointer disabled:opacity-50"
                 >
                   <FiShoppingCart size={16} />
                   <span>{isAddingToCart ? "Adding..." : "Add to Cart"}</span>
@@ -360,7 +432,7 @@ export default function PixelScopeHero() {
                 <button
                   type="button"
                   onClick={handleOpenBuyNow}
-                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-zinc-900 border border-white/20 py-3.5 text-sm font-bold text-white transition-all hover:bg-black hover:border-white/40 shadow-lg cursor-pointer"
+                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-zinc-900 border border-white/20 py-3.5 text-xs sm:text-sm font-bold text-white transition-all hover:bg-black hover:border-white/40 shadow-lg cursor-pointer"
                 >
                   <FiZap className="text-amber-400 animate-pulse" size={16} />
                   <span>Buy Now</span>
@@ -374,7 +446,7 @@ export default function PixelScopeHero() {
                   <span className="font-extrabold text-[#635BFF] text-sm tracking-tight font-sans">stripe</span>
                 </div>
 
-                <div className="flex flex-wrap items-center justify-center gap-2">
+                <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2">
                   {/* VISA */}
                   <div className="flex h-6 px-2 items-center justify-center rounded border border-zinc-200 bg-white">
                     <svg className="h-3 w-auto" viewBox="0 0 40 14" fill="none">
@@ -417,47 +489,61 @@ export default function PixelScopeHero() {
                 </div>
               </div>
 
-              {/* Trust Badges Row */}
-              <div className="pt-4 border-t border-white/10 grid grid-cols-4 gap-2 text-center text-[10px] text-zinc-300">
-                <div className="space-y-1">
-                  <FiTruck size={16} className="mx-auto text-purple-400" />
+              {/* Trust badges — 2 up, 4 up, then 2 up again at `lg`.
+                  The step back to two is not a typo. Below `lg` this box is
+                  full width and four fit comfortably; AT `lg` it becomes a 5/12
+                  column ~395 px wide, which leaves each of four tiles ~71 px of
+                  text after padding, and "Free Shipping" needs ~78 px. It only
+                  fits four again once the container reaches its max width, so
+                  four returns at `xl`. */}
+              <div className="pt-4 border-t border-white/10 grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-2 xl:grid-cols-4 gap-2.5 text-center text-[10px] sm:text-xs text-zinc-300">
+                <div className="flex flex-col items-center justify-center p-2.5 rounded-xl bg-white/5 border border-white/5 space-y-1">
+                  <FiTruck size={18} className="text-purple-400" />
                   <p className="font-semibold text-white leading-tight">Free Shipping</p>
-                  <p className="text-zinc-500 scale-90">on orders over $50</p>
+                  <p className="text-zinc-400 text-[9px]">orders over $50</p>
                 </div>
-                <div className="space-y-1">
-                  <FiRefreshCw size={16} className="mx-auto text-purple-400" />
+                <div className="flex flex-col items-center justify-center p-2.5 rounded-xl bg-white/5 border border-white/5 space-y-1">
+                  <FiRefreshCw size={18} className="text-purple-400" />
                   <p className="font-semibold text-white leading-tight">30-Day</p>
-                  <p className="text-zinc-500 scale-90">Returns</p>
+                  <p className="text-zinc-400 text-[9px]">Returns</p>
                 </div>
-                <div className="space-y-1">
-                  <FiShield size={16} className="mx-auto text-purple-400" />
+                <div className="flex flex-col items-center justify-center p-2.5 rounded-xl bg-white/5 border border-white/5 space-y-1">
+                  <FiShield size={18} className="text-purple-400" />
                   <p className="font-semibold text-white leading-tight">1-Year</p>
-                  <p className="text-zinc-500 scale-90">Warranty</p>
+                  <p className="text-zinc-400 text-[9px]">Warranty</p>
                 </div>
-                <div className="space-y-1">
-                  <FiLock size={16} className="mx-auto text-purple-400" />
+                <div className="flex flex-col items-center justify-center p-2.5 rounded-xl bg-white/5 border border-white/5 space-y-1">
+                  <FiLock size={18} className="text-purple-400" />
                   <p className="font-semibold text-white leading-tight">Secure</p>
-                  <p className="text-zinc-500 scale-90">Checkout</p>
+                  <p className="text-zinc-400 text-[9px]">Checkout</p>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* 4. Product Lower Grid (Left: Key Features & Collapsible Product Details | Right: What's Included) */}
-        <div className="mt-12 grid gap-8 lg:grid-cols-12 lg:items-start">
+        {/* 5. Product Lower Grid (Left: Key Features & Collapsible Product Details | Right: What's Included) */}
+        <div className="mt-8 sm:mt-12 grid gap-6 sm:gap-8 lg:grid-cols-12 lg:items-start">
           {/* Left Column: Key Features & Product Details */}
-          <div className="lg:col-span-7 space-y-6">
+          <div className="min-w-0 lg:col-span-7 space-y-6">
             {/* Key Features Card */}
-            <div className="rounded-2xl border border-white/10 bg-zinc-950/80 p-6 backdrop-blur-xl shadow-2xl">
-              <h3 className="text-sm font-bold text-white mb-6">Key Features</h3>
+            <div className="rounded-2xl border border-white/10 bg-zinc-950/80 p-4 sm:p-6 backdrop-blur-xl shadow-2xl">
+              <h3 className="text-sm font-bold text-white mb-4">Key Features</h3>
 
-              <div className="grid grid-cols-3 sm:grid-cols-6 gap-4 text-center">
+              {/* Three across at every size above mobile, never six.
+                  `lg:grid-cols-6` looked right read as a breakpoint ladder and
+                  was wrong in practice: at `lg` this card is inside a 7/12
+                  column, so six tracks are ~76 px wide and each cell has ~52 px
+                  left after its padding. "Magnification" alone is ~65 px, so
+                  every tile wrapped to three ragged lines. The container that
+                  matters here is the COLUMN, not the viewport — and it never
+                  gets wide enough for six, even at the container's max width. */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-center">
                 {keyFeatures.map((kf) => {
                   const Icon = kf.icon;
                   return (
-                    <div key={kf.subtitle} className="space-y-2">
-                      <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                    <div key={kf.subtitle} className="flex flex-col items-center justify-center p-3 rounded-xl bg-white/5 border border-white/5 space-y-1.5">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20 shrink-0">
                         <Icon size={18} />
                       </div>
                       <div>
@@ -471,7 +557,7 @@ export default function PixelScopeHero() {
             </div>
 
             {/* Product Details Collapsible Card */}
-            <div className="rounded-2xl border border-white/10 bg-zinc-950/80 p-6 backdrop-blur-xl shadow-2xl">
+            <div className="rounded-2xl border border-white/10 bg-zinc-950/80 p-4 sm:p-6 backdrop-blur-xl shadow-2xl">
               <h3 className="text-sm font-bold text-white mb-3">Product Details</h3>
               <p className="text-xs text-zinc-300 leading-relaxed">
                 PixelScope is a premium portable digital magnifier built for collectors and professionals who demand perfect clarity, anywhere, anytime.
@@ -503,20 +589,20 @@ export default function PixelScopeHero() {
           </div>
 
           {/* Right Column: What's Included Card */}
-          <div className="lg:col-span-5">
-            <div className="rounded-2xl border border-white/10 bg-zinc-950/80 p-6 backdrop-blur-xl shadow-2xl space-y-4">
+          <div className="min-w-0 lg:col-span-5">
+            <div className="rounded-2xl border border-white/10 bg-zinc-950/80 p-4 sm:p-6 backdrop-blur-xl shadow-2xl space-y-4">
               <h3 className="text-sm font-bold text-white">What&apos;s Included</h3>
 
               <div className="space-y-3">
                 {includedItems.map((item) => (
                   <div key={item.name} className="flex items-center justify-between border-b border-white/5 pb-3 last:border-0 last:pb-0">
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
                       <div className="relative h-10 w-10 overflow-hidden rounded-lg border border-white/10 bg-black shrink-0">
-                        <Image src={item.icon} alt={item.name} fill className="object-cover" />
+                        <Image src={item.icon} alt={item.name} fill sizes="40px" className="object-contain p-1" />
                       </div>
-                      <span className="text-xs font-medium text-zinc-200">{item.name}</span>
+                      <span className="text-xs font-medium text-zinc-200 truncate">{item.name}</span>
                     </div>
-                    <span className="font-mono text-xs font-bold text-amber-400">{item.qty}</span>
+                    <span className="font-mono text-xs font-bold text-amber-400 shrink-0 ml-2">{item.qty}</span>
                   </div>
                 ))}
               </div>
@@ -531,17 +617,25 @@ export default function PixelScopeHero() {
         onCancel={() => setIsModalOpen(false)}
         footer={null}
         centered
-        width={500}
+        // Responsive width, not a flat 500.
+        //
+        // `max-w-[95vw]` on the wrapper below did NOT solve this: the width
+        // prop sizes `.ant-modal` itself, so on any phone the dialog box was
+        // 500 px inside a ~360 px viewport and the modal's own scroll wrap took
+        // the overflow — a checkout form you had to pan sideways to fill in.
+        // Capping the wrapper only clipped the visible card, it never resized
+        // the box underneath it.
+        width={{ xs: "94vw", sm: 500 }}
         closeIcon={<FiX className="text-zinc-400 hover:text-white text-lg" />}
         modalRender={(modalContent) => (
-          <div className="rounded-3xl border border-purple-500/30 bg-zinc-950 p-6 shadow-2xl backdrop-blur-xl text-white">
+          <div className="rounded-3xl border border-purple-500/30 bg-zinc-950 p-4 sm:p-6 shadow-2xl backdrop-blur-xl text-white">
             {modalContent}
           </div>
         )}
       >
-        <div className="space-y-5">
-          <div className="flex items-center gap-3 border-b border-white/10 pb-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20">
+        <div className="space-y-4 sm:space-y-5">
+          <div className="flex items-center gap-3 border-b border-white/10 pb-3.5">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20 shrink-0">
               <FiCreditCard size={20} />
             </div>
             <div>
@@ -551,17 +645,17 @@ export default function PixelScopeHero() {
           </div>
 
           {/* Item Summary */}
-          <div className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 p-3.5">
-            <div className="flex items-center gap-3">
-              <div className="relative h-11 w-11 overflow-hidden rounded-lg border border-white/10 bg-black">
-                <Image src="/assets/pixelscope/pixelscope_image_one.PNG" alt="PixelScope" fill className="object-cover" />
+          <div className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 p-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="relative h-10 w-10 sm:h-11 sm:w-11 overflow-hidden rounded-lg border border-white/10 bg-black shrink-0">
+                <Image src="/assets/pixelscope/pixelscope_image_one.PNG" alt="PixelScope" fill sizes="44px" className="object-contain p-1" />
               </div>
-              <div>
-                <p className="text-xs font-bold text-white">PixelScope Digital Magnifier</p>
+              <div className="min-w-0">
+                <p className="text-xs font-bold text-white truncate">PixelScope Digital Magnifier</p>
                 <p className="text-[11px] text-purple-400 font-medium">Qty: {quantity} • $69.99 each</p>
               </div>
             </div>
-            <span className="text-sm font-extrabold text-white">${subtotal.toFixed(2)}</span>
+            <span className="text-sm font-extrabold text-white shrink-0 ml-2">${subtotal.toFixed(2)}</span>
           </div>
 
           {/* Form */}
@@ -579,7 +673,7 @@ export default function PixelScopeHero() {
                   placeholder="John Doe"
                   value={shippingAddress.fullName}
                   onChange={(e) => setShippingAddress({ ...shippingAddress, fullName: e.target.value })}
-                  className="w-full rounded-xl border border-white/15 bg-black/60 px-3.5 py-2 text-xs text-white placeholder-zinc-600 focus:border-purple-500 focus:outline-none"
+                  className="w-full rounded-xl border border-white/15 bg-black/60 px-3 py-2 text-xs text-white placeholder-zinc-600 focus:border-purple-500 focus:outline-none"
                 />
               </div>
 
@@ -591,11 +685,11 @@ export default function PixelScopeHero() {
                   placeholder="112 Commercial Ct"
                   value={shippingAddress.streetAddress}
                   onChange={(e) => setShippingAddress({ ...shippingAddress, streetAddress: e.target.value })}
-                  className="w-full rounded-xl border border-white/15 bg-black/60 px-3.5 py-2 text-xs text-white placeholder-zinc-600 focus:border-purple-500 focus:outline-none"
+                  className="w-full rounded-xl border border-white/15 bg-black/60 px-3 py-2 text-xs text-white placeholder-zinc-600 focus:border-purple-500 focus:outline-none"
                 />
               </div>
 
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3">
                 <div>
                   <label className="block text-xs font-medium text-zinc-300 mb-1">City *</label>
                   <input
@@ -604,7 +698,7 @@ export default function PixelScopeHero() {
                     placeholder="Santa Rosa"
                     value={shippingAddress.city}
                     onChange={(e) => setShippingAddress({ ...shippingAddress, city: e.target.value })}
-                    className="w-full rounded-xl border border-white/15 bg-black/60 px-3.5 py-2 text-xs text-white placeholder-zinc-600 focus:border-purple-500 focus:outline-none"
+                    className="w-full rounded-xl border border-white/15 bg-black/60 px-3 py-2 text-xs text-white placeholder-zinc-600 focus:border-purple-500 focus:outline-none"
                   />
                 </div>
                 <div>
@@ -615,7 +709,7 @@ export default function PixelScopeHero() {
                     placeholder="CA"
                     value={shippingAddress.state}
                     onChange={(e) => setShippingAddress({ ...shippingAddress, state: e.target.value })}
-                    className="w-full rounded-xl border border-white/15 bg-black/60 px-3.5 py-2 text-xs text-white placeholder-zinc-600 focus:border-purple-500 focus:outline-none"
+                    className="w-full rounded-xl border border-white/15 bg-black/60 px-3 py-2 text-xs text-white placeholder-zinc-600 focus:border-purple-500 focus:outline-none"
                   />
                 </div>
                 <div>
@@ -626,25 +720,27 @@ export default function PixelScopeHero() {
                     placeholder="95407"
                     value={shippingAddress.postalCode}
                     onChange={(e) => setShippingAddress({ ...shippingAddress, postalCode: e.target.value })}
-                    className="w-full rounded-xl border border-white/15 bg-black/60 px-3.5 py-2 text-xs text-white placeholder-zinc-600 focus:border-purple-500 focus:outline-none"
+                    className="w-full rounded-xl border border-white/15 bg-black/60 px-3 py-2 text-xs text-white placeholder-zinc-600 focus:border-purple-500 focus:outline-none"
                   />
                 </div>
               </div>
             </div>
 
             {/* Price Breakdown */}
-            <div className="rounded-xl border border-white/10 bg-black/40 p-3.5 space-y-1.5 text-xs text-zinc-300">
+            <div className="rounded-xl border border-white/10 bg-black/40 p-3 sm:p-3.5 space-y-1.5 text-xs text-zinc-300">
               <div className="flex justify-between">
                 <span>Subtotal</span>
                 <span className="font-semibold text-white">${subtotal.toFixed(2)}</span>
               </div>
               <div className="flex justify-between">
-                <span>Shipping</span>
-                <span className="text-emerald-400 font-semibold">$0.00 (Free)</span>
+                <span>Shipping (USPS Ground)</span>
+                <span className={shippingFee === 0 ? "text-emerald-400 font-semibold" : "font-semibold text-white"}>
+                  {shippingFee === 0 ? "FREE (Orders over $50)" : `$${shippingFee.toFixed(2)}`}
+                </span>
               </div>
               <div className="flex justify-between">
-                <span>Estimated Tax</span>
-                <span>$0.00</span>
+                <span>Estimated Tax (8.50%)</span>
+                <span>${taxAmount.toFixed(2)}</span>
               </div>
               <div className="border-t border-white/10 pt-2 flex justify-between font-extrabold text-sm text-white">
                 <span>Total Amount</span>

@@ -46,9 +46,8 @@ export default function CheckoutPage() {
   const [shippoValidated, setShippoValidated] = useState(false);
 
   const subtotal = items.reduce((sum, i) => sum + (i.price || 24.99) * (i.quantity || 1), 0);
-  const containsHardware = items.some((i) => i.cardName.includes("PixelScope") || i.gradeLabel === "HARDWARE");
-  const shippingFee = containsHardware ? 0 : (validatedRate ?? 5.95);
-  const taxAmount = containsHardware ? 0 : Number((subtotal * TAX_RATE).toFixed(2));
+  const shippingFee = subtotal >= 50 ? 0 : (validatedRate ?? 5.95);
+  const taxAmount = Number((subtotal * TAX_RATE).toFixed(2));
   const totalAmount = Number((subtotal + shippingFee + taxAmount).toFixed(2));
 
   const handleValidateAddress = async (e: React.FormEvent) => {

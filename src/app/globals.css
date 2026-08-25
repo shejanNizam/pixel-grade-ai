@@ -53,6 +53,46 @@ body {
   --font-raleway-bold: var(--times-new-roman-bold); */
 }
 
+/* Horizontal scrollers whose affordance is the content, not a scrollbar — the
+   PixelScope thumbnail rail and its breadcrumb. Both classes were already in
+   use across the app and neither existed: Tailwind v4 ships no `scrollbar-none`
+   and no `fadeIn` keyframe, so the rail was relying on an inline
+   `scrollbarWidth` style and the breadcrumb was showing a scrollbar on every
+   narrow screen.
+
+   Both selectors are needed. `scrollbar-width` is the standard and is what
+   Firefox and current Chrome honour; `::-webkit-scrollbar` covers the Safari
+   and older-Chromium versions that a shopping page on a phone actually meets. */
+@utility scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@utility animate-fadeIn {
+  animation: fadeIn 0.2s ease-out;
+
+  /* Disclosure panels expand on tap; anyone who has asked for reduced motion
+     should get the content, not the movement. */
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
 /* for ignore tailwind */
 .no-tailwind * {
   all: revert !important;
