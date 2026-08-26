@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { FiShoppingBag, FiX } from "react-icons/fi";
+import { FiSearch, FiShoppingBag, FiX } from "react-icons/fi";
 import {
   MdOutlineAutoAwesome,
   MdOutlineCollectionsBookmark,
@@ -45,6 +45,12 @@ const navItems = [
     label: "Price Tracker",
     Icon: MdOutlineInsertChart,
   },
+  {
+    href: "/pixelscope",
+    label: "Pixelscope",
+    Icon: FiSearch,
+    isOrange: true,
+  },
 ];
 
 interface SidebarProps {
@@ -58,12 +64,16 @@ export default function Sidebar({ isOpen, toggleSidebar }: SidebarProps) {
   const isActive = (href: string) =>
     href === "/user-dashboard" ? pathname === href : pathname.startsWith(href);
 
-  const itemClass = (active: boolean) =>
-    `flex items-center gap-3.5 rounded-xl px-3 py-2.5 text-sm transition-colors ${
-      active
-        ? "bg-violet-500 font-medium text-white! shadow-lg shadow-violet-500/25"
-        : "text-zinc-400! hover:bg-white/5 hover:text-white!"
-    }`;
+  const itemClass = (active: boolean, isOrange?: boolean) =>
+    isOrange
+      ? `flex items-center gap-3.5 rounded-xl px-3 py-2.5 text-sm font-bold text-orange-400! hover:bg-orange-500/10 hover:text-orange-300! transition-all ${
+          active ? "bg-orange-500/20 border border-orange-500/40" : ""
+        }`
+      : `flex items-center gap-3.5 rounded-xl px-3 py-2.5 text-sm transition-colors ${
+          active
+            ? "bg-violet-500 font-medium text-white! shadow-lg shadow-violet-500/25"
+            : "text-zinc-400! hover:bg-white/5 hover:text-white!"
+        }`;
 
   return (
     <aside
@@ -92,13 +102,13 @@ export default function Sidebar({ isOpen, toggleSidebar }: SidebarProps) {
         </div>
 
         <nav className="flex flex-1 flex-col gap-1.5">
-          {navItems.map(({ href, label, Icon }) => (
+          {navItems.map(({ href, label, Icon, isOrange }) => (
             <Link
               key={href}
               href={href}
               onClick={toggleSidebar}
               aria-current={isActive(href) ? "page" : undefined}
-              className={itemClass(isActive(href))}
+              className={itemClass(isActive(href), isOrange)}
             >
               <Icon className="shrink-0 text-xl" />
               {label}

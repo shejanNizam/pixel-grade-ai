@@ -7,7 +7,7 @@ import {
 import { getApiErrorMessage } from "@/utils/apiError";
 import { App } from "antd";
 import { useState } from "react";
-import { FiDownload, FiFileText, FiImage, FiShoppingBag, FiTag } from "react-icons/fi";
+import { FiFileText, FiImage, FiShoppingBag, FiTag } from "react-icons/fi";
 import type { GradedCard, SlabSpec } from "./data";
 import OrderSlabModal from "./OrderSlabModal";
 
@@ -132,7 +132,8 @@ export default function ExportBar({
               Order Physical Custom Slab
             </h3>
             <p className="mt-1 text-xs text-zinc-300">
-              Get this exact slab design produced in-house and shipped directly to your address.
+              Get this exact slab design produced in-house and shipped directly
+              to your address.
             </p>
           </div>
 
@@ -143,32 +144,8 @@ export default function ExportBar({
             className="inline-flex items-center gap-2 rounded-full bg-linear-to-r from-amber-400 to-amber-500 px-6 py-2.5 text-xs font-semibold text-black transition-transform hover:scale-102 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
           >
             <FiShoppingBag size={14} />
-            Order Physical Slab ($24.99)
+            Order Physical Slab ($5.99)
           </button>
-        </div>
-      </div>
-
-      {/* ---- Full slab, card window left blank ---- */}
-      <div className="rounded-2xl border border-white/10 bg-[#111113] p-4">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <h3 className="flex items-center gap-2 text-sm font-medium text-white">
-              <FiDownload size={14} className="text-violet-400" />
-              Print-ready export — full slab
-            </h3>
-            <p className="mt-1 text-[11px] text-zinc-500 tabular-nums">
-              {spec.widthMm} × {spec.heightMm} mm + {spec.bleedMm} mm bleed ·{" "}
-              {widthPx} × {heightPx} px @ {EXPORT_DPI} DPI
-            </p>
-            {/* The preview shows the card in the window; this file does not.
-                Saying so here is what stops it being reported as a bug. */}
-            <p className="mt-1.5 text-[11px] text-zinc-400">
-              The card window is left blank so the press prints only the slab
-              artwork around your card.
-            </p>
-          </div>
-
-          {buttons("print")}
         </div>
       </div>
 

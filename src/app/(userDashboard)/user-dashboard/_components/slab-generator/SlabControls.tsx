@@ -97,82 +97,99 @@ export default function SlabControls({
         )}
       </section>
 
-      {/* ---- Background artwork: the four EXT. ART options ---- */}
-      <section>
-        <h3 className="text-sm font-medium text-white">Background artwork</h3>
-        <p className="mt-1 text-[11px] text-zinc-500">
-          Choose the extended artwork that best matches your card.
-        </p>
-
-        <div className="mt-3 grid grid-cols-2 gap-2">
-          {variants.length === 0
-            ? // Nothing generated yet (or a batch in flight). Four skeletons
-              // rather than an empty gap, so the grid does not reflow when the
-              // artwork lands.
-              Array.from({ length: EXT_ART_COUNT }, (_, i) => (
-                <div
-                  key={i}
-                  className="overflow-hidden rounded-xl border border-white/10 bg-[#0d0d0f] p-1.5"
-                >
-                  <div
-                    className={`aspect-4/5 w-full rounded-md bg-white/5 ${
-                      generating ? "animate-pulse" : ""
-                    }`}
-                  />
-                  <span className="mt-1.5 block text-[10px] tracking-wider text-zinc-600">
-                    EXT. ART {i + 1}
-                  </span>
-                </div>
-              ))
-            : variants.map((variant) => {
-                const active = variant.index === selectedVariant;
-                return (
-                  <button
-                    key={variant.index}
-                    type="button"
-                    onClick={() => onVariantSelect(variant.index)}
-                    disabled={generating || selecting}
-                    aria-pressed={active}
-                    aria-label={`Use EXT. ART ${variant.index}`}
-                    className={`overflow-hidden rounded-xl border p-1.5 text-left transition-colors disabled:cursor-not-allowed ${
-                      active
-                        ? "border-violet-500 bg-violet-500/10"
-                        : "border-white/10 bg-[#0d0d0f] hover:border-white/25"
-                    }`}
-                  >
-                    {/* The ARTWORK only. The client was explicit that
-                        thumbnails must not contain the Pokémon or the card —
-                        so this is `artworkUrl`, never `compositeUrl`. */}
-                    <Image
-                      src={variant.artworkUrl}
-                      alt=""
-                      width={160}
-                      height={200}
-                      unoptimized
-                      className="aspect-4/5 w-full rounded-md object-cover"
-                    />
-                    <span
-                      className={`mt-1.5 block text-[10px] tracking-wider ${
-                        active ? "text-white" : "text-zinc-400"
-                      }`}
-                    >
-                      EXT. ART {variant.index}
-                    </span>
-                  </button>
-                );
-              })}
+      {/* ---- Generate Label Section ---- */}
+      <section className="rounded-xl border border-violet-500/30 bg-violet-500/10 p-4 space-y-3">
+        <div>
+          <h3 className="text-xs font-bold text-white flex items-center gap-1.5">
+            <FiRefreshCw className="text-violet-400" /> Custom Slab Label
+          </h3>
+          <p className="text-[11px] text-zinc-400 mt-0.5">
+            Generate or refresh the custom 70 × 20 mm grading label for {card.name}.
+          </p>
         </div>
-
         <button
           type="button"
           onClick={onRegenerate}
           disabled={generating || selecting}
-          className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-white/15 bg-white/5 py-2.5 text-xs font-medium text-zinc-200 transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
+          className="w-full flex items-center justify-center gap-2 rounded-xl bg-violet-600 py-2.5 text-xs font-bold text-white transition-all hover:bg-violet-500 shadow-md shadow-violet-600/30 disabled:opacity-50 cursor-pointer"
         >
-          <FiRefreshCw size={13} className={generating ? "animate-spin" : ""} />
-          {generating ? "Generating…" : "Regenerate artwork"}
+          <FiRefreshCw size={14} className={generating ? "animate-spin" : ""} />
+          <span>{generating ? "Generating Label…" : "Generate Label"}</span>
         </button>
       </section>
+
+      {/* ---- Background artwork: disabled for initial launch per client instructions (LABEL-ONLY) ---- */}
+      {false && (
+        <section>
+          <h3 className="text-sm font-medium text-white">Background artwork</h3>
+          <p className="mt-1 text-[11px] text-zinc-500">
+            Choose the extended artwork that best matches your card.
+          </p>
+
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            {variants.length === 0
+              ? Array.from({ length: EXT_ART_COUNT }, (_, i) => (
+                  <div
+                    key={i}
+                    className="overflow-hidden rounded-xl border border-white/10 bg-[#0d0d0f] p-1.5"
+                  >
+                    <div
+                      className={`aspect-4/5 w-full rounded-md bg-white/5 ${
+                        generating ? "animate-pulse" : ""
+                      }`}
+                    />
+                    <span className="mt-1.5 block text-[10px] tracking-wider text-zinc-600">
+                      EXT. ART {i + 1}
+                    </span>
+                  </div>
+                ))
+              : variants.map((variant) => {
+                  const active = variant.index === selectedVariant;
+                  return (
+                    <button
+                      key={variant.index}
+                      type="button"
+                      onClick={() => onVariantSelect(variant.index)}
+                      disabled={generating || selecting}
+                      aria-pressed={active}
+                      aria-label={`Use EXT. ART ${variant.index}`}
+                      className={`overflow-hidden rounded-xl border p-1.5 text-left transition-colors disabled:cursor-not-allowed ${
+                        active
+                          ? "border-violet-500 bg-violet-500/10"
+                          : "border-white/10 bg-[#0d0d0f] hover:border-white/25"
+                      }`}
+                    >
+                      <Image
+                        src={variant.artworkUrl}
+                        alt=""
+                        width={160}
+                        height={200}
+                        unoptimized
+                        className="aspect-4/5 w-full rounded-md object-cover"
+                      />
+                      <span
+                        className={`mt-1.5 block text-[10px] tracking-wider ${
+                          active ? "text-white" : "text-zinc-400"
+                        }`}
+                      >
+                        EXT. ART {variant.index}
+                      </span>
+                    </button>
+                  );
+                })}
+          </div>
+
+          <button
+            type="button"
+            onClick={onRegenerate}
+            disabled={generating || selecting}
+            className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-white/15 bg-white/5 py-2.5 text-xs font-medium text-zinc-200 transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <FiRefreshCw size={13} className={generating ? "animate-spin" : ""} />
+            {generating ? "Generating…" : "Regenerate artwork"}
+          </button>
+        </section>
+      )}
 
       {/* ---- Print ---- */}
       <section>

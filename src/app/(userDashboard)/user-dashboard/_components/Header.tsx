@@ -130,7 +130,7 @@ export default function Header({ toggleSidebar }: HeaderProps) {
 
         <HeaderProfile
           href="/user-dashboard/settings/profile"
-          subtitle="My Profile"
+          subtitle="Settings"
           links={[
             {
               href: "/user-dashboard/creator-profile",
@@ -138,11 +138,7 @@ export default function Header({ toggleSidebar }: HeaderProps) {
             },
             { href: "/user-dashboard/subscription", label: "Subscription" },
             { href: "/user-dashboard/support", label: "Support" },
-            { href: "/user-dashboard/settings/profile", label: "My Profile" },
-            {
-              href: "/user-dashboard/settings/change-password",
-              label: "Change Password",
-            },
+            { href: "/user-dashboard/settings/profile", label: "Settings" },
             {
               label: "Sign out",
               danger: true,
