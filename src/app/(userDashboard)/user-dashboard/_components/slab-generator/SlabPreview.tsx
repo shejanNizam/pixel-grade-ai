@@ -227,7 +227,7 @@ export default function SlabPreview({
 
           <div className="w-px shrink-0 self-stretch bg-white/20" />
 
-          <div className="flex min-w-0 flex-1 flex-col justify-start">
+          <div className="flex min-w-0 flex-1 flex-col justify-start pl-2.5">
             <p className="truncate font-serif text-[9px] leading-none font-bold text-white">
               {card.name}
             </p>
