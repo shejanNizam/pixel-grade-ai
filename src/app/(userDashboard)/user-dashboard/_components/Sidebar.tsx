@@ -31,11 +31,6 @@ const navItems = [
     Icon: MdOutlineAutoAwesome,
   },
   {
-    href: "/user-dashboard/slab-orders",
-    label: "My Slab Orders",
-    Icon: FiShoppingBag,
-  },
-  {
     href: "/user-dashboard/my-collection",
     label: "My Collection",
     Icon: MdOutlineCollectionsBookmark,
@@ -44,6 +39,11 @@ const navItems = [
     href: "/user-dashboard/price-tracker",
     label: "Price Tracker",
     Icon: MdOutlineInsertChart,
+  },
+  {
+    href: "/user-dashboard/slab-orders",
+    label: "My Slab Orders",
+    Icon: FiShoppingBag,
   },
   {
     href: "/pixelscope",

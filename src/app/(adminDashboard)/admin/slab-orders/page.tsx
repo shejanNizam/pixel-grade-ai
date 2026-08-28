@@ -18,12 +18,11 @@ import type { ColumnsType } from "antd/es/table";
 import { useState } from "react";
 import { FiDownload, FiFileText, FiPrinter, FiTruck } from "react-icons/fi";
 
-const STATUS_COLOR: Record<TSlabOrderStatus, string> = {
+const STATUS_COLOR: Partial<Record<TSlabOrderStatus, string>> = {
   order_received: "blue",
   processing: "gold",
   ready_to_ship: "cyan",
   shipped: "purple",
-  in_transit: "indigo",
   delivered: "green",
   shipping_exception: "volcano",
   shipping_error: "red",
@@ -66,26 +65,22 @@ export default function AdminSlabOrdersPage() {
     }
   };
 
-  const handleDownload = async (labelId: string, kind: "print" | "label") => {
-    const key = `${kind}-${labelId}`;
+  const handleDownload = async (labelId: string, format: "png" | "pdf") => {
+    const key = `${format}-${labelId}`;
     setDownloadingKey(key);
     try {
-      const run = kind === "print" ? exportPrint : exportLabel;
-      const blob = await run({ labelId, format: "pdf" }).unwrap();
+      const blob = await exportLabel({ labelId, format }).unwrap();
 
       const url = URL.createObjectURL(blob);
       const anchor = document.createElement("a");
       anchor.href = url;
-      anchor.download =
-        kind === "print"
-          ? `slab_print_${labelId}.pdf`
-          : `label_only_${labelId}.pdf`;
+      anchor.download = `label_only_${labelId}.${format}`;
       document.body.appendChild(anchor);
       anchor.click();
       anchor.remove();
       setTimeout(() => URL.revokeObjectURL(url), 10_000);
     } catch (err) {
-      message.error(getApiErrorMessage(err, "Couldn't download print file."));
+      message.error(getApiErrorMessage(err, "Couldn't download label file."));
     } finally {
       setDownloadingKey(null);
     }
@@ -212,25 +207,25 @@ export default function AdminSlabOrdersPage() {
               ? record.slab._id
               : (firstItemSlab as string | undefined);
         if (!labelId) return <span className="text-xs text-zinc-500">N/A</span>;
-        const printBusy = downloadingKey === `print-${labelId}`;
-        const labelBusy = downloadingKey === `label-${labelId}`;
+        const pngBusy = downloadingKey === `png-${labelId}`;
+        const pdfBusy = downloadingKey === `pdf-${labelId}`;
         return (
           <div className="flex flex-col gap-1.5">
             <button
               type="button"
-              disabled={printBusy || labelBusy}
-              onClick={() => handleDownload(labelId, "print")}
+              disabled={pngBusy || pdfBusy}
+              onClick={() => handleDownload(labelId, "png")}
               className="inline-flex items-center gap-1 rounded border border-violet-500/30 bg-violet-500/10 px-2 py-1 text-[11px] font-medium text-violet-300 transition-colors hover:bg-violet-500/20 disabled:opacity-50 cursor-pointer"
             >
-              <FiDownload size={11} /> {printBusy ? "Building…" : "Slab Print PDF"}
+              <FiDownload size={11} /> {pngBusy ? "Building…" : "Label PNG"}
             </button>
             <button
               type="button"
-              disabled={printBusy || labelBusy}
-              onClick={() => handleDownload(labelId, "label")}
+              disabled={pngBusy || pdfBusy}
+              onClick={() => handleDownload(labelId, "pdf")}
               className="inline-flex items-center gap-1 rounded border border-white/15 bg-white/5 px-2 py-1 text-[11px] font-medium text-zinc-300 transition-colors hover:bg-white/10 disabled:opacity-50 cursor-pointer"
             >
-              <FiFileText size={11} /> {labelBusy ? "Building…" : "Label Only PDF"}
+              <FiFileText size={11} /> {pdfBusy ? "Building…" : "Label PDF"}
             </button>
           </div>
         );
@@ -283,13 +278,13 @@ export default function AdminSlabOrdersPage() {
       title: "Action",
       key: "action",
       render: (_, record) => (
-        <Button
-          size="small"
+        <button
+          type="button"
           onClick={() => handleOpenStatusModal(record)}
-          className="!rounded-lg !border-white/20 !bg-white/5 !text-xs !text-zinc-200 hover:!bg-white/10"
+          className="inline-flex items-center gap-1 rounded border border-white/15 bg-white/5 px-2.5 py-1 text-xs font-medium text-white transition-colors hover:bg-white/10 cursor-pointer"
         >
           Update Status
-        </Button>
+        </button>
       ),
     },
   ];
@@ -310,7 +305,6 @@ export default function AdminSlabOrdersPage() {
             { label: "Processing", value: "processing" },
             { label: "Ready to Ship", value: "ready_to_ship" },
             { label: "Shipped", value: "shipped" },
-            { label: "In Transit", value: "in_transit" },
             { label: "Delivered", value: "delivered" },
           ]}
         />
@@ -362,7 +356,6 @@ export default function AdminSlabOrdersPage() {
                 { label: "Processing", value: "processing" },
                 { label: "Ready to Ship", value: "ready_to_ship" },
                 { label: "Shipped", value: "shipped" },
-                { label: "In Transit", value: "in_transit" },
                 { label: "Delivered", value: "delivered" },
               ]}
             />

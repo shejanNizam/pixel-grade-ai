@@ -905,7 +905,7 @@ export default function PixelScopeHero() {
                 <input
                   type="text"
                   required
-                  placeholder="112 Commercial Ct"
+                  placeholder="123 Main St"
                   value={shippingAddress.streetAddress}
                   onChange={(e) =>
                     setShippingAddress({
@@ -925,7 +925,7 @@ export default function PixelScopeHero() {
                   <input
                     type="text"
                     required
-                    placeholder="Santa Rosa"
+                    placeholder="Springfield"
                     value={shippingAddress.city}
                     onChange={(e) =>
                       setShippingAddress({
@@ -943,7 +943,7 @@ export default function PixelScopeHero() {
                   <input
                     type="text"
                     required
-                    placeholder="CA"
+                    placeholder="IL"
                     value={shippingAddress.state}
                     onChange={(e) =>
                       setShippingAddress({
@@ -961,7 +961,7 @@ export default function PixelScopeHero() {
                   <input
                     type="text"
                     required
-                    placeholder="95407"
+                    placeholder="62701"
                     value={shippingAddress.postalCode}
                     onChange={(e) =>
                       setShippingAddress({

@@ -191,13 +191,11 @@ export default function SlabControls({
         </section>
       )}
 
-      {/* ---- Print ---- */}
+      {/* ---- Slab Size & Controls ---- */}
       <section>
-        <h3 className="text-sm font-medium text-white">Print</h3>
-
         <label
           htmlFor="slab-size"
-          className="mt-3 mb-1.5 block text-[11px] text-zinc-400"
+          className="mb-1.5 block text-[11px] text-zinc-400"
         >
           Slab size
         </label>

@@ -210,7 +210,7 @@ export default function CheckoutPage() {
                 <FiMapPin className="text-violet-400" /> Enter Shipping Address
               </h3>
               <p className="text-xs text-zinc-400">
-                Addresses are validated live by Shippo to ensure accurate USPS Ground delivery.
+                Addresses are verified to ensure accurate USPS Ground delivery.
               </p>
 
               <div className="space-y-3 pt-2">
@@ -231,7 +231,7 @@ export default function CheckoutPage() {
                   <input
                     type="text"
                     required
-                    placeholder="112 Commercial Ct"
+                    placeholder="123 Main St"
                     value={address.street1}
                     onChange={(e) => setAddress({ ...address, street1: e.target.value })}
                     className="w-full rounded-xl border border-white/10 bg-black/50 px-3.5 py-2.5 text-xs text-white placeholder-zinc-600 focus:border-violet-500 focus:outline-none"
@@ -242,7 +242,7 @@ export default function CheckoutPage() {
                   <label className="block text-xs text-zinc-400 mb-1">Apt, Suite, Unit (Optional)</label>
                   <input
                     type="text"
-                    placeholder="Ste 25"
+                    placeholder="Apt 4B"
                     value={address.street2}
                     onChange={(e) => setAddress({ ...address, street2: e.target.value })}
                     className="w-full rounded-xl border border-white/10 bg-black/50 px-3.5 py-2.5 text-xs text-white placeholder-zinc-600 focus:border-violet-500 focus:outline-none"
@@ -255,7 +255,7 @@ export default function CheckoutPage() {
                     <input
                       type="text"
                       required
-                      placeholder="Santa Rosa"
+                      placeholder="Springfield"
                       value={address.city}
                       onChange={(e) => setAddress({ ...address, city: e.target.value })}
                       className="w-full rounded-xl border border-white/10 bg-black/50 px-3.5 py-2.5 text-xs text-white placeholder-zinc-600 focus:border-violet-500 focus:outline-none"
@@ -266,7 +266,7 @@ export default function CheckoutPage() {
                     <input
                       type="text"
                       required
-                      placeholder="CA"
+                      placeholder="IL"
                       value={address.state}
                       onChange={(e) => setAddress({ ...address, state: e.target.value })}
                       className="w-full rounded-xl border border-white/10 bg-black/50 px-3.5 py-2.5 text-xs text-white placeholder-zinc-600 focus:border-violet-500 focus:outline-none"
@@ -277,7 +277,7 @@ export default function CheckoutPage() {
                     <input
                       type="text"
                       required
-                      placeholder="95407"
+                      placeholder="62701"
                       value={address.zip}
                       onChange={(e) => setAddress({ ...address, zip: e.target.value })}
                       className="w-full rounded-xl border border-white/10 bg-black/50 px-3.5 py-2.5 text-xs text-white placeholder-zinc-600 focus:border-violet-500 focus:outline-none"
@@ -303,7 +303,7 @@ export default function CheckoutPage() {
                   className="w-full flex items-center justify-center gap-2 rounded-full bg-violet-600 py-3 text-xs font-semibold text-white transition-colors hover:bg-violet-500 disabled:opacity-50 cursor-pointer"
                 >
                   <FiTruck size={14} />
-                  {isCalculatingRates ? "Validating & Calculating Rates..." : "Continue to Payment"}
+                  {isCalculatingRates ? "Calculating Rates..." : "Continue to Payment"}
                 </button>
               </div>
             </form>
@@ -313,7 +313,7 @@ export default function CheckoutPage() {
               <div className="flex items-center justify-between border-b border-white/10 pb-4">
                 <div>
                   <h3 className="flex items-center gap-2 text-base font-semibold text-white">
-                    <FiCheckCircle className="text-emerald-400" /> Shipping Address Confirmed
+                    <FiMapPin className="text-violet-400" /> Shipping Address
                   </h3>
                   <p className="mt-1 text-xs text-zinc-300">
                     {address.name} — {address.street1} {address.street2}, {address.city}, {address.state} {address.zip}
@@ -322,16 +322,36 @@ export default function CheckoutPage() {
                 <button
                   type="button"
                   onClick={() => setStep(1)}
-                  className="text-xs text-violet-400 hover:underline cursor-pointer"
+                  className="text-xs text-violet-400 hover:underline cursor-pointer font-medium"
                 >
                   Edit
                 </button>
               </div>
 
-              {shippoValidated && (
-                <div className="flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3.5 py-2.5 text-xs text-emerald-300">
-                  <FiCheckCircle className="shrink-0" />
-                  <span>Shippo Validated Address · USPS Ground Advantage Offered (${shippingFee.toFixed(2)})</span>
+              {shippoValidated ? (
+                <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3.5 flex items-start gap-3 text-xs text-emerald-300">
+                  <FiCheckCircle size={18} className="text-emerald-400 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-semibold text-emerald-300">Address Verified</p>
+                    <p className="text-[11px] text-emerald-400/80 mt-0.5">We&apos;ve verified this address and delivery is available.</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-3.5 space-y-2.5 text-xs text-amber-300">
+                  <div className="flex items-start gap-2 font-semibold text-amber-300">
+                    <FiCheckCircle size={16} className="shrink-0 mt-0.5 text-amber-400" />
+                    <span>We couldn&apos;t verify this address. Please review it before continuing.</span>
+                  </div>
+                  <p className="text-[11px] text-amber-400/80 pl-6">Double-check the address or edit it for accurate delivery.</p>
+                  <div className="flex items-center gap-2 pt-1 pl-6">
+                    <button
+                      type="button"
+                      onClick={() => setStep(1)}
+                      className="rounded-lg border border-amber-500/40 bg-amber-500/20 px-3 py-1.5 text-xs font-medium text-amber-200 hover:bg-amber-500/30 cursor-pointer"
+                    >
+                      Edit Address
+                    </button>
+                  </div>
                 </div>
               )}
 

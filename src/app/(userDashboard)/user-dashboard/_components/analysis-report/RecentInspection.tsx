@@ -227,9 +227,9 @@ export default function RecentInspection() {
 
           <button
             type="button"
-            onClick={() => router.push("/user-dashboard/slab-generator")}
+            onClick={() => router.push(`/user-dashboard/slab-generator?reportId=${report._id}`)}
             aria-label={`Create a custom slab label for ${name}`}
-            className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-violet-500/40 bg-violet-500/10 py-2 text-xs font-medium text-violet-300 transition-colors hover:bg-violet-500/20"
+            className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-violet-500/40 bg-violet-500/10 py-2 text-xs font-medium text-violet-300 transition-colors hover:bg-violet-500/20 cursor-pointer"
           >
             <MdAutoAwesome size={13} />
             Create slab
