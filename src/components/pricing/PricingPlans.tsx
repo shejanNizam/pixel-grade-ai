@@ -2,7 +2,6 @@
 
 import {
   BILLING_PERIODS,
-  creditsToScans,
   formatCredits,
   getPlan,
   monthlyPrice,
@@ -153,15 +152,15 @@ export default function PricingPlans({ ctaHref, onSelect }: PricingPlansProps) {
         )}
 
         <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-4 py-1.5 text-xs font-semibold text-emerald-400">
-          <span>🎁 30-Day Free Trial Included</span>
+          <span>🎁 30-Day Free Trial for Collector</span>
           <span className="text-zinc-400">• Card required • Cancel anytime</span>
         </div>
       </div>
 
       <div className="mx-auto mt-12 grid max-w-6xl gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {plans.map((plan) => {
-          const scans = creditsToScans(plan.credits);
           const isPaid = plan.price > 0;
+          const isCollector = plan.name === "Collector";
           // On yearly, spell out the real up-front charge and the saving so the
           // "/per month" figure isn't mistaken for a monthly bill.
           const showYearly = billing === "yearly" && isPaid;
@@ -210,19 +209,16 @@ export default function PricingPlans({ ctaHref, onSelect }: PricingPlansProps) {
                       <span className="text-emerald-400"> · save ${saved}</span>
                     )}
                   </>
-                ) : isPaid ? (
-                  <span className="text-emerald-400 font-medium">$0 due today · 30 days free</span>
+                ) : isCollector ? (
+                  <span className="text-emerald-400 font-medium">30-Day Free Trial</span>
                 ) : (
                   " "
                 )}
               </p>
 
-              {/* Credits are the metered term the plan actually sells. */}
+              {/* Credits are the metered term the plan actually sells (scan equivalents removed per client request). */}
               <p className="mt-2 text-xs font-medium text-violet-300">
                 {formatCredits(plan.credits, plan.creditInterval)}
-                {scans !== null && (
-                  <span className="text-zinc-500"> · ≈ {scans} scans</span>
-                )}
               </p>
 
               <ul className="mt-6 flex-1 space-y-3">
@@ -248,7 +244,11 @@ export default function PricingPlans({ ctaHref, onSelect }: PricingPlansProps) {
                 }
                 className="mt-10 py-2.5! pr-2.5!"
               >
-                {isPaid ? "Start 30-Day Free Trial" : "Get Started"}
+                {isCollector
+                  ? "Start 30-Day Free Trial"
+                  : isPaid
+                    ? `Upgrade to ${plan.name}`
+                    : "Get Started"}
               </PillButton>
             </article>
           );

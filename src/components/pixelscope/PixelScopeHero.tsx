@@ -104,16 +104,6 @@ const includedItems = [
     qty: "x1",
     icon: "/assets/pixelscope/pixelscope_image_seven.PNG",
   },
-  {
-    name: "Cleaning Cloth",
-    qty: "x1",
-    icon: "/assets/pixelscope/pixelscope_image_seven.PNG",
-  },
-  {
-    name: "Storage Pouch",
-    qty: "x1",
-    icon: "/assets/pixelscope/pixelscope_image_seven.PNG",
-  },
 ];
 
 const UNIT_PRICE = 69.99;
@@ -350,7 +340,7 @@ export default function PixelScopeHero() {
               propagates up through the flex row to this grid item. */}
           <div className="min-w-0 lg:col-span-7 space-y-3 sm:space-y-4">
             {/* Main Image Container */}
-            <div className="relative aspect-square w-full overflow-hidden rounded-2xl sm:rounded-3xl border border-white/10 bg-linear-to-b from-zinc-900/90 to-black p-2 shadow-2xl shadow-purple-950/20">
+            <div className="relative aspect-square w-full overflow-hidden rounded-2xl sm:rounded-3xl border border-white/10 bg-linear-to-b from-zinc-900/90 to-black p-2 shadow-2xl shadow-purple-950/20 group">
               {/* `fill` with no `sizes` defaults to `100vw`, so a 320 px phone
                   was told to pick the widest entry in the srcset and downloaded
                   the desktop asset — on the LCP image of a shopping page. Below
@@ -367,6 +357,32 @@ export default function PixelScopeHero() {
               <span className="absolute top-3 left-3 sm:top-4 sm:left-4 rounded-full bg-purple-600/90 px-3 py-1 text-[11px] sm:text-xs font-semibold text-white shadow-lg backdrop-blur-md">
                 ★ Best for Card Collectors
               </span>
+
+              {/* Main Image Overlay Left & Right Navigation Arrows */}
+              <button
+                type="button"
+                onClick={() =>
+                  setActiveImageIndex((prev) =>
+                    prev > 0 ? prev - 1 : galleryImages.length - 1,
+                  )
+                }
+                aria-label="Previous product image"
+                className="absolute left-3 top-1/2 -translate-y-1/2 flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-full border border-white/20 bg-black/60 text-white shadow-xl backdrop-blur-md transition-all hover:bg-purple-600 hover:border-purple-400 hover:scale-110 active:scale-95 cursor-pointer z-10"
+              >
+                <FiChevronLeft size={20} />
+              </button>
+              <button
+                type="button"
+                onClick={() =>
+                  setActiveImageIndex((prev) =>
+                    prev < galleryImages.length - 1 ? prev + 1 : 0,
+                  )
+                }
+                aria-label="Next product image"
+                className="absolute right-3 top-1/2 -translate-y-1/2 flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-full border border-white/20 bg-black/60 text-white shadow-xl backdrop-blur-md transition-all hover:bg-purple-600 hover:border-purple-400 hover:scale-110 active:scale-95 cursor-pointer z-10"
+              >
+                <FiChevronRight size={20} />
+              </button>
             </div>
 
             {/* Thumbnail rail.

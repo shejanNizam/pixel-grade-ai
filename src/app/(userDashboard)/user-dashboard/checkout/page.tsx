@@ -351,6 +351,14 @@ export default function CheckoutPage() {
                     >
                       Edit Address
                     </button>
+                    <button
+                      type="button"
+                      onClick={() => setShippoValidated(true)}
+                      className="rounded-lg border border-violet-500/40 bg-violet-600/30 px-3 py-1.5 text-xs font-medium text-violet-200 hover:bg-violet-600/50 cursor-pointer flex items-center gap-1"
+                    >
+                      <FiCheckCircle size={12} className="text-violet-300" />
+                      Use Address Anyway
+                    </button>
                   </div>
                 </div>
               )}

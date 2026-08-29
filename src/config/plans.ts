@@ -88,8 +88,7 @@ export const planCatalog: PlanDefinition[] = [
       "No Pixel Verified badge",
     ],
     popular: false,
-    // 5 scans/day
-    credits: 5 * CREDITS_PER_SCAN,
+    credits: 20,
     creditInterval: "daily",
     pixelscope: false,
   },
@@ -109,8 +108,7 @@ export const planCatalog: PlanDefinition[] = [
       "Order custom slab labels",
     ],
     popular: true,
-    // 600 scans/month = 3,000 credits
-    credits: 600 * CREDITS_PER_SCAN,
+    credits: 1500,
     creditInterval: "monthly",
     pixelscope: true,
   },
@@ -130,8 +128,7 @@ export const planCatalog: PlanDefinition[] = [
       "Priority support",
     ],
     popular: false,
-    // 1,500 scans/month = 7,500 credits
-    credits: 1500 * CREDITS_PER_SCAN,
+    credits: 4000,
     creditInterval: "monthly",
     pixelscope: true,
   },
@@ -151,7 +148,7 @@ export const planCatalog: PlanDefinition[] = [
       "Priority feature requests",
     ],
     popular: false,
-    credits: null,
+    credits: 25000,
     creditInterval: "monthly",
     pixelscope: true,
   },

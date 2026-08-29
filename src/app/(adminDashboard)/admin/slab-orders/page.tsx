@@ -20,9 +20,8 @@ import { FiDownload, FiFileText, FiPrinter, FiTruck } from "react-icons/fi";
 
 const STATUS_COLOR: Partial<Record<TSlabOrderStatus, string>> = {
   order_received: "blue",
-  processing: "gold",
   ready_to_ship: "cyan",
-  shipped: "purple",
+  in_transit: "purple",
   delivered: "green",
   shipping_exception: "volcano",
   shipping_error: "red",
@@ -302,9 +301,8 @@ export default function AdminSlabOrdersPage() {
           className="w-52 [&_.ant-select-selector]:!rounded-full [&_.ant-select-selector]:!border-zinc-800 [&_.ant-select-selector]:!bg-zinc-950 [&_.ant-select-selection-item]:!text-white"
           options={[
             { label: "Order Received", value: "order_received" },
-            { label: "Processing", value: "processing" },
             { label: "Ready to Ship", value: "ready_to_ship" },
-            { label: "Shipped", value: "shipped" },
+            { label: "In Transit", value: "in_transit" },
             { label: "Delivered", value: "delivered" },
           ]}
         />
@@ -353,9 +351,8 @@ export default function AdminSlabOrdersPage() {
               className="w-full"
               options={[
                 { label: "Order Received", value: "order_received" },
-                { label: "Processing", value: "processing" },
                 { label: "Ready to Ship", value: "ready_to_ship" },
-                { label: "Shipped", value: "shipped" },
+                { label: "In Transit", value: "in_transit" },
                 { label: "Delivered", value: "delivered" },
               ]}
             />

@@ -13,6 +13,7 @@ import { App } from "antd";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useMemo, useState } from "react";
+import CreditBalanceCard from "../_components/new-analysis/CreditBalanceCard";
 import ExportBar from "../_components/slab-generator/ExportBar";
 import SlabControls from "../_components/slab-generator/SlabControls";
 import SlabPreview from "../_components/slab-generator/SlabPreview";
@@ -98,43 +99,40 @@ function SlabGeneratorScreen() {
    */
   const requestedMissing =
     !isLoading &&
-    !cardId &&
-    !!requestedReportId &&
+    Boolean(requestedReportId) &&
     !cards.some((c) => c.id === requestedReportId);
 
   const label = card ? labels[card.id] : undefined;
-
+  const composite = label?.compositeUrl;
   const variants = label?.variants ?? [];
   const selectedVariant = label?.selectedVariant;
-  const composite = label?.compositeUrl;
 
-  /**
-   * Produces the four EXT. ART options.
-   *
-   * ⚠️ FOUR billed image generations per press, both on first generate and on
-   * every regenerate. It is triggered by an explicit user action on this
-   * screen — deliberately NOT on scan — so a scan that never becomes a slab
-   * order costs nothing in artwork.
-   */
-  const generate = async () => {
+  const handleGenerate = async () => {
     if (!card || generating) return;
     setGenerating(true);
     try {
-      // First press creates the label and its four options; after that,
-      // regenerate throws them away and produces four completely new ones.
-      const next = label
-        ? await regenerateLabel({ labelId: label._id }).unwrap()
-        : await createLabel({ reportId: card.id }).unwrap();
-
-      setLabels((current) => ({ ...current, [card.id]: next }));
-      message.success(
-        label
-          ? "Four new artwork options generated."
-          : "Slab label generated — pick your artwork.",
-      );
+      const created = await createLabel({ reportId: card.id }).unwrap();
+      setLabels((current) => ({ ...current, [card.id]: created }));
+      message.success("Generated artwork for " + card.name + "!");
     } catch (err) {
       message.error(
-        getApiErrorMessage(err, "Couldn't generate the slab. Try again."),
+        getApiErrorMessage(err, "Couldn't generate artwork. Try again."),
+      );
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const handleRegenerate = async () => {
+    if (!card || !label || generating) return;
+    setGenerating(true);
+    try {
+      const updated = await regenerateLabel({ labelId: label._id }).unwrap();
+      setLabels((current) => ({ ...current, [card.id]: updated }));
+      message.success("Generated new artwork variant!");
+    } catch (err) {
+      message.error(
+        getApiErrorMessage(err, "Couldn't regenerate artwork. Try again."),
       );
     } finally {
       setGenerating(false);
@@ -168,12 +166,15 @@ function SlabGeneratorScreen() {
   if (!isLoading && cards.length === 0) {
     return (
       <div className="space-y-8">
-        <div>
-          <h2 className="text-2xl font-medium text-white">Slab Generator</h2>
-          <p className="mt-1.5 text-xs text-zinc-500">
-            Create a custom, print-ready slab label. The card and label stay
-            fixed — AI generates the artwork around them.
-          </p>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h2 className="text-2xl font-medium text-white">Slab Generator</h2>
+            <p className="mt-1.5 text-xs text-zinc-500">
+              Create a custom, print-ready slab label. The card and label stay
+              fixed — AI generates the artwork around them.
+            </p>
+          </div>
+          <CreditBalanceCard />
         </div>
 
         <div className="rounded-2xl border border-dashed border-violet-500/40 bg-[#111113] px-6 py-12 text-center">
@@ -193,12 +194,15 @@ function SlabGeneratorScreen() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h2 className="text-2xl font-medium text-white">Slab Generator</h2>
-        <p className="mt-1.5 text-xs text-zinc-500">
-          Create a custom, print-ready slab label. The card and label stay fixed
-          — AI generates the artwork around them.
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-medium text-white">Slab Generator</h2>
+          <p className="mt-1.5 text-xs text-zinc-500">
+            Create a custom, print-ready slab label. The card and label stay fixed
+            — AI generates the artwork around them.
+          </p>
+        </div>
+        <CreditBalanceCard />
       </div>
 
       {requestedMissing && (
@@ -287,7 +291,7 @@ function SlabGeneratorScreen() {
             onVariantSelect={selectVariant}
             onSpecChange={setSpec}
             onBleedChange={setShowBleed}
-            onRegenerate={generate}
+            onRegenerate={label ? handleRegenerate : handleGenerate}
           />
         </div>
       )}
