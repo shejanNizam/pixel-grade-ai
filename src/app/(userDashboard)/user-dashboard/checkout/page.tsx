@@ -45,7 +45,7 @@ export default function CheckoutPage() {
   const [shippoRateId, setShippoRateId] = useState<string | undefined>(undefined);
   const [shippoValidated, setShippoValidated] = useState(false);
 
-  const subtotal = items.reduce((sum, i) => sum + (i.price || 5.99) * (i.quantity || 1), 0);
+  const subtotal = items.reduce((sum, i) => sum + (i.price || 0.99) * (i.quantity || 1), 0);
   const shippingFee = subtotal >= 50 ? 0 : (validatedRate ?? 5.95);
   const taxAmount = Number((subtotal * TAX_RATE).toFixed(2));
   const totalAmount = Number((subtotal + shippingFee + taxAmount).toFixed(2));

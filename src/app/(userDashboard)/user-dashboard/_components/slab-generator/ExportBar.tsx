@@ -28,11 +28,6 @@ interface ExportBarProps {
   labelHeightMm?: number;
 }
 
-/** mm -> pixels at the export DPI, including bleed on both edges. */
-function pxWithBleed(mm: number, bleedMm: number) {
-  return Math.round(((mm + bleedMm * 2) / MM_PER_INCH) * EXPORT_DPI);
-}
-
 /** mm -> pixels at the export DPI, no bleed. The label band prints trimmed. */
 function px(mm: number) {
   return Math.round((mm / MM_PER_INCH) * EXPORT_DPI);
@@ -55,9 +50,6 @@ export default function ExportBar({
   const [exportLabel] = useExportLabelOnlyMutation();
   const [busy, setBusy] = useState<string | null>(null);
   const [orderModalOpen, setOrderModalOpen] = useState(false);
-
-  const widthPx = pxWithBleed(spec.widthMm, spec.bleedMm);
-  const heightPx = pxWithBleed(spec.heightMm, spec.bleedMm);
 
   /**
    * Both endpoints stream an authenticated binary attachment, so the file has
@@ -144,7 +136,7 @@ export default function ExportBar({
             className="inline-flex items-center gap-2 rounded-full bg-linear-to-r from-amber-400 to-amber-500 px-6 py-2.5 text-xs font-semibold text-black transition-transform hover:scale-102 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
           >
             <FiShoppingBag size={14} />
-            Order Physical Slab ($5.99)
+            Order Physical Slab ($0.99)
           </button>
         </div>
       </div>

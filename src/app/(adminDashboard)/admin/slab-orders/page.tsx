@@ -1,10 +1,7 @@
 "use client";
 
 import BackHeading from "../_components/BackHeading";
-import {
-  useExportLabelOnlyMutation,
-  useExportPrintSlabMutation,
-} from "@/redux/features/slab/slabApi";
+import { useExportLabelOnlyMutation } from "@/redux/features/slab/slabApi";
 import {
   useGetAllSlabOrdersQuery,
   usePurchaseShippoLabelMutation,
@@ -48,7 +45,6 @@ export default function AdminSlabOrdersPage() {
 
   const [updateStatus, { isLoading: isUpdating }] = useUpdateSlabOrderStatusMutation();
   const [purchaseShippoLabel] = usePurchaseShippoLabelMutation();
-  const [exportPrint] = useExportPrintSlabMutation();
   const [exportLabel] = useExportLabelOnlyMutation();
   const [form] = Form.useForm();
 
