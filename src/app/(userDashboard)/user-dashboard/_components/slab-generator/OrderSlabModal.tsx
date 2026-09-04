@@ -66,7 +66,7 @@ export default function OrderSlabModal({
         <div className="space-y-1">
           <h3 className="text-xl font-bold text-white">Custom Physical Slab</h3>
           <p className="text-sm font-medium text-violet-300">
-            $0.99 per slab · Quantity 1
+            $11.99 per slab · Quantity 1
           </p>
         </div>
         <p className="mx-auto max-w-sm text-xs leading-relaxed text-zinc-400">
@@ -97,7 +97,7 @@ export default function OrderSlabModal({
             className="inline-flex items-center gap-2 cursor-pointer rounded-full bg-violet-600 px-6 py-2 text-xs font-semibold text-white transition-colors hover:bg-violet-500 disabled:opacity-50"
           >
             <FiShoppingCart size={14} />
-            {loading ? "Adding..." : "Add to Cart ($0.99)"}
+            {loading ? "Adding..." : "Add to Cart ($11.99)"}
           </button>
         </div>
       </div>

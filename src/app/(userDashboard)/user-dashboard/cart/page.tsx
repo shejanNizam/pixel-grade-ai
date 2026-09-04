@@ -25,7 +25,7 @@ import {
 
 const FALLBACK_IMAGE = "/assets/user-dashboard/recent_scan_card.png";
 const FREE_SHIPPING_THRESHOLD = 50.0;
-const DEFAULT_SLAB_PRICE = 0.99;
+const DEFAULT_SLAB_PRICE = 11.99;
 
 export default function CartPage() {
   const router = useRouter();

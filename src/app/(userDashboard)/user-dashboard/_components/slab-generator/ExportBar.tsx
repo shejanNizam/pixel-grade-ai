@@ -136,7 +136,7 @@ export default function ExportBar({
             className="inline-flex items-center gap-2 rounded-full bg-linear-to-r from-amber-400 to-amber-500 px-6 py-2.5 text-xs font-semibold text-black transition-transform hover:scale-102 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
           >
             <FiShoppingBag size={14} />
-            Order Physical Slab ($0.99)
+            Order Physical Slab ($11.99)
           </button>
         </div>
       </div>

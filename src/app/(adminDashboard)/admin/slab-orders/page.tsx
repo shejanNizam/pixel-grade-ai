@@ -165,7 +165,7 @@ export default function AdminSlabOrdersPage() {
       key: "card",
       render: (_, record) => {
         const items = record.items || [];
-        const sub = record.subtotal ?? 24.99;
+        const sub = record.subtotal ?? 11.99;
         const ship = record.shippingFee ?? 5.95;
         const tax = record.taxAmount ?? sub * 0.085;
         return (

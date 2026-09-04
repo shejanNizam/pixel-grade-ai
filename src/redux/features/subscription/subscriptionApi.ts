@@ -52,6 +52,7 @@ export interface TSubscriberStats {
   mrr: number;
   /** Total dollar amount earned from custom physical slab sales. */
   slabRevenue?: number;
+  pixelScopeRevenue?: number;
   newThisMonth: number;
   newLastMonth: number;
 }

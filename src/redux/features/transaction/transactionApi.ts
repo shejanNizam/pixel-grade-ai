@@ -39,8 +39,10 @@ export interface TEarnings {
   grossRevenue: number;
   subscriptionRevenue: number;
   slabOrderRevenue: number;
+  pixelScopeOrderRevenue?: number;
   subscriptionCount: number;
   slabOrderCount: number;
+  pixelScopeOrderCount?: number;
   refundedAmount: number;
   refundedCount: number;
 }

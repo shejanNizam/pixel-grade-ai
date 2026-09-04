@@ -27,8 +27,8 @@ export default function EarningsStats() {
 
   if (loadingEarnings || loadingStats) {
     return (
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {Array.from({ length: 3 }, (_, i) => (
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {Array.from({ length: 4 }, (_, i) => (
           <div
             key={i}
             className="h-40 animate-pulse rounded-2xl border border-violet-500/30 bg-linear-to-br from-violet-950/50 to-black"
@@ -46,7 +46,10 @@ export default function EarningsStats() {
   }[] = [
     {
       label: "Total earnings",
-      value: money(earnings?.grossRevenue ?? 0),
+      value: money(
+        (earnings?.grossRevenue ?? 0) ||
+          (stats?.mrr ?? 0) + (stats?.slabRevenue ?? 0) + (stats?.pixelScopeRevenue ?? 0),
+      ),
       Icon: MdOutlineMonetizationOn,
     },
     {
@@ -63,10 +66,18 @@ export default function EarningsStats() {
           : undefined,
       Icon: FiStar,
     },
+    {
+      label: "PixelScope revenue",
+      value: money(
+        (stats?.pixelScopeRevenue ?? 0) ||
+          (earnings?.pixelScopeOrderRevenue ?? 0),
+      ),
+      Icon: FiStar,
+    },
   ];
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       {cards.map(({ label, value, delta, Icon }) => (
         <AdminStatCard
           key={label}
