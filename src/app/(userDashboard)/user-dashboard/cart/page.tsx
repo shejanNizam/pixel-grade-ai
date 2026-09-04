@@ -25,7 +25,7 @@ import {
 
 const FALLBACK_IMAGE = "/assets/user-dashboard/recent_scan_card.png";
 const FREE_SHIPPING_THRESHOLD = 50.0;
-const DEFAULT_SLAB_PRICE = 11.99;
+const DEFAULT_SLAB_PRICE = 5.99;
 
 export default function CartPage() {
   const router = useRouter();
@@ -231,7 +231,11 @@ export default function CartPage() {
                         <span className="font-bold text-white">
                           {item.quantity || 1}
                         </span>{" "}
-                        • ${itemPrice.toFixed(2)} each
+                        •{" "}
+                        {!item.cardName.includes("PixelScope") && (
+                          <span className="line-through text-zinc-500 mr-1">$11.99</span>
+                        )}
+                        <span className="font-semibold text-emerald-400">${itemPrice.toFixed(2)}</span> each
                       </p>
                     </div>
 
