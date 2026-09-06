@@ -95,10 +95,16 @@ export default function OrderSlabModal({
             type="button"
             disabled={loading}
             onClick={handleAddToCart}
-            className="inline-flex items-center gap-2 cursor-pointer rounded-full bg-violet-600 px-6 py-2 text-xs font-semibold text-white transition-colors hover:bg-violet-500 disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 cursor-pointer rounded-full bg-violet-600 px-6 py-2 text-xs font-semibold text-white transition-colors hover:bg-violet-500 disabled:opacity-50"
           >
             <FiShoppingCart size={14} />
-            {loading ? "Adding..." : "Add to Cart ($5.99)"}
+            <span>{loading ? "Adding..." : "Add to Cart"}</span>
+            {!loading && (
+              <span className="inline-flex items-center gap-1">
+                (<span className="line-through opacity-60 font-normal">$11.99</span>
+                <span className="font-bold text-emerald-300">$5.99</span>)
+              </span>
+            )}
           </button>
         </div>
       </div>
