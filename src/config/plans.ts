@@ -23,8 +23,8 @@
 // Specification)" sheet: Free / Collector / Pro / Enterprise.
 // ---------------------------------------------------------------------------
 
-export const PLAN_NAMES = ["Free", "Collector", "Pro", "Enterprise"] as const;
-export type PlanName = (typeof PLAN_NAMES)[number];
+export const PLAN_NAMES = ["Free", "Pro", "Enterprise"] as const;
+export type PlanName = (typeof PLAN_NAMES)[number] | "Collector";
 
 /** One plan per name, so the catalogue also caps how many plans can exist. */
 export const MAX_PLANS = PLAN_NAMES.length;
@@ -47,7 +47,7 @@ export const EXPIRY_OPTIONS = [
 ] as const;
 export type PlanExpiry = (typeof EXPIRY_OPTIONS)[number];
 
-/** When the credit allowance is refilled. Free = daily, paid = monthly. */
+/** When the credit allowance is refilled. Free = monthly, paid = monthly. */
 export const CREDIT_INTERVALS = ["daily", "monthly"] as const;
 export type CreditInterval = (typeof CREDIT_INTERVALS)[number];
 
@@ -81,36 +81,16 @@ export const planCatalog: PlanDefinition[] = [
     priceYearly: 0,
     expiry: "1 Month",
     features: [
-      "Standard scan (phone camera)",
-      "Basic AI grading report",
-      "Order custom slab labels",
-      "No PixelScope",
-      "No Pixel Verified badge",
-    ],
-    popular: false,
-    credits: 20,
-    creditInterval: "daily",
-    pixelscope: false,
-  },
-  {
-    name: "Collector",
-    tagline: "For active collectors",
-    price: 10,
-    priceYearly: 8,
-    expiry: "1 Month",
-    features: [
-      "Standard & Advanced (PixelScope) scans",
-      "Pixel Verified badge",
-      "Full AI grading reports",
-      "Unlimited report history",
+      "AI grading",
+      "Full grading reports",
+      "Label generator",
       "Collection management",
       "Price tracking",
-      "Order custom slab labels",
     ],
-    popular: true,
-    credits: 1500,
+    popular: false,
+    credits: 500,
     creditInterval: "monthly",
-    pixelscope: true,
+    pixelscope: false,
   },
   {
     name: "Pro",
@@ -119,15 +99,13 @@ export const planCatalog: PlanDefinition[] = [
     priceYearly: 20,
     expiry: "1 Month",
     features: [
-      "Everything in Collector",
+      "Everything in Free",
       "Priority AI processing",
-      "Bulk grading",
       "Advanced analytics",
       "Collection insights",
-      "Early access to new AI features",
       "Priority support",
     ],
-    popular: false,
+    popular: true,
     credits: 4000,
     creditInterval: "monthly",
     pixelscope: true,
@@ -140,12 +118,10 @@ export const planCatalog: PlanDefinition[] = [
     expiry: "1 Month",
     features: [
       "Everything in Pro",
-      "Custom grading reports",
-      "Team accounts",
-      "Card Shop Dashboard",
-      "API access (coming soon)",
-      "Dedicated account manager",
-      "Priority feature requests",
+      "Priority support",
+      "Card Shop Dashboard (Coming Soon)",
+      "Team Accounts (Coming Soon)",
+      "API Access (Coming Soon)",
     ],
     popular: false,
     credits: 25000,

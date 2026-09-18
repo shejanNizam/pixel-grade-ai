@@ -23,7 +23,6 @@ import {
   FiMinus,
   FiMonitor,
   FiPlus,
-  FiRefreshCw,
   FiSearch,
   FiShield,
   FiShoppingCart,
@@ -241,46 +240,8 @@ export default function PixelScopeHero() {
 
   return (
     <div className="min-h-screen bg-black text-white pb-16 sm:pb-24">
-      {/* 1. Top Guarantee Banner Bar (Offset below fixed Navbar at pt-20 to avoid collision) */}
-      <div className="pt-20">
-        <div className="border-b border-purple-500/20 bg-linear-to-r from-purple-950/80 via-indigo-950/60 to-purple-950/80 py-2.5 sm:py-3 backdrop-blur-xl">
-          {/* `whitespace-nowrap` only from `sm` up.
-              On mobile these sit in a two-column grid, and at 320 px — an
-              iPhone SE, still the narrowest phone worth supporting — a column
-              is 140 px against 137 px of "Free shipping over $50". Three pixels
-              is not a margin; it is a rounding error away from a nowrap run
-              pushing the whole page into horizontal scroll. Wrapping to two
-              lines in a grid cell is the correct behaviour at that width, and
-              from `sm` the row is a flex line where nowrap is what keeps each
-              claim on one line. */}
-          <div className="mx-auto max-w-6xl px-4 grid grid-cols-2 sm:flex sm:flex-wrap sm:items-center sm:justify-between gap-2 text-[11px] sm:text-xs font-medium text-purple-200">
-            <div className="flex items-center justify-center sm:justify-start gap-1.5">
-              <FiTruck className="text-purple-400 text-xs sm:text-sm shrink-0" />
-              <span className="sm:whitespace-nowrap">
-                Free shipping over $50
-              </span>
-            </div>
-            <span className="hidden sm:inline text-purple-500/30">|</span>
-            <div className="flex items-center justify-center sm:justify-start gap-1.5">
-              <FiRefreshCw className="text-purple-400 text-xs sm:text-sm shrink-0" />
-              <span className="sm:whitespace-nowrap">30-day returns</span>
-            </div>
-            <span className="hidden sm:inline text-purple-500/30">|</span>
-            <div className="flex items-center justify-center sm:justify-start gap-1.5">
-              <FiShield className="text-purple-400 text-xs sm:text-sm shrink-0" />
-              <span className="sm:whitespace-nowrap">1-year warranty</span>
-            </div>
-            <span className="hidden sm:inline text-purple-500/30">|</span>
-            <div className="flex items-center justify-center sm:justify-start gap-1.5">
-              <FiLock className="text-purple-400 text-xs sm:text-sm shrink-0" />
-              <span className="sm:whitespace-nowrap">Secure checkout</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="mx-auto max-w-6xl px-4 pt-4 sm:pt-6">
-        {/* 2. Breadcrumb */}
+      <div className="mx-auto max-w-6xl px-4 pt-20 sm:pt-24">
+        {/* Breadcrumb */}
         <nav
           aria-label="Breadcrumb"
           className="mb-4 sm:mb-6 flex items-center gap-2 text-xs text-zinc-400 overflow-x-auto whitespace-nowrap scrollbar-none pb-1"
@@ -653,34 +614,14 @@ export default function PixelScopeHero() {
                 </div>
               </div>
 
-              {/* Trust badges — 2 up, 4 up, then 2 up again at `lg`.
-                  The step back to two is not a typo. Below `lg` this box is
-                  full width and four fit comfortably; AT `lg` it becomes a 5/12
-                  column ~395 px wide, which leaves each of four tiles ~71 px of
-                  text after padding, and "Free Shipping" needs ~78 px. It only
-                  fits four again once the container reaches its max width, so
-                  four returns at `xl`. */}
-              <div className="pt-4 border-t border-white/10 grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-2 xl:grid-cols-4 gap-2.5 text-center text-[10px] sm:text-xs text-zinc-300">
+              {/* Trust badges — Free shipping & Secure Checkout */}
+              <div className="pt-4 border-t border-white/10 grid grid-cols-2 gap-3 text-center text-[10px] sm:text-xs text-zinc-300">
                 <div className="flex flex-col items-center justify-center p-2.5 rounded-xl bg-white/5 border border-white/5 space-y-1">
                   <FiTruck size={18} className="text-purple-400" />
                   <p className="font-semibold text-white leading-tight">
                     Free Shipping
                   </p>
                   <p className="text-zinc-400 text-[9px]">orders over $50</p>
-                </div>
-                <div className="flex flex-col items-center justify-center p-2.5 rounded-xl bg-white/5 border border-white/5 space-y-1">
-                  <FiRefreshCw size={18} className="text-purple-400" />
-                  <p className="font-semibold text-white leading-tight">
-                    30-Day
-                  </p>
-                  <p className="text-zinc-400 text-[9px]">Returns</p>
-                </div>
-                <div className="flex flex-col items-center justify-center p-2.5 rounded-xl bg-white/5 border border-white/5 space-y-1">
-                  <FiShield size={18} className="text-purple-400" />
-                  <p className="font-semibold text-white leading-tight">
-                    1-Year
-                  </p>
-                  <p className="text-zinc-400 text-[9px]">Warranty</p>
                 </div>
                 <div className="flex flex-col items-center justify-center p-2.5 rounded-xl bg-white/5 border border-white/5 space-y-1">
                   <FiLock size={18} className="text-purple-400" />

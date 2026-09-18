@@ -128,8 +128,9 @@ export default function PricingPlans({ ctaHref, onSelect }: PricingPlansProps) {
 
   const plans = useMemo<PlanDefinition[]>(() => {
     if (!livePlans || livePlans.length === 0) return planCatalog;
-    const order = new Map(PLAN_NAMES.map((name, i) => [name, i] as const));
+    const order = new Map<string, number>(PLAN_NAMES.map((name, i) => [name, i] as const));
     return [...livePlans]
+      .filter((p) => p.isActive !== false && p.name !== "Collector")
       .map(toDefinition)
       .sort((a, b) => (order.get(a.name) ?? 99) - (order.get(b.name) ?? 99));
   }, [livePlans]);
@@ -152,15 +153,15 @@ export default function PricingPlans({ ctaHref, onSelect }: PricingPlansProps) {
         )}
 
         <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-4 py-1.5 text-xs font-semibold text-emerald-400">
-          <span>🎁 30-Day Free Trial for Collector</span>
+          <span>🎁 30-Day Free Trial for Pro</span>
           <span className="text-zinc-400">• Card required • Cancel anytime</span>
         </div>
       </div>
 
-      <div className="mx-auto mt-12 grid max-w-6xl gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mx-auto mt-12 grid max-w-5xl gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {plans.map((plan) => {
           const isPaid = plan.price > 0;
-          const isCollector = plan.name === "Collector";
+          const isPro = plan.name === "Pro";
           // On yearly, spell out the real up-front charge and the saving so the
           // "/per month" figure isn't mistaken for a monthly bill.
           const showYearly = billing === "yearly" && isPaid;
@@ -209,7 +210,7 @@ export default function PricingPlans({ ctaHref, onSelect }: PricingPlansProps) {
                       <span className="text-emerald-400"> · save ${saved}</span>
                     )}
                   </>
-                ) : isCollector ? (
+                ) : isPro ? (
                   <span className="text-emerald-400 font-medium">30-Day Free Trial</span>
                 ) : (
                   " "
@@ -244,11 +245,9 @@ export default function PricingPlans({ ctaHref, onSelect }: PricingPlansProps) {
                 }
                 className="mt-10 py-2.5! pr-2.5!"
               >
-                {isCollector
-                  ? "Start 30-Day Free Trial"
-                  : isPaid
-                    ? `Upgrade to ${plan.name}`
-                    : "Get Started"}
+                {isPaid
+                  ? `Upgrade to ${plan.name}`
+                  : "Get Started"}
               </PillButton>
             </article>
           );

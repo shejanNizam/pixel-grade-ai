@@ -47,7 +47,7 @@ export interface Plan {
   facilities: Facility[];
 }
 
-/** The four fixed plans, seeded from the catalogue so the editor opens showing
+/** The three fixed plans, seeded from the catalogue so the editor opens showing
  *  the live plans rather than a second, divergent set of defaults. */
 export const seedPlans: Plan[] = planCatalog.map((plan, i) => ({
   id: String(i + 1),
