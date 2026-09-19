@@ -30,13 +30,15 @@ const toViewModel = (plan: TPlan): Plan => ({
 export default function SubscriptionPlans() {
   const { message } = App.useApp();
 
-  // The four canonical plans are fixed — admin edits them in place, never
-  // creates or deletes — so this is always the full catalogue.
+  // The three canonical plans are fixed — admin edits them in place, never
+  // creates or deletes — so this is always the active 3-tier catalogue.
   const { data, isLoading, isError } = useGetAdminPlansQuery();
   const [updatePlan, { isLoading: isSaving }] = useUpdatePlanMutation();
   const [editing, setEditing] = useState<Plan | null>(null);
 
-  const plans = (data ?? []).map(toViewModel);
+  const plans = (data ?? [])
+    .filter((p) => p.isActive !== false && p.name !== "Collector")
+    .map(toViewModel);
 
   const submit = async (values: Omit<Plan, "id">) => {
     if (!editing || isSaving) return;
@@ -83,9 +85,9 @@ export default function SubscriptionPlans() {
         </p>
       )}
 
-      <div className="mx-auto mt-12 grid max-w-6xl gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mx-auto mt-12 grid max-w-5xl gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {isLoading
-          ? Array.from({ length: 4 }, (_, i) => (
+          ? Array.from({ length: 3 }, (_, i) => (
               <div
                 key={i}
                 className="h-96 animate-pulse rounded-2xl border border-violet-500/30 bg-linear-to-br from-violet-950/50 to-black"

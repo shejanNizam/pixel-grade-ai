@@ -10,9 +10,9 @@ import { FiArrowRight, FiGrid, FiMenu, FiX } from "react-icons/fi";
 const navLinks = [
   { href: "/", label: "Home" },
   { href: "/#working-process", label: "Working process" },
-  { href: "/pixelscope", label: "PixelScope" },
   { href: "/#pricing", label: "Pricing" },
   { href: "/#contact", label: "Contact us" },
+  { href: "/pixelscope", label: "PixelScope" },
 ];
 
 function Brand({ onClick }: { onClick?: () => void }) {
