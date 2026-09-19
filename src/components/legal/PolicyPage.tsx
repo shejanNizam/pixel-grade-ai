@@ -15,7 +15,8 @@ export interface PolicySection {
 interface PolicyPageProps {
   slug?: CmsSlug;
   title: string;
-  intro: string;
+  effectiveDate?: string;
+  intro?: string;
   sections: PolicySection[];
 }
 
@@ -26,6 +27,7 @@ interface PolicyPageProps {
 export default function PolicyPage({
   slug,
   title,
+  effectiveDate,
   intro,
   sections,
 }: PolicyPageProps) {
@@ -33,7 +35,15 @@ export default function PolicyPage({
     skip: !slug,
   });
 
-  const dynamicContent = data?.htmlContent?.trim();
+  const rawContent = data?.htmlContent?.trim();
+  // Filter out any lingering developer/demo placeholder text
+  const isPlaceholder =
+    rawContent &&
+    (/demo dynamic/i.test(rawContent) ||
+      (rawContent.toLowerCase().includes("demo") &&
+        rawContent.toLowerCase().includes("admin dashboard")));
+
+  const dynamicContent = isPlaceholder ? "" : rawContent;
 
   return (
     <main className="bg-black">
@@ -49,13 +59,20 @@ export default function PolicyPage({
           />
         ) : (
           <>
-            <p className="text-sm leading-relaxed text-zinc-400">{intro}</p>
+            {effectiveDate && (
+              <p className="mb-4 text-xs font-semibold tracking-wider text-violet-400 uppercase">
+                Effective Date: {effectiveDate}
+              </p>
+            )}
+            {intro && (
+              <p className="text-sm leading-relaxed text-zinc-400">{intro}</p>
+            )}
 
             <div className="mt-10 space-y-10">
               {sections.map((section, i) => (
                 <section key={section.heading ?? i}>
                   {section.heading && (
-                    <h2 className="mb-3 text-sm font-semibold text-white">
+                    <h2 className="mb-3 text-base font-semibold text-white">
                       {section.heading}
                     </h2>
                   )}

@@ -2,46 +2,52 @@ import PolicyPage from "@/components/legal/PolicyPage";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "About Us",
-  description: "Learn more about PixelGrade AI.",
+  title: "About Us | PixelGrade",
+  description: "Learn more about PixelGrade.",
 };
 
-/* Placeholder copy — replace with your own before launch. */
 export default function About() {
   return (
     <PolicyPage
       slug="about"
-      title="About Us."
-      intro="PixelGrade AI gives collectors an instant, AI-powered read on the cards they own. Upload a front and a back photo and get a grade prediction, a condition breakdown, and a market valuation in seconds — no envelope, no waiting weeks for a verdict."
+      title="Welcome to PixelGrade"
+      intro="PixelGrade is a next-generation self-grading platform for trading cards. Built for collectors and card businesses, our platform lets users analyze their cards, receive detailed condition reports and grade estimates, and create personalized grading labels — all without sending their cards away."
       sections={[
         {
-          heading: "What we do",
+          heading: "What We Do",
           paragraphs: [
-            "Our Vision AI inspects the four things graders look at — centering, corners, edges, and surface — and returns a PSA-style estimate with a confidence score. You get a professional, investor-ready report you can download, keep, or share with a buyer.",
+            "PixelGrade analyzes trading cards across four core grading areas:",
           ],
           bullets: [
-            "Predict a grade before you pay for one",
-            "Spot scratches, whitening, chipping, and print defects",
-            "Track what your collection is worth over time",
-            "Turn a graded card into a custom slab with your own brand",
+            "Centering — Analysis of front and back card alignment.",
+            "Corners — Inspection for rounding, wear, and damaged corners.",
+            "Edges — Analysis for whitening, chipping, and edge wear.",
+            "Surface — Detection of scratches, print lines, surface wear, and other visible defects.",
           ],
         },
         {
-          heading: "Who it's for",
+          heading: "Why Collectors Choose PixelGrade",
           paragraphs: [
-            "Collectors deciding whether a card is worth submitting. Sellers who need to show condition honestly. Investors watching a portfolio move. Anyone who has ever guessed at a grade and wished they hadn't.",
+            "Whether you're evaluating a card, managing your collection, or creating your own personalized grading label, PixelGrade puts the grading experience in your hands.",
+          ],
+          bullets: [
+            "Instant Grading — Receive an estimated grade and condition analysis in seconds.",
+            "Detailed Condition Reports — Review individual grading categories, subgrades, and confidence scores.",
+            "Personalized Grading Labels — Create grading labels featuring your own name or brand.",
+            "Physical Slabs — Turn your grade into a professional protective card holder without sending your card away.",
+            "Market Pricing — Track card values and market information directly through PixelGrade.",
           ],
         },
         {
-          heading: "How we work",
+          heading: "Mission Statement",
           paragraphs: [
-            "An AI estimate is a tool, not an authority. We show you a confidence score alongside every grade so you know how much to trust it, and we never claim to replace official certification. The decision stays yours.",
+            '"Our mission is to put grading in the hands of collectors by making card analysis faster, more accessible, and more personalized."',
           ],
         },
         {
-          heading: "Contact Us",
+          heading: "Contact & Support",
           paragraphs: [
-            "Questions about the product, a report, or your account? Reach us through the contact page and we'll get back to you.",
+            "Have questions, feedback, or need help with your account? Contact our support team anytime at admin@pixelgradeai.com or visit our Contact Us page.",
           ],
         },
       ]}

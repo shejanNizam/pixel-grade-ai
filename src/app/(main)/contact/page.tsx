@@ -5,7 +5,7 @@ import Image from "next/image";
 
 export const metadata: Metadata = {
   title: "Contact us",
-  description: "Get in touch with the PixelGrade AI team.",
+  description: "Get in touch with the PixelGrade team.",
 };
 
 export default function Contact() {

@@ -58,7 +58,7 @@ export default function Hero() {
           </h1>
 
           <p className="mx-auto mt-6 max-w-md text-sm leading-relaxed text-zinc-400 lg:mx-0">
-            PixelGrade AI gives collectors instant, AI-powered grading reports
+            PixelGrade gives collectors instant, AI-powered grading reports
             and lets you create your own custom slab labels.
           </p>
 

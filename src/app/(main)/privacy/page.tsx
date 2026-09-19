@@ -2,56 +2,87 @@ import PolicyPage from "@/components/legal/PolicyPage";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Privacy policy",
-  description: "How PixelGrade AI collects, uses, and protects your data.",
+  title: "Privacy Policy | PixelGrade",
+  description: "How PixelGrade collects, uses, and protects your data.",
 };
 
-/* Placeholder copy — have a lawyer review this before launch. */
 export default function Privacy() {
   return (
     <PolicyPage
       slug="privacy"
-      title="Privacy policy"
-      intro="We value your privacy and are committed to protecting your personal information. We collect data such as your name, email, and card images only when you need it, and only to run the service you signed up for."
+      title="Privacy Policy"
+      effectiveDate="September 2026"
       sections={[
         {
-          heading: "How We Use Your Information",
-          paragraphs: ["Your personal data is used to:"],
-          bullets: [
-            "Create your account and keep you signed in",
-            "Run AI analysis on the card images you upload",
-            "Respond to your enquiries and support requests",
-            "Send relevant service and product notifications",
+          heading: "1. Information We Collect",
+          paragraphs: [
+            "PixelGrade may collect information that users provide directly, including name, email address, account information, shipping and billing information, support messages, and other information submitted through the platform. We may also collect card images, card information, grading reports, labels, collection data, and other content users upload or create while using PixelGrade.",
           ],
         },
         {
-          heading: "How We Share Your Information",
+          heading: "2. Card Images and Grading Data",
           paragraphs: [
-            "We do not sell your personal information. We share data with third parties only where it is needed to deliver the service — for example, the infrastructure providers that host the app and process images — and those providers are bound to use it for nothing else.",
+            "When users upload or scan trading cards, PixelGrade may process the images and related card information to provide identification, grading estimates, condition analysis, reports, personalized labels, collection features, and related services. We may retain relevant card and grading data to operate, secure, improve, and develop PixelGrade's services and grading technology, subject to applicable law and our data practices.",
           ],
         },
         {
-          heading: "Cookies and Tracking",
+          heading: "3. Automatically Collected Information",
           paragraphs: [
-            "We use cookies to keep you signed in, remember your preferences, and understand how the site is used. You can block cookies in your browser, but parts of the app may stop working if you do.",
+            "We may automatically collect technical and usage information such as IP address, browser type, device information, pages visited, actions taken within the platform, timestamps, and similar analytics or diagnostic information.",
           ],
         },
         {
-          heading: "Your Rights",
+          heading: "4. How We Use Information",
           paragraphs: [
-            "You have the right to access, update, or delete the personal information we hold about you. You can also ask us to stop processing it. Contact us and we will act on your request.",
+            "We may use information to provide and maintain the PixelGrade platform; process card analyses and grading reports; create personalized labels and slab orders; manage accounts and subscriptions; process payments and shipping; provide customer support; improve product performance and user experience; detect fraud or misuse; communicate service updates; and comply with legal obligations.",
           ],
         },
         {
-          heading: "Changes to This Privacy Policy",
+          heading: "5. Payments and Third-Party Services",
           paragraphs: [
-            "We may update this policy from time to time. Any changes will be posted on this page, with an updated date.",
+            "PixelGrade may use third-party providers for services such as payment processing, shipping, hosting, analytics, storage, and other infrastructure. These providers may process information as necessary to perform services on our behalf and are subject to their own terms and privacy practices.",
           ],
         },
         {
-          heading: "Contact Us",
+          heading: "6. Sharing of Information",
           paragraphs: [
-            "For any questions about this policy or your data, reach out to us through our contact page.",
+            "We do not sell personal information to advertisers. We may share information with service providers that help us operate PixelGrade, when a user directs us to share information, in connection with a business transaction, or when required to comply with law, protect rights, prevent fraud, or maintain the security of the platform.",
+          ],
+        },
+        {
+          heading: "7. Public Profiles and Shared Content",
+          paragraphs: [
+            "Certain PixelGrade features may allow users to create public profiles, grading reports, labels, QR-linked pages, collections, or other content. Information a user chooses to make public may be visible to other users or anyone with access to the relevant link or QR code.",
+          ],
+        },
+        {
+          heading: "8. Data Retention and Security",
+          paragraphs: [
+            "We retain information for as long as reasonably necessary to provide the services, maintain business and legal records, resolve disputes, enforce agreements, and meet legal obligations. We use reasonable administrative, technical, and organizational safeguards, but no system can guarantee absolute security.",
+          ],
+        },
+        {
+          heading: "9. User Choices and Requests",
+          paragraphs: [
+            "Users may update certain account information through their account settings. Where required by applicable law, users may also have rights to request access, correction, deletion, or other actions relating to their personal information. Requests may be sent to admin@pixelgradeai.com.",
+          ],
+        },
+        {
+          heading: "10. Children's Privacy",
+          paragraphs: [
+            "PixelGrade is not intended for children under 13, and we do not knowingly collect personal information from children under 13. If we learn that such information has been collected, we will take reasonable steps to delete it.",
+          ],
+        },
+        {
+          heading: "11. Changes to This Policy",
+          paragraphs: [
+            "We may update this Privacy Policy from time to time. The updated version will be posted on this page with a revised effective date.",
+          ],
+        },
+        {
+          heading: "12. Contact",
+          paragraphs: [
+            "Questions about this Privacy Policy or privacy requests can be sent to admin@pixelgradeai.com.",
           ],
         },
       ]}

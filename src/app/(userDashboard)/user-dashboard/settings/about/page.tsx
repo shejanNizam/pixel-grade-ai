@@ -5,7 +5,7 @@ import BackLink from "../../_components/settings/BackLink";
 /* No Figma for this screen yet — deliberately minimal. */
 const links = [
   { label: "Privacy Policy", href: "/privacy" },
-  { label: "Terms & Service", href: "/terms" },
+  { label: "Terms & Conditions", href: "/terms" },
   { label: "Contact support", href: "/contact" },
 ];
 
