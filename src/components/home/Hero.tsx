@@ -1,5 +1,9 @@
+"use client";
+
 import PillButton from "@/components/shared/PillButton";
+import VideoModal from "@/components/shared/VideoModal";
 import Image from "next/image";
+import { useState } from "react";
 import type { IconType } from "react-icons";
 import { FiArrowRight, FiClock, FiCpu, FiLock, FiPlay } from "react-icons/fi";
 
@@ -31,6 +35,8 @@ function SlabPreview() {
 }
 
 export default function Hero() {
+  const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
+
   return (
     <section
       id="home"
@@ -71,10 +77,10 @@ export default function Hero() {
               Get Started Free
             </PillButton>
             <PillButton
-              href="/#working-process"
               size="md"
               variant="outline"
               icon={<FiPlay className="text-xs" />}
+              onClick={() => setIsVideoModalOpen(true)}
             >
               See How It Works
             </PillButton>
@@ -127,6 +133,14 @@ export default function Hero() {
 
         <SlabPreview />
       </div>
+
+      {/* Demo Video Modal */}
+      <VideoModal
+        isOpen={isVideoModalOpen}
+        onClose={() => setIsVideoModalOpen(false)}
+        videoSrc="/videos/how-it-works.MOV"
+        title="PixelGrade AI — See How It Works"
+      />
     </section>
   );
 }
