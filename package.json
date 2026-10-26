@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "node api.js && next dev --turbopack",
-    "build": "node api.js && next build --turbopack",
-    "start": "node api.js && next start",
+    "dev": "node next dev --turbopack",
+    "build": "node next build --turbopack",
+    "start": "node next start",
     "lint": "eslint",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
